@@ -56,7 +56,10 @@ import com.karrad.ticketsclient.AppSession
 import com.karrad.ticketsclient.data.api.dto.CategoryEventsEntryDto
 import com.karrad.ticketsclient.data.api.dto.DiscoveryFeedResponseDto
 import com.karrad.ticketsclient.data.api.dto.EventDto
+import cafe.adriel.voyager.navigator.LocalNavigator
+import cafe.adriel.voyager.navigator.currentOrThrow
 import com.karrad.ticketsclient.di.AppContainer
+import com.karrad.ticketsclient.ui.navigation.EventDetailScreen
 import kotlinx.datetime.Clock
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.DayOfWeek
@@ -103,7 +106,13 @@ fun FeedScreen() {
                     }
                 }
             }
-            is FeedState.Success -> FeedContent(feed = s.feed)
+            is FeedState.Success -> {
+                val navigator = LocalNavigator.currentOrThrow
+                FeedContent(feed = s.feed, onEventClick = { event ->
+                    AppSession.currentEvent = event
+                    navigator.push(EventDetailScreen(event.id))
+                })
+            }
         }
     }
 }
@@ -222,7 +231,7 @@ private fun DayOfWeek.shortRu(): String = when (this) {
 // ─── Feed content ──────────────────────────────────────────────────────────────
 
 @Composable
-private fun FeedContent(feed: DiscoveryFeedResponseDto) {
+private fun FeedContent(feed: DiscoveryFeedResponseDto, onEventClick: (EventDto) -> Unit) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(bottom = 32.dp)
@@ -232,26 +241,26 @@ private fun FeedContent(feed: DiscoveryFeedResponseDto) {
         }
 
         if (feed.forYou.isNotEmpty()) {
-            item { ForYouSection(events = feed.forYou) }
+            item { ForYouSection(events = feed.forYou, onEventClick = onEventClick) }
         }
 
         if (feed.tomorrow.isNotEmpty()) {
             item {
                 Spacer(modifier = Modifier.height(8.dp))
-                HorizontalEventSection(title = "Завтра", events = feed.tomorrow)
+                HorizontalEventSection(title = "Завтра", events = feed.tomorrow, onEventClick = onEventClick)
             }
         }
 
         if (feed.dayAfterTomorrow.isNotEmpty()) {
             item {
                 Spacer(modifier = Modifier.height(8.dp))
-                HorizontalEventSection(title = "Послезавтра", events = feed.dayAfterTomorrow)
+                HorizontalEventSection(title = "Послезавтра", events = feed.dayAfterTomorrow, onEventClick = onEventClick)
             }
         }
 
         items(feed.byCategory, key = { it.category.id }) { entry ->
             Spacer(modifier = Modifier.height(8.dp))
-            CategorySection(entry = entry)
+            CategorySection(entry = entry, onEventClick = onEventClick)
         }
     }
 }
@@ -259,7 +268,7 @@ private fun FeedContent(feed: DiscoveryFeedResponseDto) {
 // ─── "Для вас" pager ───────────────────────────────────────────────────────────
 
 @Composable
-private fun ForYouSection(events: List<EventDto>) {
+private fun ForYouSection(events: List<EventDto>, onEventClick: (EventDto) -> Unit) {
     val pagerState = rememberPagerState { events.size }
 
     Column {
@@ -271,7 +280,7 @@ private fun ForYouSection(events: List<EventDto>) {
             pageSpacing = 12.dp,
             modifier = Modifier.fillMaxWidth()
         ) { page ->
-            LargeEventCard(event = events[page])
+            LargeEventCard(event = events[page], onClick = { onEventClick(events[page]) })
         }
 
         // Dot indicators
@@ -300,12 +309,13 @@ private fun ForYouSection(events: List<EventDto>) {
 }
 
 @Composable
-private fun LargeEventCard(event: EventDto) {
+private fun LargeEventCard(event: EventDto, onClick: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(220.dp)
             .clip(RoundedCornerShape(16.dp))
+            .clickable { onClick() }
     ) {
         // Gradient background image placeholder
         EventImagePlaceholder(seed = event.id, modifier = Modifier.fillMaxSize())
@@ -354,7 +364,7 @@ private fun LargeEventCard(event: EventDto) {
 // ─── Generic horizontal section (Завтра / Послезавтра) ─────────────────────────
 
 @Composable
-private fun HorizontalEventSection(title: String, events: List<EventDto>) {
+private fun HorizontalEventSection(title: String, events: List<EventDto>, onEventClick: (EventDto) -> Unit) {
     Column {
         SectionHeader(title = title)
         LazyRow(
@@ -362,7 +372,7 @@ private fun HorizontalEventSection(title: String, events: List<EventDto>) {
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             items(events, key = { it.id }) { event ->
-                SmallEventCard(event = event)
+                SmallEventCard(event = event, onClick = { onEventClick(event) })
             }
         }
     }
@@ -371,7 +381,7 @@ private fun HorizontalEventSection(title: String, events: List<EventDto>) {
 // ─── Category section ──────────────────────────────────────────────────────────
 
 @Composable
-private fun CategorySection(entry: CategoryEventsEntryDto) {
+private fun CategorySection(entry: CategoryEventsEntryDto, onEventClick: (EventDto) -> Unit) {
     Column {
         SectionHeader(title = entry.category.label, hasMore = true)
         LazyRow(
@@ -379,7 +389,7 @@ private fun CategorySection(entry: CategoryEventsEntryDto) {
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             items(entry.events, key = { it.id }) { event ->
-                SmallEventCard(event = event)
+                SmallEventCard(event = event, onClick = { onEventClick(event) })
             }
         }
     }
@@ -414,8 +424,9 @@ private fun SectionHeader(title: String, hasMore: Boolean = false) {
 // ─── Small event card (portrait) ───────────────────────────────────────────────
 
 @Composable
-private fun SmallEventCard(event: EventDto) {
+private fun SmallEventCard(event: EventDto, onClick: () -> Unit = {}) {
     Card(
+        onClick = onClick,
         modifier = Modifier.width(152.dp),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
