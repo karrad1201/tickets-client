@@ -53,6 +53,7 @@ import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.karrad.ticketsclient.AppSession
+import com.karrad.ticketsclient.ui.util.formatPrice
 
 // ─── Seat model ────────────────────────────────────────────────────────────────
 
@@ -324,7 +325,3 @@ private fun SeatGrid(
     }
 }
 
-private fun Int.formatPrice(): String {
-    val s = this.toString()
-    return if (s.length <= 3) s else s.dropLast(3) + "\u00A0" + s.takeLast(3)
-}

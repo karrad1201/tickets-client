@@ -225,7 +225,6 @@ private fun DayOfWeek.shortRu(): String = when (this) {
     DayOfWeek.FRIDAY -> "ПТ"
     DayOfWeek.SATURDAY -> "СБ"
     DayOfWeek.SUNDAY -> "ВС"
-    else -> ""
 }
 
 // ─── Feed content ──────────────────────────────────────────────────────────────

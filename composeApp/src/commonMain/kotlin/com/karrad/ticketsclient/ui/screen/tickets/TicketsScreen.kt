@@ -48,6 +48,7 @@ import androidx.compose.ui.unit.sp
 import com.karrad.ticketsclient.AppSession
 import com.karrad.ticketsclient.MockTicket
 import com.karrad.ticketsclient.TicketStatus
+import com.karrad.ticketsclient.ui.util.formatPrice
 
 @Composable
 fun TicketsScreen() {
@@ -316,7 +317,3 @@ private fun EmptyTickets(isUpcoming: Boolean) {
     }
 }
 
-private fun Int.formatPrice(): String {
-    val s = this.toString()
-    return if (s.length <= 3) s else s.dropLast(3) + "\u00A0" + s.takeLast(3)
-}

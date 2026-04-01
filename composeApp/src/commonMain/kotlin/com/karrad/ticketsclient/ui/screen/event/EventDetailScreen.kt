@@ -51,6 +51,7 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import com.karrad.ticketsclient.AppSession
 import com.karrad.ticketsclient.data.api.dto.EventDto
 import com.karrad.ticketsclient.ui.navigation.SeatMapScreen
+import com.karrad.ticketsclient.ui.util.formatPrice
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -316,10 +317,6 @@ private fun String.formatEventDateFull(): String? = runCatching {
         "${ldt.hour.toString().padStart(2, '0')}:${ldt.minute.toString().padStart(2, '0')}"
 }.getOrNull()
 
-private fun Int.formatPrice(): String {
-    val s = this.toString()
-    return if (s.length <= 3) s else s.dropLast(3) + "\u00A0" + s.takeLast(3)
-}
 
 private fun String.venueLabel(): String = when (this) {
     "venue-bolshoi"  -> "Большой театр"
