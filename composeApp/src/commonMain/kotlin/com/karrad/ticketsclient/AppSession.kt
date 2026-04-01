@@ -12,4 +12,10 @@ object AppSession {
 
     /** Set before pushing EventDetailScreen; read inside that screen. */
     var currentEvent: EventDto? = null
+
+    // Profile — хранится локально до появления реального API
+    var userName: String = "Иван Иванов"
+    var userPhone: String = "+7 (999) 123-45-67"
+    var userCity: String = city
+    var userInterests: List<String> = listOf("Театры", "Кино", "Концерты")
 }
