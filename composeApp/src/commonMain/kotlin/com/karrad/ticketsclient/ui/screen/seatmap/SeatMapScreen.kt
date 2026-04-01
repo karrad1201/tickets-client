@@ -40,6 +40,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -144,10 +145,12 @@ fun SeatMapScreen(eventId: String) {
             }
 
             // ─── Схема зала ──────────────────────────────────────────────────
+            // clipToBounds() обязателен: без него graphicsLayer рисует поверх хедера
             Box(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth()
+                    .clipToBounds()
                     .transformable(state = transformState)
             ) {
                 Box(
@@ -321,8 +324,8 @@ private fun SeatGrid(
                             .then(
                                 if (seat != null && seat.available && !isSelected)
                                     Modifier.clickable { onSeatClick(seat) }
-                                else if (isSelected)
-                                    Modifier.clickable { onSeatClick(seat!!) }
+                                else if (isSelected && seat != null)
+                                    Modifier.clickable { onSeatClick(seat) }
                                 else Modifier
                             )
                     )
