@@ -222,7 +222,7 @@ private fun FeedContent(feed: DiscoveryFeedResponseDto, onEventClick: (EventDto)
 
     LazyColumn(
         modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
-        contentPadding = PaddingValues(bottom = 32.dp)
+        contentPadding = PaddingValues(bottom = 96.dp) // место под плавающий нав-бар
     ) {
         stickyHeader {
             DateStrip(selectedDay = selectedDay, onDaySelect = { selectedDay = it })

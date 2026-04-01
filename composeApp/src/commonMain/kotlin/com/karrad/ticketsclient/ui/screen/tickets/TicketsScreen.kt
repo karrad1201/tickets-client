@@ -102,11 +102,12 @@ fun TicketsScreen() {
 
         Spacer(Modifier.height(16.dp))
 
-        // ─── Контент ─────────────────────────────────────────────────────────
+        // ─── Контент (+ отступ снизу под плавающий нав-бар) ──────────────────
         if (current.isEmpty()) {
             EmptyTickets(selectedTab == 0)
         } else {
             TicketsPager(tickets = current, isArchived = selectedTab == 1)
+            Spacer(Modifier.height(96.dp))
         }
     }
 }

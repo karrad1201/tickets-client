@@ -146,7 +146,8 @@ fun ProfileScreen() {
             MenuItem(label = "О приложении", onClick = {})
         }
 
-        Spacer(Modifier.height(32.dp))
+        // Отступ под плавающий нав-бар
+        Spacer(Modifier.height(96.dp))
     }
 }
 
