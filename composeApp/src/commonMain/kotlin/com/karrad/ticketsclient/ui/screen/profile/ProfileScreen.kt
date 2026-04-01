@@ -48,6 +48,8 @@ import com.karrad.ticketsclient.ui.navigation.EditProfileScreen
 @Composable
 fun ProfileScreen() {
     val navigator = LocalNavigator.currentOrThrow
+    // EditProfileScreen открывается поверх табов
+    val rootNavigator = navigator.parent ?: navigator
 
     var name by remember { mutableStateOf(AppSession.userName) }
     var phone by remember { mutableStateOf(AppSession.userPhone) }
@@ -103,7 +105,7 @@ fun ProfileScreen() {
                 .padding(horizontal = 16.dp)
                 .clip(RoundedCornerShape(16.dp))
                 .background(MaterialTheme.colorScheme.surface)
-                .clickable { navigator.push(EditProfileScreen) }
+                .clickable { rootNavigator.push(EditProfileScreen) }
                 .padding(horizontal = 16.dp, vertical = 14.dp)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {

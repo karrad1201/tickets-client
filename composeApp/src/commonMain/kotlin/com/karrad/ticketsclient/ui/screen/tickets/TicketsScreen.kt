@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -355,10 +356,3 @@ private fun EmptyTickets(isUpcoming: Boolean) {
     }
 }
 
-private class PaddingValues(val horizontal: androidx.compose.ui.unit.Dp, val vertical: androidx.compose.ui.unit.Dp = 0.dp) :
-    androidx.compose.foundation.layout.PaddingValues {
-    override fun calculateBottomPadding() = vertical
-    override fun calculateLeftPadding(layoutDirection: androidx.compose.ui.unit.LayoutDirection) = horizontal
-    override fun calculateRightPadding(layoutDirection: androidx.compose.ui.unit.LayoutDirection) = horizontal
-    override fun calculateTopPadding() = vertical
-}

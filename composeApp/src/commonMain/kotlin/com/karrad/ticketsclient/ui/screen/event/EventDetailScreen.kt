@@ -57,6 +57,8 @@ import kotlinx.datetime.toLocalDateTime
 
 @Composable
 fun EventDetailScreen(eventId: String) {
+    // EventDetailScreen находится уже в корневом навигаторе,
+    // поэтому navigator.pop() и navigator.push(SeatMapScreen) работают верно
     val navigator = LocalNavigator.currentOrThrow
     val event = AppSession.currentEvent
 

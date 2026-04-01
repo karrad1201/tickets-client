@@ -72,6 +72,11 @@ import kotlinx.datetime.toLocalDateTime
 
 @Composable
 fun FeedScreen() {
+    // Берём родительский навигатор: EventDetailScreen должен открываться
+    // поверх TabNavigator (без нижней панели)
+    val navigator = LocalNavigator.currentOrThrow
+    val rootNavigator = navigator.parent ?: navigator
+
     val viewModel = viewModel { FeedViewModel(AppContainer.discoveryService) }
     val state by viewModel.state.collectAsState()
 
@@ -100,10 +105,9 @@ fun FeedScreen() {
                 }
             }
             is FeedState.Success -> {
-                val navigator = LocalNavigator.currentOrThrow
                 FeedContent(feed = s.feed, onEventClick = { event ->
                     AppSession.currentEvent = event
-                    navigator.push(EventDetailScreen(event.id))
+                    rootNavigator.push(EventDetailScreen(event.id))
                 })
             }
         }
