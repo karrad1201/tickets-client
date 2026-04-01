@@ -16,6 +16,8 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Phone
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -91,6 +93,13 @@ fun LoginScreen() {
                 onValueChange = { phone = it },
                 label = { Text("Номер телефона") },
                 placeholder = { Text("+7 (000) 000-00-00") },
+                leadingIcon = {
+                    Icon(
+                        Icons.Outlined.Phone,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                 singleLine = true,
                 shape = RoundedCornerShape(12.dp),
@@ -130,7 +139,7 @@ fun LoginScreen() {
             Text(
                 text = "Или войти через",
                 style = MaterialTheme.typography.bodySmall,
-                color = Color(0xFF8E8E93)
+                color = MaterialTheme.colorScheme.onBackground
             )
 
             Spacer(modifier = Modifier.height(16.dp))
