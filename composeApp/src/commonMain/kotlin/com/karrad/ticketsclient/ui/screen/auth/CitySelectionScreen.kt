@@ -29,6 +29,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import com.karrad.ticketsclient.AppSession
 import com.karrad.ticketsclient.data.repository.LocalCityRepository
 import com.karrad.ticketsclient.domain.model.City
 import com.karrad.ticketsclient.domain.usecase.SearchCitiesUseCase
@@ -94,7 +95,10 @@ fun CitySelectionScreen() {
         }
 
         Button(
-            onClick = { navigator.push(InterestsScreen) },
+            onClick = {
+                selectedCity?.let { AppSession.city = it.label }
+                navigator.push(InterestsScreen)
+            },
             enabled = selectedCity != null,
             shape = RoundedCornerShape(12.dp),
             modifier = Modifier
