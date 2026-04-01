@@ -3,7 +3,7 @@ package com.karrad.ticketsclient.ui.screen.feed
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.karrad.ticketsclient.AppSession
-import com.karrad.ticketsclient.data.api.DiscoveryApiService
+import com.karrad.ticketsclient.data.api.DiscoveryService
 import com.karrad.ticketsclient.data.api.dto.DiscoveryFeedResponseDto
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,7 +17,7 @@ sealed interface FeedState {
 }
 
 class FeedViewModel(
-    private val discoveryApiService: DiscoveryApiService
+    private val discoveryService: DiscoveryService
 ) : ViewModel() {
 
     private val _state = MutableStateFlow<FeedState>(FeedState.Loading)
@@ -31,7 +31,7 @@ class FeedViewModel(
         viewModelScope.launch {
             _state.value = FeedState.Loading
             try {
-                val feed = discoveryApiService.getDiscoveryFeed(
+                val feed = discoveryService.getDiscoveryFeed(
                     city = AppSession.city,
                     authToken = AppSession.authToken
                 )

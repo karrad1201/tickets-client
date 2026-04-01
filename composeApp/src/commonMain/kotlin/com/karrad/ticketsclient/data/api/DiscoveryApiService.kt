@@ -10,12 +10,12 @@ import io.ktor.client.request.parameter
 class DiscoveryApiService(
     private val httpClient: HttpClient,
     private val baseUrl: String
-) {
-    suspend fun getDiscoveryFeed(
+) : DiscoveryService {
+    override suspend fun getDiscoveryFeed(
         city: String,
-        authToken: String? = null,
-        page: Int = 0,
-        size: Int = 20
+        authToken: String?,
+        page: Int,
+        size: Int
     ): DiscoveryFeedResponseDto {
         return httpClient.get("$baseUrl/api/discovery") {
             parameter("city", city)

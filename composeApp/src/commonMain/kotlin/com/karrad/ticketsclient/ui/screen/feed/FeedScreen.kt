@@ -50,13 +50,14 @@ import com.karrad.ticketsclient.data.api.dto.CategoryEventsEntryDto
 import com.karrad.ticketsclient.data.api.dto.DiscoveryFeedResponseDto
 import com.karrad.ticketsclient.data.api.dto.EventDto
 import com.karrad.ticketsclient.di.AppContainer
+
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 
 @Composable
 fun FeedScreen() {
-    val viewModel = viewModel { FeedViewModel(AppContainer.discoveryApiService) }
+    val viewModel = viewModel { FeedViewModel(AppContainer.discoveryService) }
     val state by viewModel.state.collectAsState()
 
     Column(modifier = Modifier.fillMaxSize().statusBarsPadding()) {

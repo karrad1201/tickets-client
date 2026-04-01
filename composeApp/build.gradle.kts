@@ -72,6 +72,10 @@ android {
     namespace = "com.karrad.ticketsclient"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
+    buildFeatures {
+        buildConfig = true
+    }
+
     defaultConfig {
         applicationId = "com.karrad.ticketsclient"
         minSdk = libs.versions.android.minSdk.get().toInt()
@@ -79,6 +83,21 @@ android {
         versionCode = 1
         versionName = "1.0"
     }
+
+    flavorDimensions += "mode"
+    productFlavors {
+        create("mock") {
+            dimension = "mode"
+            applicationIdSuffix = ".mock"
+            versionNameSuffix = "-mock"
+            buildConfigField("boolean", "USE_MOCK", "true")
+        }
+        create("prod") {
+            dimension = "mode"
+            buildConfigField("boolean", "USE_MOCK", "false")
+        }
+    }
+
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
