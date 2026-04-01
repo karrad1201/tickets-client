@@ -25,10 +25,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.ElevatedButton
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -55,41 +52,28 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import com.karrad.ticketsclient.AppSession
 import com.karrad.ticketsclient.ui.util.formatPrice
 
-// ─── Seat model ────────────────────────────────────────────────────────────────
+// ─── Модели ────────────────────────────────────────────────────────────────────
 
-private data class Seat(
-    val row: Int,
-    val col: Int,
-    val zone: SeatZone
-)
+private data class Seat(val row: Int, val col: Int, val available: Boolean)
 
-private enum class SeatZone(val label: String, val color: Color, val price: Int) {
-    VIP("VIP", Color(0xFFFFD700), 5000),
-    PARQUET("Партер", Color(0xFF6C63FF), 2500),
-    BALCONY("Балкон", Color(0xFF00B4D8), 1200),
-    UNAVAILABLE("", Color(0xFF888888), 0)
-}
-
-// ─── Layout generation ─────────────────────────────────────────────────────────
+private val SESSION_TIMES = listOf("13:00", "17:00", "23:00")
 
 private fun buildSeats(): List<Seat> {
     val seats = mutableListOf<Seat>()
-    // VIP — ряды 1-2, cols 3-10
-    for (row in 1..2) for (col in 3..10) seats += Seat(row, col, SeatZone.VIP)
-    // Parquet — ряды 3-8, cols 1-12
-    for (row in 3..8) for (col in 1..12) {
-        val zone = if ((row + col) % 7 == 0) SeatZone.UNAVAILABLE else SeatZone.PARQUET
-        seats += Seat(row, col, zone)
-    }
-    // Balcony — ряды 10-13, cols 2-11
-    for (row in 10..13) for (col in 2..11) {
-        val zone = if ((row * col) % 5 == 0) SeatZone.UNAVAILABLE else SeatZone.BALCONY
-        seats += Seat(row, col, zone)
+    // 8 рядов x 10 мест, некоторые недоступны
+    for (row in 0..7) {
+        for (col in 0..9) {
+            val available = !((row == 2 && col in 3..5) ||
+                    (row == 5 && col in 6..8) ||
+                    (row == 1 && col == 8) ||
+                    (row == 4 && col == 2) ||
+                    (row == 6 && col in 0..1) ||
+                    (row == 7 && col in 7..9))
+            seats += Seat(row, col, available)
+        }
     }
     return seats
 }
-
-private val SESSION_TIMES = listOf("13:00", "17:00", "20:00", "23:00")
 
 // ─── Screen ────────────────────────────────────────────────────────────────────
 
@@ -102,77 +86,76 @@ fun SeatMapScreen(eventId: String) {
     var selectedTime by remember { mutableStateOf(SESSION_TIMES[1]) }
     var selectedSeats by remember { mutableStateOf(setOf<Seat>()) }
 
-    // pinch-zoom + pan state
     var scale by remember { mutableFloatStateOf(1f) }
     var offset by remember { mutableStateOf(Offset.Zero) }
     val transformState = rememberTransformableState { zoomChange, panChange, _ ->
-        scale = (scale * zoomChange).coerceIn(0.7f, 3f)
+        scale = (scale * zoomChange).coerceIn(0.6f, 3f)
         offset += panChange
     }
 
-    val totalPrice = selectedSeats.sumOf { it.zone.price }
+    val seatPrice = 1400
+    val totalPrice = selectedSeats.size * seatPrice
 
-    Box(Modifier.fillMaxSize()) {
+    Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         Column(
             Modifier
                 .fillMaxSize()
                 .statusBarsPadding()
         ) {
             // ─── Toolbar ─────────────────────────────────────────────────────
-            Row(
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 4.dp, vertical = 4.dp),
-                verticalAlignment = Alignment.CenterVertically
+                    .background(MaterialTheme.colorScheme.surface)
+                    .padding(horizontal = 8.dp, vertical = 8.dp)
             ) {
-                IconButton(onClick = { navigator.pop() }) {
+                IconButton(
+                    onClick = { navigator.pop() },
+                    modifier = Modifier.align(Alignment.CenterStart)
+                ) {
                     Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Назад")
                 }
                 Text(
-                    text = event?.label ?: "Выбор мест",
+                    text = "Купить билеты",
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                    modifier = Modifier.weight(1f).padding(start = 4.dp),
-                    maxLines = 1
+                    modifier = Modifier.align(Alignment.Center)
                 )
+                IconButton(
+                    onClick = {},
+                    modifier = Modifier.align(Alignment.CenterEnd)
+                ) {
+                    Icon(Icons.Outlined.CalendarMonth, contentDescription = "Дата",
+                        tint = MaterialTheme.colorScheme.primary)
+                }
             }
 
-            // ─── Time chips ──────────────────────────────────────────────────
+            // ─── Чипы времени ────────────────────────────────────────────────
             LazyRow(
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 items(SESSION_TIMES) { time ->
-                    FilterChip(
+                    TimeChip(
+                        time = time,
                         selected = time == selectedTime,
-                        onClick = {
-                            selectedTime = time
-                            selectedSeats = emptySet()
-                        },
-                        label = { Text(time) },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = MaterialTheme.colorScheme.primary,
-                            selectedLabelColor = MaterialTheme.colorScheme.onPrimary
-                        )
+                        onClick = { selectedTime = time; selectedSeats = emptySet() }
                     )
                 }
             }
 
-            // ─── Seat map (pinch-zoom) ────────────────────────────────────────
+            // ─── Схема зала ──────────────────────────────────────────────────
             Box(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth()
                     .transformable(state = transformState)
-                    .clip(RoundedCornerShape(0.dp))
             ) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
                         .graphicsLayer(
-                            scaleX = scale,
-                            scaleY = scale,
-                            translationX = offset.x,
-                            translationY = offset.y
+                            scaleX = scale, scaleY = scale,
+                            translationX = offset.x, translationY = offset.y
                         ),
                     contentAlignment = Alignment.Center
                 ) {
@@ -180,86 +163,126 @@ fun SeatMapScreen(eventId: String) {
                         seats = allSeats,
                         selected = selectedSeats,
                         onSeatClick = { seat ->
-                            if (seat.zone == SeatZone.UNAVAILABLE) return@SeatGrid
-                            selectedSeats = if (seat in selectedSeats)
-                                selectedSeats - seat
-                            else
-                                selectedSeats + seat
+                            if (!seat.available) return@SeatGrid
+                            selectedSeats = if (seat in selectedSeats) selectedSeats - seat
+                            else selectedSeats + seat
                         }
                     )
                 }
-            }
 
-            // ─── Legend ──────────────────────────────────────────────────────
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                listOf(
-                    SeatZone.VIP to "VIP ${SeatZone.VIP.price.formatPrice()} ₽",
-                    SeatZone.PARQUET to "Партер ${SeatZone.PARQUET.price.formatPrice()} ₽",
-                    SeatZone.BALCONY to "Балкон ${SeatZone.BALCONY.price.formatPrice()} ₽"
-                ).forEach { (zone, label) ->
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            Modifier
-                                .size(10.dp)
-                                .clip(CircleShape)
-                                .background(zone.color)
-                        )
-                        Spacer(Modifier.width(4.dp))
-                        Text(label, style = MaterialTheme.typography.labelSmall)
-                    }
+                // ─── +/- кнопки (правый край) ────────────────────────────────
+                Column(
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .padding(end = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    ZoomButton("+") { scale = (scale * 1.2f).coerceAtMost(3f) }
+                    ZoomButton("−") { scale = (scale / 1.2f).coerceAtLeast(0.6f) }
                 }
             }
 
-            // padding for sticky button
             Spacer(Modifier.height(80.dp))
         }
 
-        // ─── Sticky bottom CTA ────────────────────────────────────────────────
+        // ─── Sticky CTA ───────────────────────────────────────────────────────
         Surface(
             modifier = Modifier.align(Alignment.BottomCenter),
-            shadowElevation = 12.dp,
+            shadowElevation = 8.dp,
             color = MaterialTheme.colorScheme.surface
         ) {
-            Row(
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    .padding(16.dp)
             ) {
-                if (selectedSeats.isNotEmpty()) {
-                    Text(
-                        text = "${selectedSeats.size} мест · ${totalPrice.formatPrice()} ₽",
-                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold)
-                    )
-                }
-                ElevatedButton(
-                    onClick = { /* TODO: оформление заказа */ },
-                    enabled = selectedSeats.isNotEmpty(),
-                    modifier = Modifier.weight(1f).height(50.dp),
-                    colors = ButtonDefaults.elevatedButtonColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary
-                    )
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp)
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(
+                            if (selectedSeats.isEmpty())
+                                MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
+                            else
+                                MaterialTheme.colorScheme.primary
+                        )
+                        .clickable(enabled = selectedSeats.isNotEmpty()) { },
+                    contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = if (selectedSeats.isEmpty()) "Выберите места"
-                        else "Купить билеты · ${totalPrice.formatPrice()} ₽",
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 15.sp
-                    )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            "Купить билеты",
+                            color = Color.White,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 16.sp
+                        )
+                        if (selectedSeats.isNotEmpty()) {
+                            Text(
+                                "${totalPrice.formatPrice()} ₽",
+                                color = Color.White.copy(alpha = 0.9f),
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 15.sp
+                            )
+                        }
+                    }
                 }
             }
         }
     }
 }
 
-// ─── Seat grid ─────────────────────────────────────────────────────────────────
+// ─── Time chip ─────────────────────────────────────────────────────────────────
+
+@Composable
+private fun TimeChip(time: String, selected: Boolean, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(10.dp))
+            .background(
+                if (selected) MaterialTheme.colorScheme.primary
+                else MaterialTheme.colorScheme.surfaceVariant
+            )
+            .clickable { onClick() }
+            .padding(horizontal = 18.dp, vertical = 8.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = time,
+            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+            color = if (selected) Color.White else MaterialTheme.colorScheme.onBackground
+        )
+    }
+}
+
+// ─── +/- кнопка ───────────────────────────────────────────────────────────────
+
+@Composable
+private fun ZoomButton(label: String, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .size(36.dp)
+            .clip(CircleShape)
+            .background(MaterialTheme.colorScheme.surface)
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape)
+            .clickable { onClick() },
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            label,
+            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Light),
+            color = MaterialTheme.colorScheme.onBackground
+        )
+    }
+}
+
+// ─── Схема зала ────────────────────────────────────────────────────────────────
 
 @Composable
 private fun SeatGrid(
@@ -267,61 +290,72 @@ private fun SeatGrid(
     selected: Set<Seat>,
     onSeatClick: (Seat) -> Unit
 ) {
-    val seatSize = 22.dp
-    val gap = 4.dp
-    val stepX = seatSize + gap
-    val stepY = seatSize + gap
+    val dotSize = 20.dp
+    val gap = 8.dp
+    val step = dotSize + gap
 
-    val maxRow = seats.maxOf { it.row }
-    val maxCol = seats.maxOf { it.col }
+    val rows = seats.maxOf { it.row } + 1
+    val cols = seats.maxOf { it.col } + 1
 
-    val totalWidth = stepX * (maxCol + 1)
-    val totalHeight = stepY * (maxRow + 2)
-
-    Box(
-        modifier = Modifier
-            .width(totalWidth)
-            .height(totalHeight)
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(gap)
     ) {
-        // Stage label
-        Text(
-            text = "С Ц Е Н А",
-            modifier = Modifier
-                .fillMaxWidth()
-                .offset(y = 0.dp),
-            textAlign = TextAlign.Center,
-            style = MaterialTheme.typography.labelMedium.copy(
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 4.sp
-            ),
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-
-        // Seats
-        seats.forEach { seat ->
-            val isSelected = seat in selected
-            val color = when {
-                seat.zone == SeatZone.UNAVAILABLE -> SeatZone.UNAVAILABLE.color.copy(alpha = 0.4f)
-                isSelected -> MaterialTheme.colorScheme.primary
-                else -> seat.zone.color
+        repeat(rows) { row ->
+            Row(horizontalArrangement = Arrangement.spacedBy(gap)) {
+                repeat(cols) { col ->
+                    val seat = seats.find { it.row == row && it.col == col }
+                    val isSelected = seat != null && seat in selected
+                    Box(
+                        modifier = Modifier
+                            .size(dotSize)
+                            .clip(CircleShape)
+                            .background(
+                                when {
+                                    seat == null       -> Color.Transparent
+                                    isSelected         -> MaterialTheme.colorScheme.primary
+                                    !seat.available    -> Color(0xFFCCCCCC)
+                                    else               -> Color(0xFF1C1C1E)
+                                }
+                            )
+                            .then(
+                                if (seat != null && seat.available && !isSelected)
+                                    Modifier.clickable { onSeatClick(seat) }
+                                else if (isSelected)
+                                    Modifier.clickable { onSeatClick(seat!!) }
+                                else Modifier
+                            )
+                    )
+                }
             }
+        }
+
+        Spacer(Modifier.height(16.dp))
+
+        // ─── Дуга «Сцена» ────────────────────────────────────────────────────
+        Box(contentAlignment = Alignment.Center) {
+            // Имитация дуги через скруглённую полосу
             Box(
                 modifier = Modifier
-                    .offset(
-                        x = stepX * seat.col,
-                        y = stepY * seat.row + seatSize
-                    )
-                    .size(seatSize)
-                    .clip(RoundedCornerShape(4.dp))
-                    .background(color)
-                    .then(
-                        if (isSelected)
-                            Modifier.border(2.dp, MaterialTheme.colorScheme.onPrimary, RoundedCornerShape(4.dp))
-                        else Modifier
-                    )
-                    .clickable(enabled = seat.zone != SeatZone.UNAVAILABLE) { onSeatClick(seat) }
+                    .width((cols * (dotSize.value + gap.value) - gap.value).dp)
+                    .height(2.dp)
+                    .clip(RoundedCornerShape(50))
+                    .background(Color(0xFFCCCCCC))
             )
+            Box(
+                modifier = Modifier
+                    .padding(top = 8.dp)
+            ) { }
         }
+        Text(
+            "Сцена",
+            style = MaterialTheme.typography.labelMedium.copy(
+                fontWeight = FontWeight.Medium,
+                letterSpacing = 2.sp
+            ),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(top = 4.dp)
+        )
     }
 }
-

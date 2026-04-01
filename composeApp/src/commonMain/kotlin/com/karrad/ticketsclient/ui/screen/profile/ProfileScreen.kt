@@ -1,6 +1,7 @@
 package com.karrad.ticketsclient.ui.screen.profile
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,26 +13,20 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ExitToApp
-import androidx.compose.material.icons.outlined.Edit
-import androidx.compose.material.icons.outlined.LocationOn
-import androidx.compose.material.icons.outlined.Notifications
-import androidx.compose.material.icons.outlined.Phone
-import androidx.compose.material.icons.outlined.Star
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -54,209 +49,195 @@ import com.karrad.ticketsclient.ui.navigation.EditProfileScreen
 fun ProfileScreen() {
     val navigator = LocalNavigator.currentOrThrow
 
-    // читаем при каждом появлении экрана (после возврата с редактирования)
     var name by remember { mutableStateOf(AppSession.userName) }
     var phone by remember { mutableStateOf(AppSession.userPhone) }
-    var city by remember { mutableStateOf(AppSession.userCity) }
-    var interests by remember { mutableStateOf(AppSession.userInterests) }
 
-    androidx.compose.runtime.LaunchedEffect(Unit) {
+    LaunchedEffect(Unit) {
         name = AppSession.userName
         phone = AppSession.userPhone
-        city = AppSession.userCity
-        interests = AppSession.userInterests
     }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
             .statusBarsPadding()
             .verticalScroll(rememberScrollState())
     ) {
         // ─── Header ──────────────────────────────────────────────────────────
-        Row(
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+                .padding(horizontal = 16.dp, vertical = 14.dp)
         ) {
             Text(
                 "Профиль",
-                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                modifier = Modifier.align(Alignment.Center)
             )
-            IconButton(onClick = {
-                navigator.push(EditProfileScreen)
-            }) {
-                Icon(Icons.Outlined.Edit, contentDescription = "Редактировать")
-            }
-        }
-
-        // ─── Avatar + name ───────────────────────────────────────────────────
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            AvatarCircle(name = name, size = 88)
-            Spacer(Modifier.height(12.dp))
-            Text(
-                text = name,
-                style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold)
-            )
-            Spacer(Modifier.height(4.dp))
-            Text(
-                text = phone,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-
-        Spacer(Modifier.height(20.dp))
-
-        // ─── Info card ───────────────────────────────────────────────────────
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-        ) {
-            Column(Modifier.padding(vertical = 4.dp)) {
-                ProfileRow(icon = Icons.Outlined.Phone, label = "Телефон", value = phone)
-                HorizontalDivider(
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                    color = MaterialTheme.colorScheme.outlineVariant
-                )
-                ProfileRow(icon = Icons.Outlined.LocationOn, label = "Город", value = city)
-                HorizontalDivider(
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                    color = MaterialTheme.colorScheme.outlineVariant
-                )
-                ProfileRow(
-                    icon = Icons.Outlined.Star,
-                    label = "Интересы",
-                    value = interests.joinToString(", ")
+            // Кнопка выхода — оранжевый кружок справа
+            Box(
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .size(36.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primary)
+                    .clickable { /* TODO: выход */ },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    Icons.AutoMirrored.Outlined.ExitToApp,
+                    contentDescription = "Выйти",
+                    tint = Color.White,
+                    modifier = Modifier.size(18.dp)
                 )
             }
         }
 
-        Spacer(Modifier.height(20.dp))
+        Spacer(Modifier.height(4.dp))
 
-        // ─── Settings card ───────────────────────────────────────────────────
-        Card(
+        // ─── Карточка пользователя ────────────────────────────────────────────
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                .padding(horizontal = 16.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .background(MaterialTheme.colorScheme.surface)
+                .clickable { navigator.push(EditProfileScreen) }
+                .padding(horizontal = 16.dp, vertical = 14.dp)
         ) {
-            Column(Modifier.padding(vertical = 4.dp)) {
-                ProfileRow(
-                    icon = Icons.Outlined.Notifications,
-                    label = "Уведомления",
-                    value = "Включены",
-                    clickable = true
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                // Квадратный аватар с инициалом
+                AvatarSquare(name = name, size = 52)
+                Spacer(Modifier.width(14.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        text = name,
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold)
+                    )
+                    Spacer(Modifier.height(2.dp))
+                    Text(
+                        text = phone.maskPhone(),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Icon(
+                    Icons.Outlined.ChevronRight,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(20.dp)
                 )
             }
         }
 
-        Spacer(Modifier.height(20.dp))
+        Spacer(Modifier.height(16.dp))
 
-        // ─── Logout ──────────────────────────────────────────────────────────
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-        ) {
-            Column(Modifier.padding(vertical = 4.dp)) {
-                ProfileRow(
-                    icon = Icons.AutoMirrored.Outlined.ExitToApp,
-                    label = "Выйти",
-                    value = "",
-                    tintOverride = MaterialTheme.colorScheme.error,
-                    clickable = true
-                )
-            }
+        // ─── Меню ────────────────────────────────────────────────────────────
+        MenuCard {
+            MenuItem(label = "Избранное", onClick = {})
+            MenuDivider()
+            MenuItem(label = "Поддержка", onClick = {})
+            MenuDivider()
+            MenuItem(label = "Настройка рекомендаций", onClick = {})
+            MenuDivider()
+            MenuItem(label = "О приложении", onClick = {})
         }
 
         Spacer(Modifier.height(32.dp))
     }
 }
 
-@Composable
-fun AvatarCircle(name: String, size: Int) {
-    val initials = name.trim().split(" ")
-        .take(2)
-        .mapNotNull { it.firstOrNull()?.uppercaseChar() }
-        .joinToString("")
+// ─── Квадратный аватар с инициалом ────────────────────────────────────────────
 
+@Composable
+fun AvatarSquare(name: String, size: Int) {
+    val initial = name.trim().firstOrNull()?.uppercaseChar()?.toString() ?: "?"
     val gradients = listOf(
+        listOf(Color(0xFF4CAF50), Color(0xFF2E7D32)), // зелёный (как в референсе)
         listOf(Color(0xFF6C63FF), Color(0xFF3B37CC)),
         listOf(Color(0xFF00B4D8), Color(0xFF0077B6)),
-        listOf(Color(0xFF2DC653), Color(0xFF1A7A35)),
-        listOf(Color(0xFFFF6B6B), Color(0xFFCC3333))
+        listOf(Color(0xFFFF7043), Color(0xFFE64A19))
     )
     val palette = gradients[kotlin.math.abs(name.hashCode()) % gradients.size]
 
     Box(
         modifier = Modifier
             .size(size.dp)
-            .clip(CircleShape)
+            .clip(RoundedCornerShape(12.dp))
             .background(Brush.verticalGradient(palette)),
         contentAlignment = Alignment.Center
     ) {
         Text(
-            text = initials,
+            text = initial,
             color = Color.White,
-            fontSize = (size * 0.38f).sp,
+            fontSize = (size * 0.42f).sp,
             fontWeight = FontWeight.Bold
         )
     }
 }
 
+// ─── Вспомогательные компоненты ───────────────────────────────────────────────
+
 @Composable
-private fun ProfileRow(
-    icon: ImageVector,
-    label: String,
-    value: String,
-    tintOverride: Color? = null,
-    clickable: Boolean = false
-) {
-    val tint = tintOverride ?: MaterialTheme.colorScheme.primary
-    Surface(
-        onClick = {},
-        enabled = clickable,
-        color = Color.Transparent
+private fun MenuCard(content: @Composable () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(MaterialTheme.colorScheme.surface)
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 14.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(22.dp))
-            Column(Modifier.weight(1f)) {
-                Text(
-                    text = label,
-                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium)
-                )
-                if (value.isNotEmpty()) {
-                    Spacer(Modifier.height(2.dp))
-                    Text(
-                        text = value,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-        }
+        content()
     }
+}
+
+@Composable
+private fun MenuItem(
+    label: String,
+    onClick: () -> Unit,
+    icon: ImageVector? = null,
+    tint: Color? = null
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+            .padding(horizontal = 16.dp, vertical = 16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        if (icon != null) {
+            Icon(
+                icon, null,
+                tint = tint ?: MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(20.dp)
+            )
+            Spacer(Modifier.width(12.dp))
+        }
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = tint ?: MaterialTheme.colorScheme.onBackground,
+            modifier = Modifier.weight(1f)
+        )
+        Icon(
+            Icons.Outlined.ChevronRight,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(18.dp)
+        )
+    }
+}
+
+@Composable
+private fun MenuDivider() {
+    HorizontalDivider(
+        modifier = Modifier.padding(horizontal = 16.dp),
+        color = MaterialTheme.colorScheme.outlineVariant
+    )
+}
+
+private fun String.maskPhone(): String {
+    // "+7 999 123 45 67" → "+7 999 *** ** 67"
+    return if (length > 6) take(6) + " **** ** " + takeLast(2) else this
 }
