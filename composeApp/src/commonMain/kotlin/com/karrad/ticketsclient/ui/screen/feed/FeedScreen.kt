@@ -41,6 +41,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -79,6 +80,11 @@ fun FeedScreen() {
 
     val viewModel = viewModel { FeedViewModel(AppContainer.discoveryService) }
     val state by viewModel.state.collectAsState()
+    var showFilters by rememberSaveable { mutableStateOf(false) }
+
+    if (showFilters) {
+        FiltersBottomSheet(onDismiss = { showFilters = false })
+    }
 
     Column(
         modifier = Modifier
@@ -86,7 +92,7 @@ fun FeedScreen() {
             .background(MaterialTheme.colorScheme.background)
             .statusBarsPadding()
     ) {
-        FeedHeader()
+        FeedHeader(onFilterClick = { showFilters = true })
 
         when (val s = state) {
             is FeedState.Loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -117,7 +123,7 @@ fun FeedScreen() {
 // ─── Header ────────────────────────────────────────────────────────────────────
 
 @Composable
-private fun FeedHeader() {
+private fun FeedHeader(onFilterClick: () -> Unit = {}) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -149,7 +155,7 @@ private fun FeedHeader() {
         }
         Spacer(Modifier.width(8.dp))
         IconButton(
-            onClick = {},
+            onClick = onFilterClick,
             modifier = Modifier
                 .size(36.dp)
                 .clip(CircleShape)
