@@ -39,16 +39,16 @@ import com.karrad.ticketsclient.ui.navigation.MainScreen
 private data class Interest(val name: String, val emoji: String, val size: Dp)
 
 private val interests = listOf(
-    Interest("Театры",    "🎭", 88.dp),
-    Interest("Кино",      "🎬", 72.dp),
-    Interest("Концерты",  "🎵", 80.dp),
-    Interest("Выставки",  "🖼️", 64.dp),
-    Interest("Спорт",     "⚽", 76.dp),
-    Interest("Фестивали", "🎪", 68.dp),
-    Interest("Стендап",   "🎤", 80.dp),
-    Interest("Детям",     "🎠", 64.dp),
-    Interest("Лекции",    "📚", 72.dp),
-    Interest("Танцы",     "💃", 68.dp),
+    Interest("Театр",    "🎭", 96.dp),
+    Interest("Кино",     "🎬", 76.dp),
+    Interest("Концерты", "🎵", 104.dp),
+    Interest("Шоу",      "✨", 68.dp),
+    Interest("Еда",      "🍜", 64.dp),
+    Interest("Спорт",    "⚽", 80.dp),
+    Interest("Выставки", "🖼️", 88.dp),
+    Interest("Стендап",  "🎤", 72.dp),
+    Interest("Детям",    "🎠", 76.dp),
+    Interest("Танцы",    "💃", 68.dp),
 )
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -72,7 +72,7 @@ fun InterestsScreen() {
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "Отметьте до 5 своих категорий интересов",
+            text = "Отметьте до 3-х категорий интересов",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -80,8 +80,8 @@ fun InterestsScreen() {
         Spacer(modifier = Modifier.height(24.dp))
 
         FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
             modifier = Modifier.weight(1f)
         ) {
             interests.forEach { interest ->
@@ -91,7 +91,7 @@ fun InterestsScreen() {
                     isSelected = isSelected,
                     onClick = {
                         if (isSelected) selected.remove(interest.name)
-                        else if (selected.size < 5) selected.add(interest.name)
+                        else if (selected.size < 3) selected.add(interest.name)
                     }
                 )
             }
@@ -102,7 +102,7 @@ fun InterestsScreen() {
                 AppSession.userInterests = selected.toList()
                 navigator.replaceAll(MainScreen)
             },
-            enabled = selected.size >= 3,
+            enabled = selected.isNotEmpty(),
             shape = RoundedCornerShape(12.dp),
             modifier = Modifier
                 .fillMaxWidth()
@@ -124,32 +124,35 @@ private fun InterestBubble(
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(6.dp)
+    Box(
+        modifier = Modifier
+            .size(interest.size)
+            .clip(CircleShape)
+            .background(
+                if (isSelected) MaterialTheme.colorScheme.primary
+                else MaterialTheme.colorScheme.surfaceVariant
+            )
+            .clickable { onClick() },
+        contentAlignment = Alignment.Center
     ) {
-        Box(
-            modifier = Modifier
-                .size(interest.size)
-                .clip(CircleShape)
-                .background(
-                    if (isSelected) MaterialTheme.colorScheme.primary
-                    else MaterialTheme.colorScheme.surfaceVariant
-                )
-                .clickable { onClick() },
-            contentAlignment = Alignment.Center
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
             Text(
                 text = interest.emoji,
-                fontSize = (interest.size.value * 0.42f).sp
+                fontSize = (interest.size.value * 0.28f).sp
+            )
+            Text(
+                text = interest.name,
+                style = MaterialTheme.typography.labelSmall.copy(
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = (interest.size.value * 0.13f).sp
+                ),
+                color = if (isSelected) Color.White else MaterialTheme.colorScheme.onBackground,
+                textAlign = TextAlign.Center,
+                maxLines = 1
             )
         }
-        Text(
-            text = interest.name,
-            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
-            color = if (isSelected) MaterialTheme.colorScheme.primary
-                    else MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center
-        )
     }
 }
