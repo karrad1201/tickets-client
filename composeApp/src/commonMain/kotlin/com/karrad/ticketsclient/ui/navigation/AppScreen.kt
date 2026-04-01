@@ -45,3 +45,9 @@ data class EventDetailScreen(val eventId: String) : Screen {
     @androidx.compose.runtime.Composable
     override fun Content() = com.karrad.ticketsclient.ui.screen.event.EventDetailScreen(eventId)
 }
+
+// Profile edit
+object EditProfileScreen : Screen {
+    @androidx.compose.runtime.Composable
+    override fun Content() = com.karrad.ticketsclient.ui.screen.profile.EditProfileScreen()
+}
