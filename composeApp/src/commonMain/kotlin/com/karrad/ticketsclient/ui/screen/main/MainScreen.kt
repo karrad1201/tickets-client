@@ -61,14 +61,14 @@ private fun AppBottomBar(modifier: Modifier = Modifier) {
             modifier = Modifier
                 .fillMaxWidth()
                 .shadow(
-                    elevation = 16.dp,
+                    elevation = 8.dp,
                     shape = RoundedCornerShape(32.dp),
-                    ambientColor = Color.Black.copy(alpha = 0.12f),
-                    spotColor = Color.Black.copy(alpha = 0.12f)
+                    ambientColor = Color.Black.copy(alpha = 0.10f),
+                    spotColor = Color.Black.copy(alpha = 0.10f)
                 )
                 .clip(RoundedCornerShape(32.dp))
                 .background(Color.White.copy(alpha = 0.92f))
-                .padding(horizontal = 24.dp, vertical = 10.dp),
+                .padding(horizontal = 24.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.SpaceAround,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -76,7 +76,7 @@ private fun AppBottomBar(modifier: Modifier = Modifier) {
                 val selected = tabNavigator.current == tab
                 Box(
                     modifier = Modifier
-                        .size(44.dp)
+                        .size(40.dp)
                         .clip(CircleShape)
                         .background(
                             if (selected) MaterialTheme.colorScheme.primary else Color.Transparent
@@ -88,7 +88,7 @@ private fun AppBottomBar(modifier: Modifier = Modifier) {
                         painter = tab.options.icon!!,
                         contentDescription = tab.options.title,
                         tint = if (selected) Color.White
-                               else MaterialTheme.colorScheme.onSurfaceVariant,
+                               else MaterialTheme.colorScheme.onBackground,
                         modifier = Modifier.size(22.dp)
                     )
                 }
