@@ -1,6 +1,7 @@
 package com.karrad.ticketsclient.ui.screen.tickets
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,23 +14,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ConfirmationNumber
 import androidx.compose.material.icons.outlined.DateRange
 import androidx.compose.material.icons.outlined.LocationOn
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Tab
-import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -48,233 +44,275 @@ import androidx.compose.ui.unit.sp
 import com.karrad.ticketsclient.AppSession
 import com.karrad.ticketsclient.MockTicket
 import com.karrad.ticketsclient.TicketStatus
-import com.karrad.ticketsclient.ui.util.formatPrice
 
 @Composable
 fun TicketsScreen() {
     val allTickets = AppSession.mockTickets
     var selectedTab by remember { mutableIntStateOf(0) }
-    val tabs = listOf("Предстоящие", "Прошедшие")
 
-    val filtered = if (selectedTab == 0)
-        allTickets.filter { it.status == TicketStatus.UPCOMING }
-    else
-        allTickets.filter { it.status == TicketStatus.USED }
+    val upcoming = allTickets.filter { it.status == TicketStatus.UPCOMING }
+    val archived = allTickets.filter { it.status == TicketStatus.USED }
+    val current = if (selectedTab == 0) upcoming else archived
 
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
             .statusBarsPadding()
     ) {
         // ─── Header ──────────────────────────────────────────────────────────
         Text(
-            text = "Мои билеты",
+            "Мои билеты",
             style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp)
         )
 
-        // ─── Tabs ─────────────────────────────────────────────────────────────
-        PrimaryTabRow(
-            selectedTabIndex = selectedTab,
-            containerColor = MaterialTheme.colorScheme.surface,
-            contentColor = MaterialTheme.colorScheme.primary
+        // ─── Pill tabs ────────────────────────────────────────────────────────
+        Row(
+            modifier = Modifier
+                .padding(horizontal = 16.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+                .padding(4.dp),
+            horizontalArrangement = Arrangement.spacedBy(0.dp)
         ) {
-            tabs.forEachIndexed { index, title ->
-                Tab(
-                    selected = selectedTab == index,
-                    onClick = { selectedTab = index },
-                    text = {
-                        Text(
-                            text = title,
-                            fontWeight = if (selectedTab == index) FontWeight.SemiBold else FontWeight.Normal
+            listOf("Актуальные", "Архивные").forEachIndexed { index, label ->
+                val selected = selectedTab == index
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(
+                            if (selected) MaterialTheme.colorScheme.primary
+                            else Color.Transparent
                         )
-                    }
-                )
+                        .clickable { selectedTab = index }
+                        .padding(vertical = 8.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = label,
+                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                        color = if (selected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
         }
 
-        // ─── Content ──────────────────────────────────────────────────────────
-        if (filtered.isEmpty()) {
+        Spacer(Modifier.height(16.dp))
+
+        // ─── Контент ─────────────────────────────────────────────────────────
+        if (current.isEmpty()) {
             EmptyTickets(selectedTab == 0)
         } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(
-                    horizontal = 16.dp, vertical = 16.dp
-                )
-            ) {
-                items(filtered, key = { it.id }) { ticket ->
-                    TicketCard(ticket = ticket)
+            TicketsPager(tickets = current, isArchived = selectedTab == 1)
+        }
+    }
+}
+
+// ─── Pager билетов ─────────────────────────────────────────────────────────────
+
+@Composable
+private fun TicketsPager(tickets: List<MockTicket>, isArchived: Boolean) {
+    val pagerState = rememberPagerState { tickets.size }
+
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        HorizontalPager(
+            state = pagerState,
+            contentPadding = PaddingValues(horizontal = 16.dp),
+            pageSpacing = 12.dp,
+            modifier = Modifier.fillMaxWidth()
+        ) { page ->
+            TicketCard(ticket = tickets[page], isArchived = isArchived)
+        }
+
+        Spacer(Modifier.height(16.dp))
+
+        // Dot indicators
+        if (tickets.size > 1) {
+            Row(horizontalArrangement = Arrangement.Center) {
+                repeat(tickets.size) { i ->
+                    val active = pagerState.currentPage == i
+                    Box(
+                        modifier = Modifier
+                            .padding(horizontal = 3.dp)
+                            .size(if (active) 8.dp else 6.dp)
+                            .clip(CircleShape)
+                            .background(
+                                if (active) MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
+                            )
+                    )
                 }
             }
         }
     }
 }
 
-// ─── Ticket card ───────────────────────────────────────────────────────────────
+// ─── Карточка билета ───────────────────────────────────────────────────────────
 
 @Composable
-private fun TicketCard(ticket: MockTicket) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+private fun TicketCard(ticket: MockTicket, isArchived: Boolean) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(20.dp))
+            .background(MaterialTheme.colorScheme.surface)
     ) {
-        Column {
-            // Top colored strip
+        // Фото-шапка с градиентом
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(160.dp)
+        ) {
+            // Градиентный placeholder
+            val palettes = listOf(
+                listOf(Color(0xFF1A1A2E), Color(0xFF16213E)),
+                listOf(Color(0xFF0F3460), Color(0xFF533483)),
+                listOf(Color(0xFF2D6A4F), Color(0xFF1B4332)),
+                listOf(Color(0xFF6A0572), Color(0xFF3A0CA3))
+            )
+            val palette = palettes[kotlin.math.abs(ticket.id.hashCode()) % palettes.size]
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .background(Brush.verticalGradient(palette))
+            )
+            // Информация поверх изображения
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(14.dp)
+            ) {
+                Text(
+                    ticket.eventName,
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                    color = Color.White,
+                    maxLines = 1
+                )
+                Spacer(Modifier.height(4.dp))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Icon(Icons.Outlined.LocationOn, null,
+                        tint = Color.White.copy(alpha = 0.8f), modifier = Modifier.size(12.dp))
+                    Text(ticket.venue, style = MaterialTheme.typography.labelSmall,
+                        color = Color.White.copy(alpha = 0.8f))
+                }
+                Spacer(Modifier.height(2.dp))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Icon(Icons.Outlined.DateRange, null,
+                        tint = Color.White.copy(alpha = 0.8f), modifier = Modifier.size(12.dp))
+                    Text(ticket.datetime, style = MaterialTheme.typography.labelSmall,
+                        color = Color.White.copy(alpha = 0.8f))
+                }
+            }
+        }
+
+        // QR-блок / архивный текст
+        if (isArchived) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(6.dp)
-                    .background(
-                        brush = Brush.horizontalGradient(
-                            if (ticket.status == TicketStatus.UPCOMING)
-                                listOf(Color(0xFF6C63FF), Color(0xFF00B4D8))
-                            else
-                                listOf(Color(0xFF888888), Color(0xFFAAAAAA))
-                        )
-                    )
-            )
-
-            Column(Modifier.padding(16.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.Top
-                ) {
+                    .padding(24.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = ticket.eventName,
-                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                        modifier = Modifier.weight(1f)
+                        "Мероприятие завершилось",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center
                     )
-                    Spacer(Modifier.width(8.dp))
-                    StatusBadge(ticket.status)
+                    Text(
+                        ticket.datetime,
+                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                        textAlign = TextAlign.Center
+                    )
                 }
-
-                Spacer(Modifier.height(10.dp))
-
-                TicketInfoRow(
-                    icon = Icons.Outlined.LocationOn,
-                    text = ticket.venue
-                )
-                Spacer(Modifier.height(4.dp))
-                TicketInfoRow(
-                    icon = Icons.Outlined.DateRange,
-                    text = ticket.datetime
-                )
-                Spacer(Modifier.height(4.dp))
-                TicketInfoRow(
-                    icon = Icons.Outlined.ConfirmationNumber,
-                    text = ticket.seat
-                )
+            }
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // Место
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Icon(Icons.Outlined.ConfirmationNumber, null,
+                        tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(14.dp))
+                    Text(ticket.seat, style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
 
                 Spacer(Modifier.height(12.dp))
-                HorizontalDivider(
-                    color = MaterialTheme.colorScheme.outlineVariant,
-                    modifier = Modifier.padding(vertical = 2.dp)
-                )
 
-                // QR placeholder + price
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 12.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    QrPlaceholder()
-                    Column(horizontalAlignment = Alignment.End) {
-                        Text(
-                            text = "${ticket.price.formatPrice()} ₽",
-                            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                        Text(
-                            text = "за 1 место",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
+                // QR-код (большой)
+                QrCode(modifier = Modifier.size(160.dp))
+
+                Spacer(Modifier.height(8.dp))
+
+                Text(
+                    "Покажите QR-код на входе",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(Modifier.height(8.dp))
             }
         }
     }
 }
 
-@Composable
-private fun StatusBadge(status: TicketStatus) {
-    val (text, bg, fg) = when (status) {
-        TicketStatus.UPCOMING -> Triple(
-            "Скоро",
-            MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
-            MaterialTheme.colorScheme.primary
-        )
-        TicketStatus.USED -> Triple(
-            "Использован",
-            MaterialTheme.colorScheme.surfaceVariant,
-            MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
-    Box(
-        modifier = Modifier
-            .clip(RoundedCornerShape(20.dp))
-            .background(bg)
-            .padding(horizontal = 10.dp, vertical = 4.dp)
-    ) {
-        Text(text, style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold), color = fg)
-    }
-}
+// ─── QR-код ────────────────────────────────────────────────────────────────────
 
 @Composable
-private fun TicketInfoRow(icon: androidx.compose.ui.graphics.vector.ImageVector, text: String) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Icon(
-            icon, null,
-            modifier = Modifier.size(14.dp),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Spacer(Modifier.width(6.dp))
-        Text(
-            text = text,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
-}
-
-@Composable
-private fun QrPlaceholder() {
+private fun QrCode(modifier: Modifier = Modifier) {
     Box(
-        modifier = Modifier
-            .size(72.dp)
-            .clip(RoundedCornerShape(8.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant),
+        modifier = modifier
+            .clip(RoundedCornerShape(12.dp))
+            .background(Color.White)
+            .padding(12.dp),
         contentAlignment = Alignment.Center
     ) {
-        // Имитация QR-кода сеткой точек
-        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            val pattern = listOf(
-                listOf(1,1,1,0,1,1,1),
-                listOf(1,0,1,0,1,0,1),
-                listOf(1,1,1,1,1,1,1),
-                listOf(0,1,0,1,0,1,0),
-                listOf(1,1,1,0,1,1,1),
-                listOf(1,0,0,1,0,0,1),
-                listOf(1,1,1,0,1,1,1),
-            )
-            pattern.forEach { rowData ->
-                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    rowData.forEach { cell ->
+        // Детальный паттерн QR
+        val pattern = listOf(
+            listOf(1,1,1,1,1,1,1,0,1,0,1,0,1,1,1,1,1,1,1),
+            listOf(1,0,0,0,0,0,1,0,0,1,0,1,1,0,0,0,0,0,1),
+            listOf(1,0,1,1,1,0,1,0,1,0,1,0,1,0,1,1,1,0,1),
+            listOf(1,0,1,1,1,0,1,0,0,1,1,0,1,0,1,1,1,0,1),
+            listOf(1,0,1,1,1,0,1,0,1,1,0,1,1,0,1,1,1,0,1),
+            listOf(1,0,0,0,0,0,1,0,0,0,1,0,1,0,0,0,0,0,1),
+            listOf(1,1,1,1,1,1,1,0,1,0,1,0,1,1,1,1,1,1,1),
+            listOf(0,0,0,0,0,0,0,0,1,1,0,1,0,0,0,0,0,0,0),
+            listOf(1,0,1,1,0,1,1,1,0,1,1,0,1,1,0,1,1,1,0),
+            listOf(0,1,0,0,1,0,0,0,1,0,0,1,0,0,1,0,0,0,1),
+            listOf(1,1,0,1,0,1,1,0,1,1,0,0,1,0,1,1,0,1,1),
+            listOf(0,0,0,0,0,0,0,0,1,0,1,1,0,1,1,0,1,0,0),
+            listOf(1,1,1,1,1,1,1,0,0,1,0,1,1,0,0,1,0,1,0),
+            listOf(1,0,0,0,0,0,1,0,1,0,1,0,0,1,1,0,1,0,1),
+            listOf(1,0,1,1,1,0,1,0,0,1,1,1,0,1,0,1,0,1,0),
+            listOf(1,0,1,1,1,0,1,0,1,0,0,0,1,0,1,0,1,0,1),
+            listOf(1,0,1,1,1,0,1,0,0,1,0,1,1,1,0,1,1,1,0),
+            listOf(1,0,0,0,0,0,1,0,1,1,1,0,0,0,1,0,0,0,1),
+            listOf(1,1,1,1,1,1,1,0,0,0,1,1,0,1,0,1,0,1,0),
+        )
+        Column(verticalArrangement = Arrangement.spacedBy(1.5.dp)) {
+            pattern.forEach { row ->
+                Row(horizontalArrangement = Arrangement.spacedBy(1.5.dp)) {
+                    row.forEach { cell ->
                         Box(
                             Modifier
                                 .size(6.dp)
                                 .clip(RoundedCornerShape(1.dp))
-                                .background(
-                                    if (cell == 1) MaterialTheme.colorScheme.onSurface
-                                    else Color.Transparent
-                                )
+                                .background(if (cell == 1) Color.Black else Color.White)
                         )
                     }
                 }
@@ -297,19 +335,19 @@ private fun EmptyTickets(isUpcoming: Boolean) {
         Icon(
             Icons.Outlined.ConfirmationNumber,
             contentDescription = null,
-            modifier = Modifier.size(72.dp),
+            modifier = Modifier.size(64.dp),
             tint = MaterialTheme.colorScheme.outlineVariant
         )
         Spacer(Modifier.height(16.dp))
         Text(
-            text = if (isUpcoming) "Нет предстоящих событий" else "Нет прошедших событий",
+            text = if (isUpcoming) "Нет актуальных билетов" else "Нет архивных билетов",
             style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
             textAlign = TextAlign.Center
         )
         Spacer(Modifier.height(8.dp))
         Text(
-            text = if (isUpcoming) "Купите билет на любое событие\nиз раздела «Афиша»"
-                   else "Здесь появятся события,\nкоторые вы уже посетили",
+            text = if (isUpcoming) "Купите билет на любое событие\nв разделе «Афиша»"
+            else "Здесь появятся события, которые\nвы уже посетили",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
@@ -317,3 +355,10 @@ private fun EmptyTickets(isUpcoming: Boolean) {
     }
 }
 
+private class PaddingValues(val horizontal: androidx.compose.ui.unit.Dp, val vertical: androidx.compose.ui.unit.Dp = 0.dp) :
+    androidx.compose.foundation.layout.PaddingValues {
+    override fun calculateBottomPadding() = vertical
+    override fun calculateLeftPadding(layoutDirection: androidx.compose.ui.unit.LayoutDirection) = horizontal
+    override fun calculateRightPadding(layoutDirection: androidx.compose.ui.unit.LayoutDirection) = horizontal
+    override fun calculateTopPadding() = vertical
+}

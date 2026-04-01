@@ -18,13 +18,13 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material3.Button
@@ -35,7 +35,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -51,22 +50,25 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import cafe.adriel.voyager.navigator.LocalNavigator
+import cafe.adriel.voyager.navigator.currentOrThrow
 import com.karrad.ticketsclient.AppSession
 import com.karrad.ticketsclient.data.api.dto.CategoryEventsEntryDto
 import com.karrad.ticketsclient.data.api.dto.DiscoveryFeedResponseDto
 import com.karrad.ticketsclient.data.api.dto.EventDto
-import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.currentOrThrow
 import com.karrad.ticketsclient.di.AppContainer
 import com.karrad.ticketsclient.ui.navigation.EventDetailScreen
+import com.karrad.ticketsclient.ui.util.formatPrice
 import kotlinx.datetime.Clock
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.DayOfWeek
-import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
+
+// ─── Screen ────────────────────────────────────────────────────────────────────
 
 @Composable
 fun FeedScreen() {
@@ -76,34 +78,25 @@ fun FeedScreen() {
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
             .statusBarsPadding()
     ) {
         FeedHeader()
 
         when (val s = state) {
-            is FeedState.Loading -> {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
-                }
+            is FeedState.Loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
             }
-            is FeedState.Error -> {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            text = "Не удалось загрузить события",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Button(
-                            onClick = { viewModel.load() },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.primary
-                            )
-                        ) {
-                            Text("Повторить")
-                        }
-                    }
+            is FeedState.Error -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("Не удалось загрузить события",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Spacer(Modifier.height(12.dp))
+                    Button(
+                        onClick = { viewModel.load() },
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                    ) { Text("Повторить") }
                 }
             }
             is FeedState.Success -> {
@@ -124,35 +117,42 @@ private fun FeedHeader() {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 16.dp, end = 4.dp, top = 8.dp, bottom = 4.dp),
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
-            imageVector = Icons.Outlined.LocationOn,
+            Icons.Outlined.LocationOn,
             contentDescription = null,
             tint = MaterialTheme.colorScheme.primary,
             modifier = Modifier.size(18.dp)
         )
-        Spacer(modifier = Modifier.width(4.dp))
+        Spacer(Modifier.width(4.dp))
         Text(
             text = AppSession.city,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold,
+            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
             modifier = Modifier.weight(1f)
         )
-        IconButton(onClick = {}) {
-            Icon(
-                imageVector = Icons.Filled.Search,
-                contentDescription = "Поиск",
-                tint = MaterialTheme.colorScheme.onSurface
-            )
+        IconButton(
+            onClick = {},
+            modifier = Modifier
+                .size(36.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+        ) {
+            Icon(Icons.Default.Search, contentDescription = "Поиск",
+                tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(18.dp))
         }
-        IconButton(onClick = {}) {
-            Icon(
-                imageVector = Icons.Outlined.Tune,
-                contentDescription = "Фильтры",
-                tint = MaterialTheme.colorScheme.onSurface
-            )
+        Spacer(Modifier.width(8.dp))
+        IconButton(
+            onClick = {},
+            modifier = Modifier
+                .size(36.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+        ) {
+            Icon(Icons.Outlined.Tune, contentDescription = "Фильтры",
+                tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(18.dp))
         }
     }
 }
@@ -160,235 +160,81 @@ private fun FeedHeader() {
 // ─── Date strip ────────────────────────────────────────────────────────────────
 
 @Composable
-private fun DateStrip() {
+private fun DateStrip(selectedDay: Int, onDaySelect: (Int) -> Unit) {
     val tz = TimeZone.currentSystemDefault()
-    val today = remember { Clock.System.now().toLocalDateTime(tz).date }
-    var selectedIndex by remember { mutableStateOf(0) }
+    val today = Clock.System.now().toLocalDateTime(tz).date
+    val listState = rememberLazyListState()
 
-    Surface(
-        color = MaterialTheme.colorScheme.background,
-        modifier = Modifier.fillMaxWidth()
+    LazyRow(
+        state = listState,
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(vertical = 10.dp),
+        contentPadding = PaddingValues(horizontal = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
     ) {
-        LazyRow(
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            items(14) { i ->
-                val date = today.plus(i, DateTimeUnit.DAY)
-                DateCell(
-                    dayNumber = date.dayOfMonth,
-                    weekday = date.dayOfWeek.shortRu(),
-                    selected = selectedIndex == i,
-                    onClick = { selectedIndex = i }
+        items(14) { offset ->
+            val date = today.plus(offset, DateTimeUnit.DAY)
+            val isSelected = offset == selectedDay
+            Column(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(12.dp))
+                    .clickable { onDaySelect(offset) }
+                    .background(if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent)
+                    .padding(horizontal = 10.dp, vertical = 6.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = date.dayOfMonth.toString(),
+                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                    color = if (isSelected) Color.White else MaterialTheme.colorScheme.onBackground
+                )
+                Text(
+                    text = date.dayOfWeek.shortRu(),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = if (isSelected) Color.White.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
     }
 }
 
-@Composable
-private fun DateCell(dayNumber: Int, weekday: String, selected: Boolean, onClick: () -> Unit) {
-    val bgColor = if (selected) MaterialTheme.colorScheme.primary else Color.Transparent
-    val textColor = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
-    val subColor = if (selected) MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
-                   else MaterialTheme.colorScheme.onSurfaceVariant
-
-    Box(
-        modifier = Modifier
-            .size(width = 44.dp, height = 56.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .background(bgColor)
-            .clickable { onClick() },
-        contentAlignment = Alignment.Center
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                text = dayNumber.toString(),
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold,
-                color = textColor
-            )
-            Text(
-                text = weekday,
-                style = MaterialTheme.typography.labelSmall,
-                color = subColor
-            )
-        }
-    }
-}
-
 private fun DayOfWeek.shortRu(): String = when (this) {
-    DayOfWeek.MONDAY -> "ПН"
-    DayOfWeek.TUESDAY -> "ВТ"
+    DayOfWeek.MONDAY    -> "ПН"
+    DayOfWeek.TUESDAY   -> "ВТ"
     DayOfWeek.WEDNESDAY -> "СР"
-    DayOfWeek.THURSDAY -> "ЧТ"
-    DayOfWeek.FRIDAY -> "ПТ"
-    DayOfWeek.SATURDAY -> "СБ"
-    DayOfWeek.SUNDAY -> "ВС"
+    DayOfWeek.THURSDAY  -> "ЧТ"
+    DayOfWeek.FRIDAY    -> "ПТ"
+    DayOfWeek.SATURDAY  -> "СБ"
+    DayOfWeek.SUNDAY    -> "ВС"
 }
 
 // ─── Feed content ──────────────────────────────────────────────────────────────
 
 @Composable
 private fun FeedContent(feed: DiscoveryFeedResponseDto, onEventClick: (EventDto) -> Unit) {
+    var selectedDay by remember { mutableStateOf(0) }
+
     LazyColumn(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
         contentPadding = PaddingValues(bottom = 32.dp)
     ) {
         stickyHeader {
-            DateStrip()
+            DateStrip(selectedDay = selectedDay, onDaySelect = { selectedDay = it })
         }
 
         if (feed.forYou.isNotEmpty()) {
-            item { ForYouSection(events = feed.forYou, onEventClick = onEventClick) }
-        }
-
-        if (feed.tomorrow.isNotEmpty()) {
             item {
-                Spacer(modifier = Modifier.height(8.dp))
-                HorizontalEventSection(title = "Завтра", events = feed.tomorrow, onEventClick = onEventClick)
+                SectionHeader("Для вас")
+                ForYouSection(events = feed.forYou, onEventClick = onEventClick)
             }
         }
 
-        if (feed.dayAfterTomorrow.isNotEmpty()) {
+        feed.byCategory.forEach { entry ->
             item {
-                Spacer(modifier = Modifier.height(8.dp))
-                HorizontalEventSection(title = "Послезавтра", events = feed.dayAfterTomorrow, onEventClick = onEventClick)
-            }
-        }
-
-        items(feed.byCategory, key = { it.category.id }) { entry ->
-            Spacer(modifier = Modifier.height(8.dp))
-            CategorySection(entry = entry, onEventClick = onEventClick)
-        }
-    }
-}
-
-// ─── "Для вас" pager ───────────────────────────────────────────────────────────
-
-@Composable
-private fun ForYouSection(events: List<EventDto>, onEventClick: (EventDto) -> Unit) {
-    val pagerState = rememberPagerState { events.size }
-
-    Column {
-        SectionHeader(title = "Для вас")
-
-        HorizontalPager(
-            state = pagerState,
-            contentPadding = PaddingValues(horizontal = 16.dp),
-            pageSpacing = 12.dp,
-            modifier = Modifier.fillMaxWidth()
-        ) { page ->
-            LargeEventCard(event = events[page], onClick = { onEventClick(events[page]) })
-        }
-
-        // Dot indicators
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 10.dp, bottom = 4.dp),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            repeat(events.size) { i ->
-                val isSelected = pagerState.currentPage == i
-                Box(
-                    modifier = Modifier
-                        .padding(horizontal = 3.dp)
-                        .size(if (isSelected) 8.dp else 6.dp)
-                        .clip(CircleShape)
-                        .background(
-                            if (isSelected) MaterialTheme.colorScheme.primary
-                            else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
-                        )
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun LargeEventCard(event: EventDto, onClick: () -> Unit) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(220.dp)
-            .clip(RoundedCornerShape(16.dp))
-            .clickable { onClick() }
-    ) {
-        // Gradient background image placeholder
-        EventImagePlaceholder(seed = event.id, modifier = Modifier.fillMaxSize())
-
-        // Bottom gradient for text readability
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        0f to Color.Transparent,
-                        0.45f to Color.Transparent,
-                        1f to Color.Black.copy(alpha = 0.75f)
-                    )
-                )
-        )
-
-        // Price badge — top right
-        event.minPrice?.let {
-            PriceBadge(
-                price = it,
-                modifier = Modifier.align(Alignment.TopEnd).padding(12.dp)
-            )
-        }
-
-        // Text — bottom left
-        Column(
-            modifier = Modifier
-                .align(Alignment.BottomStart)
-                .padding(start = 14.dp, end = 14.dp, bottom = 14.dp)
-        ) {
-            Text(
-                text = event.label,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = Color.White,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            EventMeta(isoInstant = event.time, onDark = true)
-        }
-    }
-}
-
-// ─── Generic horizontal section (Завтра / Послезавтра) ─────────────────────────
-
-@Composable
-private fun HorizontalEventSection(title: String, events: List<EventDto>, onEventClick: (EventDto) -> Unit) {
-    Column {
-        SectionHeader(title = title)
-        LazyRow(
-            contentPadding = PaddingValues(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            items(events, key = { it.id }) { event ->
-                SmallEventCard(event = event, onClick = { onEventClick(event) })
-            }
-        }
-    }
-}
-
-// ─── Category section ──────────────────────────────────────────────────────────
-
-@Composable
-private fun CategorySection(entry: CategoryEventsEntryDto, onEventClick: (EventDto) -> Unit) {
-    Column {
-        SectionHeader(title = entry.category.label, hasMore = true)
-        LazyRow(
-            contentPadding = PaddingValues(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            items(entry.events, key = { it.id }) { event ->
-                SmallEventCard(event = event, onClick = { onEventClick(event) })
+                SectionHeader(entry.category.label, hasMore = true)
+                HorizontalEventRow(events = entry.events, onEventClick = onEventClick)
             }
         }
     }
@@ -401,18 +247,14 @@ private fun SectionHeader(title: String, hasMore: Boolean = false) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 16.dp, end = 12.dp, top = 16.dp, bottom = 10.dp),
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.weight(1f)
-        )
+        Text(title, style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold))
         if (hasMore) {
             Text(
-                text = "Ещё",
+                ">",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -420,127 +262,209 @@ private fun SectionHeader(title: String, hasMore: Boolean = false) {
     }
 }
 
-// ─── Small event card (portrait) ───────────────────────────────────────────────
+// ─── "Для вас" pager ───────────────────────────────────────────────────────────
 
 @Composable
-private fun SmallEventCard(event: EventDto, onClick: () -> Unit = {}) {
+private fun ForYouSection(events: List<EventDto>, onEventClick: (EventDto) -> Unit) {
+    val pagerState = rememberPagerState { events.size }
+
+    Column {
+        HorizontalPager(
+            state = pagerState,
+            contentPadding = PaddingValues(horizontal = 16.dp),
+            pageSpacing = 12.dp,
+            modifier = Modifier.fillMaxWidth()
+        ) { page ->
+            LargeEventCard(event = events[page], onClick = { onEventClick(events[page]) })
+        }
+
+        // Dot indicators
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(top = 10.dp),
+            horizontalArrangement = Arrangement.Center
+        ) {
+            repeat(events.size) { i ->
+                val isActive = pagerState.currentPage == i
+                Box(
+                    modifier = Modifier
+                        .padding(horizontal = 3.dp)
+                        .size(if (isActive) 8.dp else 6.dp)
+                        .clip(CircleShape)
+                        .background(
+                            if (isActive) MaterialTheme.colorScheme.primary
+                            else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
+                        )
+                )
+            }
+        }
+        Spacer(Modifier.height(4.dp))
+    }
+}
+
+// ─── Large event card ──────────────────────────────────────────────────────────
+
+@Composable
+private fun LargeEventCard(event: EventDto, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(200.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .clickable { onClick() }
+    ) {
+        EventImagePlaceholder(seed = event.id, modifier = Modifier.fillMaxSize())
+
+        // Gradient overlay
+        Box(
+            Modifier.fillMaxSize().background(
+                Brush.verticalGradient(
+                    colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.65f)),
+                    startY = 60f
+                )
+            )
+        )
+
+        // Price badge — top right
+        event.minPrice?.let { price ->
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(10.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(MaterialTheme.colorScheme.primary)
+                    .padding(horizontal = 10.dp, vertical = 5.dp)
+            ) {
+                Text(
+                    "от ${price.formatPrice()} ₽",
+                    color = Color.White,
+                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold)
+                )
+            }
+        }
+
+        // Title + venue bottom
+        Column(
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .padding(12.dp)
+        ) {
+            Text(
+                text = event.label,
+                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                color = Color.White,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Text(
+                text = event.venueId.venueShort(),
+                style = MaterialTheme.typography.bodySmall,
+                color = Color.White.copy(alpha = 0.75f),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+    }
+}
+
+// ─── Horizontal category row ───────────────────────────────────────────────────
+
+@Composable
+private fun HorizontalEventRow(events: List<EventDto>, onEventClick: (EventDto) -> Unit) {
+    LazyRow(
+        contentPadding = PaddingValues(horizontal = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        modifier = Modifier.padding(bottom = 4.dp)
+    ) {
+        items(events, key = { it.id }) { event ->
+            SmallEventCard(event = event, onClick = { onEventClick(event) })
+        }
+    }
+}
+
+@Composable
+private fun SmallEventCard(event: EventDto, onClick: () -> Unit) {
     Card(
         onClick = onClick,
-        modifier = Modifier.width(152.dp),
+        modifier = Modifier.width(148.dp),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column {
-            // Image area with price badge
             Box(
-                modifier = Modifier
+                Modifier
                     .fillMaxWidth()
-                    .height(120.dp)
+                    .height(110.dp)
             ) {
                 EventImagePlaceholder(seed = event.id, modifier = Modifier.fillMaxSize())
-                event.minPrice?.let {
-                    PriceBadge(
-                        price = it,
-                        modifier = Modifier.align(Alignment.TopEnd).padding(6.dp)
-                    )
+                // Price badge
+                event.minPrice?.let { price ->
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(6.dp)
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(MaterialTheme.colorScheme.primary)
+                            .padding(horizontal = 6.dp, vertical = 3.dp)
+                    ) {
+                        Text(
+                            "от ${price.formatPrice()} ₽",
+                            color = Color.White,
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 9.sp
+                            )
+                        )
+                    }
                 }
             }
-
-            // Text area
-            Column(modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp)) {
+            Column(Modifier.padding(horizontal = 8.dp, vertical = 6.dp)) {
                 Text(
                     text = event.label,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold,
+                    style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold),
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
-                    lineHeight = MaterialTheme.typography.bodyMedium.fontSize * 1.3
+                    lineHeight = 14.sp
                 )
-                Spacer(modifier = Modifier.height(4.dp))
-                EventMeta(isoInstant = event.time, onDark = false)
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    text = event.venueId.venueShort(),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
             }
         }
     }
 }
 
-// ─── Shared components ─────────────────────────────────────────────────────────
+// ─── Image placeholder ─────────────────────────────────────────────────────────
 
 @Composable
-private fun PriceBadge(price: Int, modifier: Modifier = Modifier) {
-    Surface(
-        modifier = modifier,
-        shape = RoundedCornerShape(6.dp),
-        color = MaterialTheme.colorScheme.primary
-    ) {
-        Text(
-            text = "от ${formatPrice(price)} ₽",
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onPrimary,
-            modifier = Modifier.padding(horizontal = 7.dp, vertical = 4.dp)
-        )
-    }
-}
-
-@Composable
-private fun EventMeta(isoInstant: String, onDark: Boolean) {
-    val date = remember(isoInstant) { formatEventDate(isoInstant) }
-    val tint = if (onDark) Color.White.copy(alpha = 0.8f)
-               else MaterialTheme.colorScheme.onSurfaceVariant
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Icon(
-            imageVector = Icons.Outlined.CalendarMonth,
-            contentDescription = null,
-            tint = tint,
-            modifier = Modifier.size(12.dp)
-        )
-        Spacer(modifier = Modifier.width(3.dp))
-        Text(
-            text = date,
-            style = MaterialTheme.typography.labelSmall,
-            color = tint,
-            maxLines = 1
-        )
-    }
-}
-
-@Composable
-private fun EventImagePlaceholder(seed: String, modifier: Modifier = Modifier) {
+fun EventImagePlaceholder(seed: String, modifier: Modifier = Modifier) {
     val palettes = listOf(
-        listOf(Color(0xFF5C3FCC), Color(0xFF8B6FE8)),
-        listOf(Color(0xFF1557B0), Color(0xFF3A8FE8)),
-        listOf(Color(0xFFC0392B), Color(0xFFE74C3C)),
-        listOf(Color(0xFF1A7A4A), Color(0xFF27AE60)),
-        listOf(Color(0xFFD35400), Color(0xFFE67E22)),
-        listOf(Color(0xFF6C3483), Color(0xFF9B59B6)),
-        listOf(Color(0xFF1A5276), Color(0xFF2E86C1)),
-        listOf(Color(0xFF78281F), Color(0xFFC0392B)),
+        listOf(Color(0xFF1A1A2E), Color(0xFF16213E)),
+        listOf(Color(0xFF0F3460), Color(0xFF533483)),
+        listOf(Color(0xFF2D6A4F), Color(0xFF1B4332)),
+        listOf(Color(0xFF6A0572), Color(0xFF3A0CA3)),
+        listOf(Color(0xFF7B2D00), Color(0xFF3E1200)),
+        listOf(Color(0xFF023E8A), Color(0xFF0077B6)),
+        listOf(Color(0xFF1D3557), Color(0xFF457B9D)),
+        listOf(Color(0xFF3D0000), Color(0xFF6B0000))
     )
-    val idx = (seed.hashCode() and 0x7FFFFFFF) % palettes.size
-    val (start, end) = palettes[idx]
-    Box(
-        modifier = modifier.background(
-            Brush.linearGradient(listOf(start, end))
-        )
-    )
+    val palette = palettes[kotlin.math.abs(seed.hashCode()) % palettes.size]
+    Box(modifier = modifier.background(Brush.verticalGradient(palette)))
 }
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
 
-private fun formatPrice(price: Int): String = when {
-    price >= 1000 -> "${price / 1000}\u00A0${(price % 1000).toString().padStart(3, '0')}"
-    else -> price.toString()
+private fun String.venueShort(): String = when (this) {
+    "venue-bolshoi"  -> "Большой театр"
+    "venue-arena"    -> "Арена"
+    "venue-cinema"   -> "Кинотеатр Октябрь"
+    "venue-club"     -> "Известия Hall"
+    "venue-museum"   -> "Музей совр. искусства"
+    "venue-theater"  -> "Театр на Таганке"
+    else             -> this
 }
-
-private val MONTHS = listOf(
-    "янв", "фев", "мар", "апр", "мая", "июн",
-    "июл", "авг", "сен", "окт", "ноя", "дек"
-)
-
-private fun formatEventDate(iso: String): String = try {
-    val dt = Instant.parse(iso).toLocalDateTime(TimeZone.of("Europe/Moscow"))
-    val h = dt.hour.toString().padStart(2, '0')
-    val m = dt.minute.toString().padStart(2, '0')
-    "${dt.dayOfMonth} ${MONTHS[dt.monthNumber - 1]} в $h:$m"
-} catch (_: Exception) { iso }

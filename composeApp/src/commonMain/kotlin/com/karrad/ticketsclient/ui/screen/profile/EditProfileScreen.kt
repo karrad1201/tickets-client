@@ -86,7 +86,7 @@ fun EditProfileScreen() {
                 .padding(vertical = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            AvatarCircle(name = name.ifBlank { "?" }, size = 72)
+            AvatarSquare(name = name.ifBlank { "?" }, size = 72)
         }
 
         // ─── Fields ──────────────────────────────────────────────────────────
