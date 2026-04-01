@@ -51,3 +51,9 @@ object EditProfileScreen : Screen {
     @androidx.compose.runtime.Composable
     override fun Content() = com.karrad.ticketsclient.ui.screen.profile.EditProfileScreen()
 }
+
+// Seat map
+data class SeatMapScreen(val eventId: String) : Screen {
+    @androidx.compose.runtime.Composable
+    override fun Content() = com.karrad.ticketsclient.ui.screen.seatmap.SeatMapScreen(eventId)
+}

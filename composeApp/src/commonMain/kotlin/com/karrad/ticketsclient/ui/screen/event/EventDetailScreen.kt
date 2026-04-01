@@ -50,6 +50,7 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.karrad.ticketsclient.AppSession
 import com.karrad.ticketsclient.data.api.dto.EventDto
+import com.karrad.ticketsclient.ui.navigation.SeatMapScreen
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -163,7 +164,7 @@ fun EventDetailScreen(eventId: String) {
                     )
                 }
                 ElevatedButton(
-                    onClick = { /* TODO: navigate to seat map */ },
+                    onClick = { navigator.push(SeatMapScreen(event.id)) },
                     modifier = Modifier.weight(1f).height(50.dp),
                     colors = ButtonDefaults.elevatedButtonColors(
                         containerColor = MaterialTheme.colorScheme.primary,
