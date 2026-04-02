@@ -379,7 +379,7 @@ private fun EventCard(
                         .align(Alignment.BottomEnd)
                         .padding(8.dp)
                         .clip(RoundedCornerShape(8.dp))
-                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.82f))
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.60f))
                         .padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
                     Text(
@@ -402,6 +402,7 @@ private fun EventCard(
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 12.sp
             ),
+            color = Color(0xFF1C1C1E),
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
             lineHeight = 15.sp

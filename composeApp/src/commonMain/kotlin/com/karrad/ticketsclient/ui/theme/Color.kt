@@ -2,9 +2,9 @@ package com.karrad.ticketsclient.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Primary — coral/orange из референса
-val Primary        = Color(0xFFFF5C35)
-val PrimaryVariant = Color(0xFFE04A25)
+// Primary — coral/orange из референса (чуть темнее и насыщеннее)
+val Primary        = Color(0xFFFF4D20)
+val PrimaryVariant = Color(0xFFD93D10)
 val OnPrimary      = Color(0xFFFFFFFF)
 
 // Фон — светло-серый, карточки — белые

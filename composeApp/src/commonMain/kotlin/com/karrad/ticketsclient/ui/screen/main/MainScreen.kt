@@ -69,7 +69,7 @@ private fun AppBottomBar(modifier: Modifier = Modifier) {
                     spotColor = Color.Black.copy(alpha = 0.10f)
                 )
                 .clip(RoundedCornerShape(32.dp))
-                .background(Color.White.copy(alpha = 0.78f))
+                .background(Color.White.copy(alpha = 0.60f))
                 .padding(horizontal = 16.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
