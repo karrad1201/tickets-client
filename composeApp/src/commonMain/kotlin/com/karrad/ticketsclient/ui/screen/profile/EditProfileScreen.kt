@@ -36,6 +36,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.navigator.LocalNavigator
@@ -52,8 +53,10 @@ private val ALL_INTERESTS = listOf(
 fun EditProfileScreen() {
     val navigator = LocalNavigator.currentOrThrow
 
-    var name by remember { mutableStateOf(AppSession.userName) }
-    var city by remember { mutableStateOf(AppSession.userCity) }
+    var nameValue by remember { mutableStateOf(TextFieldValue(AppSession.userName)) }
+    val name = nameValue.text
+    var cityValue by remember { mutableStateOf(TextFieldValue(AppSession.userCity)) }
+    val city = cityValue.text
     var selectedInterests by remember { mutableStateOf(AppSession.userInterests.toSet()) }
 
     Column(
@@ -93,8 +96,8 @@ fun EditProfileScreen() {
         Column(Modifier.padding(horizontal = 16.dp)) {
             FieldLabel("Имя и фамилия")
             OutlinedTextField(
-                value = name,
-                onValueChange = { name = it },
+                value = nameValue,
+                onValueChange = { nameValue = it },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 shape = RoundedCornerShape(12.dp)
@@ -116,8 +119,8 @@ fun EditProfileScreen() {
 
             FieldLabel("Город")
             OutlinedTextField(
-                value = city,
-                onValueChange = { city = it },
+                value = cityValue,
+                onValueChange = { cityValue = it },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 shape = RoundedCornerShape(12.dp)
