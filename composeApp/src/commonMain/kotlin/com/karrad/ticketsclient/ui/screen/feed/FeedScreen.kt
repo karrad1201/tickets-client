@@ -157,7 +157,7 @@ private fun FeedHeader(onSearchClick: () -> Unit = {}, onFilterClick: () -> Unit
             Icon(Icons.Default.Search, contentDescription = "Поиск",
                 tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(18.dp))
         }
-        Spacer(Modifier.width(8.dp))
+        Spacer(Modifier.width(20.dp))
         IconButton(
             onClick = onFilterClick,
             modifier = Modifier
@@ -366,14 +366,26 @@ private fun EventCard(
                     .size(28.dp)
                     .clip(CircleShape)
                     .background(Color.Black.copy(alpha = 0.35f))
-                    .clickable { /* TODO: избранное */ },
-                contentAlignment = Alignment.Center
+                    .clickable { /* TODO: избранное */ }
             ) {
                 Icon(
                     Icons.Outlined.FavoriteBorder,
                     contentDescription = "В избранное",
                     tint = Color.White,
-                    modifier = Modifier.size(15.dp)
+                    modifier = Modifier
+                        .size(15.dp)
+                        .align(Alignment.Center)
+                )
+                // Плюсик в правом верхнем углу кнопки
+                Text(
+                    "+",
+                    color = Color.White,
+                    fontSize = 9.sp,
+                    fontWeight = FontWeight.Bold,
+                    lineHeight = 9.sp,
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(top = 3.dp, end = 3.dp)
                 )
             }
 
@@ -384,7 +396,7 @@ private fun EventCard(
                         .align(Alignment.BottomEnd)
                         .padding(8.dp)
                         .clip(RoundedCornerShape(8.dp))
-                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.38f))
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.72f))
                         .padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
                     Text(
