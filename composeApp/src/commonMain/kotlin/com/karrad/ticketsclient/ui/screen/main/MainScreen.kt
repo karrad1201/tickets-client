@@ -12,13 +12,19 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.navigator.tab.CurrentTab
@@ -76,16 +82,33 @@ private fun AppBottomBar(modifier: Modifier = Modifier) {
         ) {
             tabs.forEach { tab ->
                 val selected = tabNavigator.current == tab
+
+                val bgColor by animateColorAsState(
+                    targetValue = if (selected)
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.85f)
+                    else Color.Transparent,
+                    animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+                    label = "tabBg"
+                )
+                val iconTint by animateColorAsState(
+                    targetValue = if (selected) Color.White
+                                  else MaterialTheme.colorScheme.onBackground,
+                    animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+                    label = "tabTint"
+                )
+                val scale by animateFloatAsState(
+                    targetValue = if (selected) 1.12f else 1f,
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessMedium
+                    ),
+                    label = "tabScale"
+                )
+
                 Box(
                     modifier = Modifier
-                        .then(
-                            if (selected) Modifier
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(
-                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.85f)
-                                )
-                            else Modifier
-                        )
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(bgColor)
                         .clickable { tabNavigator.current = tab }
                         .padding(horizontal = 18.dp, vertical = 8.dp),
                     contentAlignment = Alignment.Center
@@ -93,9 +116,10 @@ private fun AppBottomBar(modifier: Modifier = Modifier) {
                     Icon(
                         painter = tab.options.icon!!,
                         contentDescription = tab.options.title,
-                        tint = if (selected) Color.White
-                               else MaterialTheme.colorScheme.onBackground,
-                        modifier = Modifier.size(22.dp)
+                        tint = iconTint,
+                        modifier = Modifier
+                            .size(22.dp)
+                            .graphicsLayer { scaleX = scale; scaleY = scale }
                     )
                 }
             }

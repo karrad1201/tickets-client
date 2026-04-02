@@ -57,3 +57,25 @@ data class SeatMapScreen(val eventId: String) : Screen {
     @androidx.compose.runtime.Composable
     override fun Content() = com.karrad.ticketsclient.ui.screen.seatmap.SeatMapScreen(eventId)
 }
+
+// Search
+object SearchScreen : Screen {
+    @androidx.compose.runtime.Composable
+    override fun Content() = com.karrad.ticketsclient.ui.screen.search.SearchScreen()
+}
+
+// Profile sub-screens
+object FavoritesScreen : Screen {
+    @androidx.compose.runtime.Composable
+    override fun Content() = com.karrad.ticketsclient.ui.screen.profile.FavoritesScreen()
+}
+
+object SupportScreen : Screen {
+    @androidx.compose.runtime.Composable
+    override fun Content() = com.karrad.ticketsclient.ui.screen.profile.SupportScreen()
+}
+
+object AboutScreen : Screen {
+    @androidx.compose.runtime.Composable
+    override fun Content() = com.karrad.ticketsclient.ui.screen.profile.AboutScreen()
+}
