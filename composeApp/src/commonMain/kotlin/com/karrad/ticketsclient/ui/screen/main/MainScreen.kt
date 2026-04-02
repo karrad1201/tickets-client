@@ -20,12 +20,19 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.layout.offset
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.navigator.tab.CurrentTab
 import cafe.adriel.voyager.navigator.tab.LocalTabNavigator
@@ -35,6 +42,7 @@ import com.karrad.ticketsclient.ui.screen.feed.FeedTab
 import com.karrad.ticketsclient.ui.screen.profile.ProfileTab
 import com.karrad.ticketsclient.ui.screen.tickets.TicketsTab
 import com.karrad.ticketsclient.ui.theme.Background
+import kotlin.math.roundToInt
 
 @Composable
 fun MainScreen() {
@@ -57,6 +65,23 @@ fun MainScreen() {
 private fun AppBottomBar(modifier: Modifier = Modifier) {
     val tabNavigator = LocalTabNavigator.current
     val tabs: List<Tab> = listOf(FeedTab, TicketsTab, ProfileTab)
+    val selectedIndex = tabs.indexOfFirst { tabNavigator.current == it }.coerceAtLeast(0)
+
+    val density = LocalDensity.current
+    val gap = 8.dp
+    val gapPx = with(density) { gap.toPx() }
+
+    // Анимируем индекс как float — это даёт плавное перемещение пилюли
+    val animatedIndex by animateFloatAsState(
+        targetValue = selectedIndex.toFloat(),
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMedium
+        ),
+        label = "pillSlide"
+    )
+
+    var tabSize by remember { mutableStateOf(IntSize.Zero) }
 
     Box(
         modifier = modifier
@@ -65,7 +90,7 @@ private fun AppBottomBar(modifier: Modifier = Modifier) {
             .padding(vertical = 12.dp),
         contentAlignment = Alignment.Center
     ) {
-        Row(
+        Box(
             modifier = Modifier
                 .wrapContentWidth()
                 .shadow(
@@ -76,51 +101,56 @@ private fun AppBottomBar(modifier: Modifier = Modifier) {
                 )
                 .clip(RoundedCornerShape(32.dp))
                 .background(Color.White.copy(alpha = 0.60f))
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .padding(horizontal = 16.dp, vertical = 8.dp)
         ) {
-            tabs.forEach { tab ->
-                val selected = tabNavigator.current == tab
-
-                val bgColor by animateColorAsState(
-                    targetValue = if (selected)
-                        MaterialTheme.colorScheme.primary.copy(alpha = 0.85f)
-                    else Color.Transparent,
-                    animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
-                    label = "tabBg"
-                )
-                val iconTint by animateColorAsState(
-                    targetValue = if (selected) Color.White
-                                  else MaterialTheme.colorScheme.onBackground,
-                    animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
-                    label = "tabTint"
-                )
-                val scale by animateFloatAsState(
-                    targetValue = if (selected) 1.12f else 1f,
-                    animationSpec = spring(
-                        dampingRatio = Spring.DampingRatioMediumBouncy,
-                        stiffness = Spring.StiffnessMedium
-                    ),
-                    label = "tabScale"
-                )
-
+            // Скользящая пилюля — рисуется ДО иконок, чтобы быть позади
+            if (tabSize != IntSize.Zero) {
                 Box(
                     modifier = Modifier
+                        .offset {
+                            IntOffset(
+                                x = (animatedIndex * (tabSize.width + gapPx)).roundToInt(),
+                                y = 0
+                            )
+                        }
+                        .size(
+                            width = with(density) { tabSize.width.toDp() },
+                            height = with(density) { tabSize.height.toDp() }
+                        )
                         .clip(RoundedCornerShape(10.dp))
-                        .background(bgColor)
-                        .clickable { tabNavigator.current = tab }
-                        .padding(horizontal = 18.dp, vertical = 8.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        painter = tab.options.icon!!,
-                        contentDescription = tab.options.title,
-                        tint = iconTint,
-                        modifier = Modifier
-                            .size(22.dp)
-                            .graphicsLayer { scaleX = scale; scaleY = scale }
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.85f))
+                )
+            }
+
+            // Иконки — рисуются поверх пилюли
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(gap),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                tabs.forEachIndexed { index, tab ->
+                    val selected = selectedIndex == index
+                    val iconTint by animateColorAsState(
+                        targetValue = if (selected) Color.White
+                                      else MaterialTheme.colorScheme.onBackground,
+                        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+                        label = "tabTint"
                     )
+
+                    Box(
+                        modifier = Modifier
+                            .onSizeChanged { if (index == 0) tabSize = it }
+                            .clip(RoundedCornerShape(10.dp))
+                            .clickable { tabNavigator.current = tab }
+                            .padding(horizontal = 18.dp, vertical = 8.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            painter = tab.options.icon!!,
+                            contentDescription = tab.options.title,
+                            tint = iconTint,
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
                 }
             }
         }
