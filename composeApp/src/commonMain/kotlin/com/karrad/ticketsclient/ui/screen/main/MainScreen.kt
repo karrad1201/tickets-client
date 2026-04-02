@@ -10,7 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -54,12 +54,14 @@ private fun AppBottomBar(modifier: Modifier = Modifier) {
 
     Box(
         modifier = modifier
+            .fillMaxWidth()
             .navigationBarsPadding()
-            .padding(horizontal = 24.dp, vertical = 12.dp)
+            .padding(vertical = 12.dp),
+        contentAlignment = Alignment.Center
     ) {
         Row(
             modifier = Modifier
-                .fillMaxWidth()
+                .wrapContentWidth()
                 .shadow(
                     elevation = 8.dp,
                     shape = RoundedCornerShape(32.dp),
@@ -67,21 +69,25 @@ private fun AppBottomBar(modifier: Modifier = Modifier) {
                     spotColor = Color.Black.copy(alpha = 0.10f)
                 )
                 .clip(RoundedCornerShape(32.dp))
-                .background(Color.White.copy(alpha = 0.92f))
-                .padding(horizontal = 24.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.SpaceAround,
+                .background(Color.White.copy(alpha = 0.78f))
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             tabs.forEach { tab ->
                 val selected = tabNavigator.current == tab
                 Box(
                     modifier = Modifier
-                        .size(40.dp)
-                        .clip(CircleShape)
-                        .background(
-                            if (selected) MaterialTheme.colorScheme.primary else Color.Transparent
+                        .then(
+                            if (selected) Modifier
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(
+                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.85f)
+                                )
+                            else Modifier
                         )
-                        .clickable { tabNavigator.current = tab },
+                        .clickable { tabNavigator.current = tab }
+                        .padding(horizontal = 18.dp, vertical = 8.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
