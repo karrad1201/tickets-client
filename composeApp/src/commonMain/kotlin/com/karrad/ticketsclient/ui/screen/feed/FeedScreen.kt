@@ -19,8 +19,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -29,8 +27,6 @@ import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.FilterList
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -272,64 +268,40 @@ private fun SectionHeader(title: String, hasMore: Boolean = false) {
     }
 }
 
-// ─── "Для вас" pager ───────────────────────────────────────────────────────────
+// ─── "Для вас" row ─────────────────────────────────────────────────────────────
 
 @Composable
 private fun ForYouSection(events: List<EventDto>, onEventClick: (EventDto) -> Unit) {
-    val pagerState = rememberPagerState { events.size }
-
-    Column {
-        HorizontalPager(
-            state = pagerState,
-            contentPadding = PaddingValues(horizontal = 16.dp),
-            pageSpacing = 12.dp,
-            modifier = Modifier.fillMaxWidth()
-        ) { page ->
-            LargeEventCard(event = events[page], onClick = { onEventClick(events[page]) })
+    LazyRow(
+        contentPadding = PaddingValues(horizontal = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        modifier = Modifier.padding(bottom = 4.dp)
+    ) {
+        items(events, key = { it.id }) { event ->
+            PortraitEventCard(event = event, onClick = { onEventClick(event) })
         }
-
-        // Dot indicators
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(top = 10.dp),
-            horizontalArrangement = Arrangement.Center
-        ) {
-            repeat(events.size) { i ->
-                val isActive = pagerState.currentPage == i
-                Box(
-                    modifier = Modifier
-                        .padding(horizontal = 3.dp)
-                        .size(if (isActive) 8.dp else 6.dp)
-                        .clip(CircleShape)
-                        .background(
-                            if (isActive) MaterialTheme.colorScheme.primary
-                            else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
-                        )
-                )
-            }
-        }
-        Spacer(Modifier.height(4.dp))
     }
 }
 
-// ─── Large event card ──────────────────────────────────────────────────────────
+// ─── Portrait event card (универсальная, "Для вас" + категории) ────────────────
 
 @Composable
-private fun LargeEventCard(event: EventDto, onClick: () -> Unit) {
+private fun PortraitEventCard(event: EventDto, onClick: () -> Unit) {
     Box(
         modifier = Modifier
-            .fillMaxWidth()
+            .width(160.dp)
             .height(200.dp)
             .clip(RoundedCornerShape(16.dp))
             .clickable { onClick() }
     ) {
         EventImagePlaceholder(seed = event.id, modifier = Modifier.fillMaxSize())
 
-        // Gradient overlay
+        // Gradient overlay — нижняя треть
         Box(
             Modifier.fillMaxSize().background(
                 Brush.verticalGradient(
-                    colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.65f)),
-                    startY = 60f
+                    colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.72f)),
+                    startY = 200f
                 )
             )
         )
@@ -339,35 +311,43 @@ private fun LargeEventCard(event: EventDto, onClick: () -> Unit) {
             Box(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .padding(10.dp)
+                    .padding(8.dp)
                     .clip(RoundedCornerShape(8.dp))
                     .background(MaterialTheme.colorScheme.primary)
-                    .padding(horizontal = 10.dp, vertical = 5.dp)
+                    .padding(horizontal = 8.dp, vertical = 4.dp)
             ) {
                 Text(
                     "от ${price.formatPrice()} ₽",
                     color = Color.White,
-                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold)
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 10.sp
+                    )
                 )
             }
         }
 
-        // Title + venue bottom
+        // Title + venue — bottom
         Column(
             modifier = Modifier
                 .align(Alignment.BottomStart)
-                .padding(12.dp)
+                .padding(10.dp)
         ) {
             Text(
                 text = event.label,
-                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                style = MaterialTheme.typography.bodySmall.copy(
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 12.sp
+                ),
                 color = Color.White,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                lineHeight = 15.sp
             )
+            Spacer(Modifier.height(2.dp))
             Text(
                 text = event.venueId.venueShort(),
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.labelSmall,
                 color = Color.White.copy(alpha = 0.75f),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
@@ -386,65 +366,7 @@ private fun HorizontalEventRow(events: List<EventDto>, onEventClick: (EventDto) 
         modifier = Modifier.padding(bottom = 4.dp)
     ) {
         items(events, key = { it.id }) { event ->
-            SmallEventCard(event = event, onClick = { onEventClick(event) })
-        }
-    }
-}
-
-@Composable
-private fun SmallEventCard(event: EventDto, onClick: () -> Unit) {
-    Card(
-        onClick = onClick,
-        modifier = Modifier.width(148.dp),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column {
-            Box(
-                Modifier
-                    .fillMaxWidth()
-                    .height(110.dp)
-            ) {
-                EventImagePlaceholder(seed = event.id, modifier = Modifier.fillMaxSize())
-                // Price badge
-                event.minPrice?.let { price ->
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.TopEnd)
-                            .padding(6.dp)
-                            .clip(RoundedCornerShape(6.dp))
-                            .background(MaterialTheme.colorScheme.primary)
-                            .padding(horizontal = 6.dp, vertical = 3.dp)
-                    ) {
-                        Text(
-                            "от ${price.formatPrice()} ₽",
-                            color = Color.White,
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 9.sp
-                            )
-                        )
-                    }
-                }
-            }
-            Column(Modifier.padding(horizontal = 8.dp, vertical = 6.dp)) {
-                Text(
-                    text = event.label,
-                    style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold),
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    lineHeight = 14.sp
-                )
-                Spacer(Modifier.height(2.dp))
-                Text(
-                    text = event.venueId.venueShort(),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
+            PortraitEventCard(event = event, onClick = { onEventClick(event) })
         }
     }
 }
