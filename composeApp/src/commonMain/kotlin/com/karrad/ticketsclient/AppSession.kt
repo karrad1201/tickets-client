@@ -19,6 +19,9 @@ object AppSession {
     var userCity: String = city
     var userInterests: List<String> = listOf("Театры", "Кино", "Концерты")
 
+    // Кеш всех событий — заполняется FeedViewModel после загрузки, используется поиском
+    var cachedEvents: List<EventDto> = emptyList()
+
     // Мок-билеты для TicketsScreen
     val mockTickets: List<MockTicket> = listOf(
         MockTicket("t-001", "Лебединое озеро", "Большой театр", "5 апр 2026, 15:00", "Партер, ряд 3, место 7", 2000, TicketStatus.UPCOMING),

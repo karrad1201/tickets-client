@@ -42,12 +42,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import cafe.adriel.voyager.navigator.LocalNavigator
+import cafe.adriel.voyager.navigator.currentOrThrow
 import com.karrad.ticketsclient.AppSession
 import com.karrad.ticketsclient.MockTicket
 import com.karrad.ticketsclient.TicketStatus
+import com.karrad.ticketsclient.data.api.dto.EventDto
+import com.karrad.ticketsclient.ui.navigation.EventDetailScreen
 
 @Composable
 fun TicketsScreen() {
+    val navigator = LocalNavigator.currentOrThrow
+    val rootNavigator = navigator.parent ?: navigator
     val allTickets = AppSession.mockTickets
     var selectedTab by remember { mutableIntStateOf(0) }
 
@@ -106,7 +112,25 @@ fun TicketsScreen() {
         if (current.isEmpty()) {
             EmptyTickets(selectedTab == 0)
         } else {
-            TicketsPager(tickets = current, isArchived = selectedTab == 1)
+            TicketsPager(
+                tickets = current,
+                isArchived = selectedTab == 1,
+                onTicketClick = { ticket ->
+                    // Ищем событие в кеше или создаём заглушку из данных билета
+                    val event = AppSession.cachedEvents.find { it.label == ticket.eventName }
+                        ?: EventDto(
+                            id = ticket.id,
+                            label = ticket.eventName,
+                            description = "",
+                            venueId = ticket.venue,
+                            categoryId = "",
+                            time = ticket.datetime,
+                            minPrice = ticket.price
+                        )
+                    AppSession.currentEvent = event
+                    rootNavigator.push(EventDetailScreen(event.id))
+                }
+            )
             Spacer(Modifier.height(96.dp))
         }
     }
@@ -115,7 +139,11 @@ fun TicketsScreen() {
 // ─── Pager билетов ─────────────────────────────────────────────────────────────
 
 @Composable
-private fun TicketsPager(tickets: List<MockTicket>, isArchived: Boolean) {
+private fun TicketsPager(
+    tickets: List<MockTicket>,
+    isArchived: Boolean,
+    onTicketClick: (MockTicket) -> Unit
+) {
     val pagerState = rememberPagerState { tickets.size }
 
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -125,7 +153,11 @@ private fun TicketsPager(tickets: List<MockTicket>, isArchived: Boolean) {
             pageSpacing = 12.dp,
             modifier = Modifier.fillMaxWidth()
         ) { page ->
-            TicketCard(ticket = tickets[page], isArchived = isArchived)
+            TicketCard(
+                ticket = tickets[page],
+                isArchived = isArchived,
+                onClick = { onTicketClick(tickets[page]) }
+            )
         }
 
         Spacer(Modifier.height(16.dp))
@@ -154,12 +186,13 @@ private fun TicketsPager(tickets: List<MockTicket>, isArchived: Boolean) {
 // ─── Карточка билета ───────────────────────────────────────────────────────────
 
 @Composable
-private fun TicketCard(ticket: MockTicket, isArchived: Boolean) {
+private fun TicketCard(ticket: MockTicket, isArchived: Boolean, onClick: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
             .background(MaterialTheme.colorScheme.surface)
+            .clickable { onClick() }
     ) {
         // Фото-шапка с градиентом
         Box(
