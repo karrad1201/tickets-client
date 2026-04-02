@@ -60,6 +60,7 @@ import com.karrad.ticketsclient.data.api.dto.DiscoveryFeedResponseDto
 import com.karrad.ticketsclient.data.api.dto.EventDto
 import com.karrad.ticketsclient.di.AppContainer
 import com.karrad.ticketsclient.ui.navigation.EventDetailScreen
+import com.karrad.ticketsclient.ui.navigation.SearchScreen
 import com.karrad.ticketsclient.ui.util.formatPrice
 import kotlinx.datetime.Clock
 import kotlinx.datetime.DateTimeUnit
@@ -80,6 +81,7 @@ fun FeedScreen() {
     val viewModel = viewModel { FeedViewModel(AppContainer.discoveryService) }
     val state by viewModel.state.collectAsState()
     var showFilters by rememberSaveable { mutableStateOf(false) }
+    val searchNavigator = rootNavigator
 
     if (showFilters) {
         FiltersBottomSheet(onDismiss = { showFilters = false })
@@ -91,7 +93,10 @@ fun FeedScreen() {
             .background(MaterialTheme.colorScheme.background)
             .statusBarsPadding()
     ) {
-        FeedHeader(onFilterClick = { showFilters = true })
+        FeedHeader(
+            onSearchClick = { searchNavigator.push(SearchScreen) },
+            onFilterClick = { showFilters = true }
+        )
 
         when (val s = state) {
             is FeedState.Loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -122,7 +127,7 @@ fun FeedScreen() {
 // ─── Header ────────────────────────────────────────────────────────────────────
 
 @Composable
-private fun FeedHeader(onFilterClick: () -> Unit = {}) {
+private fun FeedHeader(onSearchClick: () -> Unit = {}, onFilterClick: () -> Unit = {}) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -143,7 +148,7 @@ private fun FeedHeader(onFilterClick: () -> Unit = {}) {
             modifier = Modifier.weight(1f)
         )
         IconButton(
-            onClick = {},
+            onClick = onSearchClick,
             modifier = Modifier
                 .size(36.dp)
                 .clip(CircleShape)

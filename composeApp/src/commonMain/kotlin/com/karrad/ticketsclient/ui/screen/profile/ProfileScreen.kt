@@ -43,7 +43,11 @@ import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.karrad.ticketsclient.AppSession
+import com.karrad.ticketsclient.ui.navigation.AboutScreen
 import com.karrad.ticketsclient.ui.navigation.EditProfileScreen
+import com.karrad.ticketsclient.ui.navigation.FavoritesScreen
+import com.karrad.ticketsclient.ui.navigation.InterestsScreen
+import com.karrad.ticketsclient.ui.navigation.SupportScreen
 
 @Composable
 fun ProfileScreen() {
@@ -137,13 +141,13 @@ fun ProfileScreen() {
 
         // ─── Меню ────────────────────────────────────────────────────────────
         MenuCard {
-            MenuItem(label = "Избранное", onClick = {})
+            MenuItem(label = "Избранное", onClick = { rootNavigator.push(FavoritesScreen) })
             MenuDivider()
-            MenuItem(label = "Поддержка", onClick = {})
+            MenuItem(label = "Поддержка", onClick = { rootNavigator.push(SupportScreen) })
             MenuDivider()
-            MenuItem(label = "Настройка рекомендаций", onClick = {})
+            MenuItem(label = "Настройка рекомендаций", onClick = { rootNavigator.push(InterestsScreen) })
             MenuDivider()
-            MenuItem(label = "О приложении", onClick = {})
+            MenuItem(label = "О приложении", onClick = { rootNavigator.push(AboutScreen) })
         }
 
         // Отступ под плавающий нав-бар
