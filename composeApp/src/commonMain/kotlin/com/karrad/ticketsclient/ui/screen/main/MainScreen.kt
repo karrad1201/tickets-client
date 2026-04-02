@@ -16,6 +16,8 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -71,13 +73,9 @@ private fun AppBottomBar(modifier: Modifier = Modifier) {
     val gap = 8.dp
     val gapPx = with(density) { gap.toPx() }
 
-    // Анимируем индекс как float — это даёт плавное перемещение пилюли
     val animatedIndex by animateFloatAsState(
         targetValue = selectedIndex.toFloat(),
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessMedium
-        ),
+        animationSpec = tween(durationMillis = 320, easing = FastOutSlowInEasing),
         label = "pillSlide"
     )
 
