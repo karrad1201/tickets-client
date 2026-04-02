@@ -384,7 +384,7 @@ private fun EventCard(
                         .align(Alignment.BottomEnd)
                         .padding(8.dp)
                         .clip(RoundedCornerShape(8.dp))
-                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.60f))
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.38f))
                         .padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
                     Text(
