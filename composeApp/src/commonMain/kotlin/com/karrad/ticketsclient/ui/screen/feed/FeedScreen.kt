@@ -19,12 +19,15 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.outlined.LocationOn
+import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.FilterList
+import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -268,91 +271,148 @@ private fun SectionHeader(title: String, hasMore: Boolean = false) {
     }
 }
 
-// ─── "Для вас" row ─────────────────────────────────────────────────────────────
+// ─── "Для вас" pager ───────────────────────────────────────────────────────────
 
 @Composable
 private fun ForYouSection(events: List<EventDto>, onEventClick: (EventDto) -> Unit) {
-    LazyRow(
-        contentPadding = PaddingValues(horizontal = 16.dp),
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
-        modifier = Modifier.padding(bottom = 4.dp)
-    ) {
-        items(events, key = { it.id }) { event ->
-            PortraitEventCard(event = event, onClick = { onEventClick(event) })
+    val pagerState = rememberPagerState { events.size }
+
+    Column {
+        HorizontalPager(
+            state = pagerState,
+            contentPadding = PaddingValues(horizontal = 16.dp),
+            pageSpacing = 12.dp,
+            modifier = Modifier.fillMaxWidth()
+        ) { page ->
+            EventCard(
+                event = events[page],
+                cardWidth = null,   // fillMaxWidth в пейджере
+                imageHeight = 200.dp,
+                onClick = { onEventClick(events[page]) }
+            )
         }
+
+        // Dot indicators
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(top = 10.dp),
+            horizontalArrangement = Arrangement.Center
+        ) {
+            repeat(events.size) { i ->
+                val active = pagerState.currentPage == i
+                Box(
+                    modifier = Modifier
+                        .padding(horizontal = 3.dp)
+                        .size(if (active) 8.dp else 6.dp)
+                        .clip(CircleShape)
+                        .background(
+                            if (active) MaterialTheme.colorScheme.primary
+                            else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
+                        )
+                )
+            }
+        }
+        Spacer(Modifier.height(4.dp))
     }
 }
 
-// ─── Portrait event card (универсальная, "Для вас" + категории) ────────────────
+// ─── Event card (универсальная: "Для вас" + категории) ────────────────────────
+// cardWidth = null → заполняет пространство пейджера; иначе — фиксированная ширина
 
 @Composable
-private fun PortraitEventCard(event: EventDto, onClick: () -> Unit) {
-    Box(
-        modifier = Modifier
-            .width(160.dp)
-            .height(200.dp)
-            .clip(RoundedCornerShape(16.dp))
-            .clickable { onClick() }
-    ) {
-        EventImagePlaceholder(seed = event.id, modifier = Modifier.fillMaxSize())
+private fun EventCard(
+    event: EventDto,
+    cardWidth: androidx.compose.ui.unit.Dp?,
+    imageHeight: androidx.compose.ui.unit.Dp = 165.dp,
+    onClick: () -> Unit
+) {
+    val widthMod = if (cardWidth != null) Modifier.width(cardWidth) else Modifier.fillMaxWidth()
 
-        // Gradient overlay — нижняя треть
+    Column(modifier = widthMod.clickable { onClick() }) {
+        // ── Фото ──────────────────────────────────────────────────────────────
         Box(
-            Modifier.fillMaxSize().background(
-                Brush.verticalGradient(
-                    colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.72f)),
-                    startY = 200f
-                )
-            )
-        )
+            modifier = Modifier
+                .then(widthMod)
+                .height(imageHeight)
+                .clip(RoundedCornerShape(14.dp))
+        ) {
+            EventImagePlaceholder(seed = event.id, modifier = Modifier.fillMaxSize())
 
-        // Price badge — top right
-        event.minPrice?.let { price ->
+            // Age rating — top left (полупрозрачный тёмный)
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(8.dp)
+                    .clip(RoundedCornerShape(6.dp))
+                    .background(Color.Black.copy(alpha = 0.45f))
+                    .padding(horizontal = 7.dp, vertical = 3.dp)
+            ) {
+                Text(
+                    text = event.ageRating ?: "0+",
+                    color = Color.White,
+                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold)
+                )
+            }
+
+            // Favourite — top right (полупрозрачный)
             Box(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .padding(8.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(MaterialTheme.colorScheme.primary)
-                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                    .size(28.dp)
+                    .clip(CircleShape)
+                    .background(Color.Black.copy(alpha = 0.35f))
+                    .clickable { /* TODO: избранное */ },
+                contentAlignment = Alignment.Center
             ) {
-                Text(
-                    "от ${price.formatPrice()} ₽",
-                    color = Color.White,
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 10.sp
-                    )
+                Icon(
+                    Icons.Outlined.FavoriteBorder,
+                    contentDescription = "В избранное",
+                    tint = Color.White,
+                    modifier = Modifier.size(15.dp)
                 )
+            }
+
+            // Price — bottom right (полупрозрачный оранжевый)
+            event.minPrice?.let { price ->
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(8.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.82f))
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                ) {
+                    Text(
+                        "от ${price.formatPrice()} ₽",
+                        color = Color.White,
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 10.sp
+                        )
+                    )
+                }
             }
         }
 
-        // Title + venue — bottom
-        Column(
-            modifier = Modifier
-                .align(Alignment.BottomStart)
-                .padding(10.dp)
-        ) {
-            Text(
-                text = event.label,
-                style = MaterialTheme.typography.bodySmall.copy(
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 12.sp
-                ),
-                color = Color.White,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                lineHeight = 15.sp
-            )
-            Spacer(Modifier.height(2.dp))
-            Text(
-                text = event.venueId.venueShort(),
-                style = MaterialTheme.typography.labelSmall,
-                color = Color.White.copy(alpha = 0.75f),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
+        // ── Текст под фото ────────────────────────────────────────────────────
+        Spacer(Modifier.height(6.dp))
+        Text(
+            text = event.label,
+            style = MaterialTheme.typography.bodySmall.copy(
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 12.sp
+            ),
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            lineHeight = 15.sp
+        )
+        Text(
+            text = event.venueId.venueShort(),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
     }
 }
 
@@ -366,7 +426,12 @@ private fun HorizontalEventRow(events: List<EventDto>, onEventClick: (EventDto) 
         modifier = Modifier.padding(bottom = 4.dp)
     ) {
         items(events, key = { it.id }) { event ->
-            PortraitEventCard(event = event, onClick = { onEventClick(event) })
+            EventCard(
+                event = event,
+                cardWidth = 155.dp,
+                imageHeight = 165.dp,
+                onClick = { onEventClick(event) }
+            )
         }
     }
 }
