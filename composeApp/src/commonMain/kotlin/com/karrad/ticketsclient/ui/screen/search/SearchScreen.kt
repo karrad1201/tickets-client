@@ -30,6 +30,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -50,7 +51,8 @@ import com.karrad.ticketsclient.ui.util.formatPrice
 @Composable
 fun SearchScreen() {
     val navigator = LocalNavigator.currentOrThrow
-    var query by remember { mutableStateOf("") }
+    var queryValue by remember { mutableStateOf(TextFieldValue("")) }
+    val query = queryValue.text
 
     val results = remember(query) {
         if (query.length < 2) emptyList()
@@ -108,8 +110,8 @@ fun SearchScreen() {
                 )
                 Spacer(Modifier.width(8.dp))
                 BasicTextField(
-                    value = query,
-                    onValueChange = { query = it },
+                    value = queryValue,
+                    onValueChange = { queryValue = it },
                     singleLine = true,
                     textStyle = MaterialTheme.typography.bodyMedium.copy(
                         color = MaterialTheme.colorScheme.onBackground

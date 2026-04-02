@@ -25,6 +25,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
@@ -33,7 +34,8 @@ import com.karrad.ticketsclient.ui.navigation.CitySelectionScreen
 @Composable
 fun NameInputScreen() {
     val navigator = LocalNavigator.currentOrThrow
-    var name by remember { mutableStateOf("") }
+    var nameValue by remember { mutableStateOf(TextFieldValue("")) }
+    val name = nameValue.text
 
     Column(
         modifier = Modifier
@@ -55,8 +57,8 @@ fun NameInputScreen() {
         Spacer(modifier = Modifier.height(32.dp))
 
         OutlinedTextField(
-            value = name,
-            onValueChange = { name = it },
+            value = nameValue,
+            onValueChange = { nameValue = it },
             label = { Text("Имя") },
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Text,
