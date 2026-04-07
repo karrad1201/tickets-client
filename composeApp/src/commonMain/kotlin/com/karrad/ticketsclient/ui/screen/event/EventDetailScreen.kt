@@ -132,7 +132,7 @@ fun EventDetailScreen(eventId: String) {
 
                 // Теги: возраст + площадка
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    TagChip(text = "12+", outlined = true)
+                    event.ageRating?.let { TagChip(text = it, outlined = true) }
                     TagChip(text = event.venueId.venueShort(), filled = true)
                 }
 
