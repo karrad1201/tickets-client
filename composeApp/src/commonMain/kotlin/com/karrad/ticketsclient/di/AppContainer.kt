@@ -3,6 +3,9 @@ package com.karrad.ticketsclient.di
 import com.karrad.ticketsclient.data.api.DiscoveryApiService
 import com.karrad.ticketsclient.data.api.DiscoveryService
 import com.karrad.ticketsclient.data.api.FakeDiscoveryApiService
+import com.karrad.ticketsclient.data.api.FakeScannerService
+import com.karrad.ticketsclient.data.api.ScannerApiService
+import com.karrad.ticketsclient.data.api.ScannerService
 import com.karrad.ticketsclient.data.api.createHttpClient
 import com.karrad.ticketsclient.data.repository.LocalCityRepository
 import com.karrad.ticketsclient.domain.usecase.SearchCitiesUseCase
@@ -21,15 +24,24 @@ object AppContainer {
     lateinit var discoveryService: DiscoveryService
         private set
 
+    lateinit var scannerService: ScannerService
+        private set
+
     val searchCitiesUseCase: SearchCitiesUseCase by lazy {
         SearchCitiesUseCase(LocalCityRepository())
     }
 
     fun init(useMock: Boolean) {
+        val httpClient = createHttpClient()
         discoveryService = if (useMock) {
             FakeDiscoveryApiService()
         } else {
-            DiscoveryApiService(createHttpClient(), BASE_URL)
+            DiscoveryApiService(httpClient, BASE_URL)
+        }
+        scannerService = if (useMock) {
+            FakeScannerService()
+        } else {
+            ScannerApiService(httpClient, BASE_URL)
         }
     }
 }

@@ -42,6 +42,7 @@ import cafe.adriel.voyager.navigator.tab.Tab
 import cafe.adriel.voyager.navigator.tab.TabNavigator
 import com.karrad.ticketsclient.ui.screen.feed.FeedTab
 import com.karrad.ticketsclient.ui.screen.profile.ProfileTab
+import com.karrad.ticketsclient.ui.screen.scanner.ScannerTab
 import com.karrad.ticketsclient.ui.screen.tickets.TicketsTab
 import com.karrad.ticketsclient.ui.theme.Background
 import kotlin.math.roundToInt
@@ -66,7 +67,7 @@ fun MainScreen() {
 @Composable
 private fun AppBottomBar(modifier: Modifier = Modifier) {
     val tabNavigator = LocalTabNavigator.current
-    val tabs: List<Tab> = listOf(FeedTab, TicketsTab, ProfileTab)
+    val tabs: List<Tab> = listOf(FeedTab, TicketsTab, ScannerTab, ProfileTab)
     val selectedIndex = tabs.indexOfFirst { tabNavigator.current == it }.coerceAtLeast(0)
 
     val density = LocalDensity.current
