@@ -10,7 +10,10 @@ import com.karrad.ticketsclient.data.api.FakeScannerService
 import com.karrad.ticketsclient.data.api.EventApiService
 import com.karrad.ticketsclient.data.api.EventService
 import com.karrad.ticketsclient.data.api.FakeEventService
+import com.karrad.ticketsclient.data.api.FakeGeoService
 import com.karrad.ticketsclient.data.api.FakeOrderService
+import com.karrad.ticketsclient.data.api.GeoApiService
+import com.karrad.ticketsclient.data.api.GeoService
 import com.karrad.ticketsclient.data.api.FakeTicketService
 import com.karrad.ticketsclient.data.api.OrderApiService
 import com.karrad.ticketsclient.data.api.OrderService
@@ -54,6 +57,9 @@ object AppContainer {
     lateinit var eventService: EventService
         private set
 
+    lateinit var geoService: GeoService
+        private set
+
     val searchCitiesUseCase: SearchCitiesUseCase by lazy {
         SearchCitiesUseCase(LocalCityRepository())
     }
@@ -90,6 +96,11 @@ object AppContainer {
             FakeEventService()
         } else {
             EventApiService(httpClient, BASE_URL)
+        }
+        geoService = if (useMock) {
+            FakeGeoService()
+        } else {
+            GeoApiService(httpClient, BASE_URL)
         }
     }
 }

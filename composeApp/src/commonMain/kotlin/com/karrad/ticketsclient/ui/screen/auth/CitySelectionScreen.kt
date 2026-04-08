@@ -20,6 +20,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -30,20 +31,31 @@ import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.karrad.ticketsclient.AppSession
-import com.karrad.ticketsclient.data.repository.LocalCityRepository
-import com.karrad.ticketsclient.domain.model.City
-import com.karrad.ticketsclient.domain.usecase.SearchCitiesUseCase
+import com.karrad.ticketsclient.data.api.dto.CityDto
+import com.karrad.ticketsclient.di.AppContainer
 import com.karrad.ticketsclient.ui.navigation.InterestsScreen
 
 @Composable
 fun CitySelectionScreen() {
     val navigator = LocalNavigator.currentOrThrow
-    val searchCities = remember { SearchCitiesUseCase(LocalCityRepository()) }
 
+    var allCities by remember { mutableStateOf<List<CityDto>>(emptyList()) }
     var query by remember { mutableStateOf("") }
-    var selectedCity by remember { mutableStateOf<City?>(null) }
+    var selectedCity by remember { mutableStateOf<CityDto?>(null) }
 
-    val cities = remember(query) { searchCities(query) }
+    LaunchedEffect(Unit) {
+        allCities = try { AppContainer.geoService.getCities() } catch (_: Exception) { emptyList() }
+    }
+
+    val cities = remember(query, allCities) {
+        if (query.isBlank()) allCities
+        else {
+            val q = query.trim().lowercase()
+            allCities.filter {
+                it.name.lowercase().contains(q) || it.region?.lowercase()?.contains(q) == true
+            }
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -96,7 +108,7 @@ fun CitySelectionScreen() {
 
         Button(
             onClick = {
-                selectedCity?.let { AppSession.city = it.label }
+                selectedCity?.let { AppSession.city = it.name }
                 navigator.push(InterestsScreen)
             },
             enabled = selectedCity != null,
@@ -116,11 +128,11 @@ fun CitySelectionScreen() {
 }
 
 @Composable
-private fun CityCard(city: City, selected: Boolean, onClick: () -> Unit) {
+private fun CityCard(city: CityDto, selected: Boolean, onClick: () -> Unit) {
     val borderColor = if (selected) MaterialTheme.colorScheme.primary else Color(0xFFE0E0E0)
     val textColor = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-    val subjectColor = if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
-                       else MaterialTheme.colorScheme.onSurfaceVariant
+    val regionColor = if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
+                      else MaterialTheme.colorScheme.onSurfaceVariant
 
     Card(
         onClick = onClick,
@@ -132,15 +144,17 @@ private fun CityCard(city: City, selected: Boolean, onClick: () -> Unit) {
     ) {
         Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
             Text(
-                text = city.label,
+                text = city.name,
                 style = MaterialTheme.typography.bodyLarge,
                 color = textColor
             )
-            Text(
-                text = city.subject.label,
-                style = MaterialTheme.typography.bodySmall,
-                color = subjectColor
-            )
+            if (city.region != null) {
+                Text(
+                    text = city.region,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = regionColor
+                )
+            }
         }
     }
 }
