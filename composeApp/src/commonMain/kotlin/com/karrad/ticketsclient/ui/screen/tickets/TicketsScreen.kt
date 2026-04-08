@@ -14,23 +14,23 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ConfirmationNumber
 import androidx.compose.material.icons.outlined.DateRange
 import androidx.compose.material.icons.outlined.LocationOn
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -41,24 +41,34 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.karrad.ticketsclient.AppSession
-import com.karrad.ticketsclient.MockTicket
-import com.karrad.ticketsclient.TicketStatus
 import com.karrad.ticketsclient.data.api.dto.EventDto
+import com.karrad.ticketsclient.data.api.dto.TicketDto
+import com.karrad.ticketsclient.di.AppContainer
 import com.karrad.ticketsclient.ui.navigation.EventDetailScreen
 
 @Composable
 fun TicketsScreen() {
     val navigator = LocalNavigator.currentOrThrow
     val rootNavigator = navigator.parent ?: navigator
-    val allTickets = AppSession.mockTickets
+    var tickets by remember { mutableStateOf<List<TicketDto>>(emptyList()) }
+    var loading by remember { mutableStateOf(true) }
     var selectedTab by remember { mutableIntStateOf(0) }
 
-    val upcoming = allTickets.filter { it.status == TicketStatus.UPCOMING }
-    val archived = allTickets.filter { it.status == TicketStatus.USED }
+    LaunchedEffect(Unit) {
+        try {
+            tickets = AppContainer.ticketService.getMyTickets(AppSession.authToken ?: "")
+        } catch (_: Exception) {
+            tickets = emptyList()
+        } finally {
+            loading = false
+        }
+    }
+
+    val upcoming = tickets.filter { it.usedAt == null }
+    val archived = tickets.filter { it.usedAt != null }
     val current = if (selectedTab == 0) upcoming else archived
 
     Column(
@@ -108,23 +118,25 @@ fun TicketsScreen() {
 
         Spacer(Modifier.height(16.dp))
 
-        // ─── Контент (+ отступ снизу под плавающий нав-бар) ──────────────────
-        if (current.isEmpty()) {
+        if (loading) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        } else if (current.isEmpty()) {
             EmptyTickets(selectedTab == 0)
         } else {
             TicketsPager(
                 tickets = current,
                 isArchived = selectedTab == 1,
                 onTicketClick = { ticket ->
-                    // Ищем событие в кеше или создаём заглушку из данных билета
-                    val event = AppSession.cachedEvents.find { it.label == ticket.eventName }
+                    val event = AppSession.cachedEvents.find { it.label == ticket.eventLabel }
                         ?: EventDto(
-                            id = ticket.id,
-                            label = ticket.eventName,
+                            id = ticket.eventId,
+                            label = ticket.eventLabel,
                             description = "",
-                            venueId = ticket.venue,
+                            venueId = ticket.venueName ?: "",
                             categoryId = "",
-                            time = ticket.datetime,
+                            time = ticket.eventTime ?: "",
                             minPrice = ticket.price
                         )
                     AppSession.currentEvent = event
@@ -140,9 +152,9 @@ fun TicketsScreen() {
 
 @Composable
 private fun TicketsPager(
-    tickets: List<MockTicket>,
+    tickets: List<TicketDto>,
     isArchived: Boolean,
-    onTicketClick: (MockTicket) -> Unit
+    onTicketClick: (TicketDto) -> Unit
 ) {
     val pagerState = rememberPagerState { tickets.size }
 
@@ -162,7 +174,6 @@ private fun TicketsPager(
 
         Spacer(Modifier.height(16.dp))
 
-        // Dot indicators
         if (tickets.size > 1) {
             Row(horizontalArrangement = Arrangement.Center) {
                 repeat(tickets.size) { i ->
@@ -186,7 +197,7 @@ private fun TicketsPager(
 // ─── Карточка билета ───────────────────────────────────────────────────────────
 
 @Composable
-private fun TicketCard(ticket: MockTicket, isArchived: Boolean, onClick: () -> Unit) {
+private fun TicketCard(ticket: TicketDto, isArchived: Boolean, onClick: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -194,13 +205,11 @@ private fun TicketCard(ticket: MockTicket, isArchived: Boolean, onClick: () -> U
             .background(MaterialTheme.colorScheme.surface)
             .clickable { onClick() }
     ) {
-        // Фото-шапка с градиентом
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(160.dp)
         ) {
-            // Градиентный placeholder
             val palettes = listOf(
                 listOf(Color(0xFF1A1A2E), Color(0xFF16213E)),
                 listOf(Color(0xFF0F3460), Color(0xFF533483)),
@@ -213,42 +222,44 @@ private fun TicketCard(ticket: MockTicket, isArchived: Boolean, onClick: () -> U
                     .fillMaxSize()
                     .background(Brush.verticalGradient(palette))
             )
-            // Информация поверх изображения
             Column(
                 modifier = Modifier
                     .align(Alignment.BottomStart)
                     .padding(14.dp)
             ) {
                 Text(
-                    ticket.eventName,
+                    ticket.eventLabel,
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                     color = Color.White,
                     maxLines = 1
                 )
                 Spacer(Modifier.height(4.dp))
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    Icon(Icons.Outlined.LocationOn, null,
-                        tint = Color.White.copy(alpha = 0.8f), modifier = Modifier.size(12.dp))
-                    Text(ticket.venue, style = MaterialTheme.typography.labelSmall,
-                        color = Color.White.copy(alpha = 0.8f))
+                if (ticket.venueName != null) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Icon(Icons.Outlined.LocationOn, null,
+                            tint = Color.White.copy(alpha = 0.8f), modifier = Modifier.size(12.dp))
+                        Text(ticket.venueName, style = MaterialTheme.typography.labelSmall,
+                            color = Color.White.copy(alpha = 0.8f))
+                    }
+                    Spacer(Modifier.height(2.dp))
                 }
-                Spacer(Modifier.height(2.dp))
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    Icon(Icons.Outlined.DateRange, null,
-                        tint = Color.White.copy(alpha = 0.8f), modifier = Modifier.size(12.dp))
-                    Text(ticket.datetime, style = MaterialTheme.typography.labelSmall,
-                        color = Color.White.copy(alpha = 0.8f))
+                if (ticket.eventTime != null) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Icon(Icons.Outlined.DateRange, null,
+                            tint = Color.White.copy(alpha = 0.8f), modifier = Modifier.size(12.dp))
+                        Text(ticket.eventTime, style = MaterialTheme.typography.labelSmall,
+                            color = Color.White.copy(alpha = 0.8f))
+                    }
                 }
             }
         }
 
-        // QR-блок / архивный текст
         if (isArchived) {
             Box(
                 modifier = Modifier
@@ -263,11 +274,13 @@ private fun TicketCard(ticket: MockTicket, isArchived: Boolean, onClick: () -> U
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center
                     )
-                    Text(
-                        ticket.datetime,
-                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
-                        textAlign = TextAlign.Center
-                    )
+                    if (ticket.eventTime != null) {
+                        Text(
+                            ticket.eventTime,
+                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                            textAlign = TextAlign.Center
+                        )
+                    }
                 }
             }
         } else {
@@ -277,20 +290,19 @@ private fun TicketCard(ticket: MockTicket, isArchived: Boolean, onClick: () -> U
                     .padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Место
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Icon(Icons.Outlined.ConfirmationNumber, null,
-                        tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(14.dp))
-                    Text(ticket.seat, style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                if (ticket.seat != null) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Icon(Icons.Outlined.ConfirmationNumber, null,
+                            tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(14.dp))
+                        Text(ticket.seat, style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    Spacer(Modifier.height(12.dp))
                 }
 
-                Spacer(Modifier.height(12.dp))
-
-                // QR-код (большой)
                 QrCode(modifier = Modifier.size(160.dp))
 
                 Spacer(Modifier.height(8.dp))
@@ -317,7 +329,6 @@ private fun QrCode(modifier: Modifier = Modifier) {
             .padding(12.dp),
         contentAlignment = Alignment.Center
     ) {
-        // Детальный паттерн QR
         val pattern = listOf(
             listOf(1,1,1,1,1,1,1,0,1,0,1,0,1,1,1,1,1,1,1),
             listOf(1,0,0,0,0,0,1,0,0,1,0,1,1,0,0,0,0,0,1),
@@ -389,4 +400,3 @@ private fun EmptyTickets(isUpcoming: Boolean) {
         )
     }
 }
-
