@@ -24,6 +24,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.LocationOn
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -44,23 +45,26 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.runtime.rememberCoroutineScope
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.karrad.ticketsclient.AppSession
 import com.karrad.ticketsclient.data.api.dto.EventDto
-import com.karrad.ticketsclient.ui.navigation.SeatMapScreen
+import com.karrad.ticketsclient.di.AppContainer
+import com.karrad.ticketsclient.ui.navigation.OrderConfirmScreen
 import com.karrad.ticketsclient.ui.screen.feed.EventImagePlaceholder
 import com.karrad.ticketsclient.ui.util.formatPrice
+import kotlinx.coroutines.launch
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 
 @Composable
 fun EventDetailScreen(eventId: String) {
-    // EventDetailScreen находится уже в корневом навигаторе,
-    // поэтому navigator.pop() и navigator.push(SeatMapScreen) работают верно
     val navigator = LocalNavigator.currentOrThrow
+    val scope = rememberCoroutineScope()
     val event = AppSession.currentEvent
+    var buyLoading by remember { mutableStateOf(false) }
 
     if (event == null) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -245,30 +249,62 @@ fun EventDetailScreen(eventId: String) {
                         .fillMaxWidth()
                         .height(52.dp)
                         .clip(RoundedCornerShape(14.dp))
-                        .background(MaterialTheme.colorScheme.primary)
-                        .clickable { navigator.push(SeatMapScreen(event.id)) },
+                        .background(
+                            if (buyLoading) MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
+                            else MaterialTheme.colorScheme.primary
+                        )
+                        .clickable(enabled = !buyLoading) {
+                            buyLoading = true
+                            scope.launch {
+                                try {
+                                    val order = AppContainer.orderService.createOrder(
+                                        eventId = event.id,
+                                        authToken = AppSession.authToken ?: ""
+                                    )
+                                    navigator.push(
+                                        OrderConfirmScreen(
+                                            eventId = event.id,
+                                            orderId = order.id,
+                                            totalPrice = order.totalPrice
+                                        )
+                                    )
+                                } catch (_: Exception) {
+                                    // оставляем на экране, кнопка снова активна
+                                } finally {
+                                    buyLoading = false
+                                }
+                            }
+                        },
                     contentAlignment = Alignment.Center
                 ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 20.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            "Выбрать места",
-                            color = Color.White,
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 16.sp
+                    if (buyLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(22.dp),
+                            strokeWidth = 2.dp,
+                            color = Color.White
                         )
-                        event.minPrice?.let { price ->
+                    } else {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 20.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
                             Text(
-                                "от ${price.formatPrice()} ₽",
-                                color = Color.White.copy(alpha = 0.9f),
-                                fontWeight = FontWeight.Medium,
-                                fontSize = 14.sp
+                                "Купить билет",
+                                color = Color.White,
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 16.sp
                             )
+                            event.minPrice?.let { price ->
+                                Text(
+                                    "от ${price.formatPrice()} ₽",
+                                    color = Color.White.copy(alpha = 0.9f),
+                                    fontWeight = FontWeight.Medium,
+                                    fontSize = 14.sp
+                                )
+                            }
                         }
                     }
                 }
