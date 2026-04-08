@@ -45,6 +45,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
@@ -63,15 +64,22 @@ import kotlinx.datetime.toLocalDateTime
 fun EventDetailScreen(eventId: String) {
     val navigator = LocalNavigator.currentOrThrow
     val scope = rememberCoroutineScope()
-    val event = AppSession.currentEvent
+    var event by remember { mutableStateOf(AppSession.currentEvent?.takeIf { it.id == eventId }) }
     var buyLoading by remember { mutableStateOf(false) }
+
+    LaunchedEffect(eventId) {
+        if (event == null) {
+            event = try { AppContainer.eventService.getEvent(eventId) } catch (_: Exception) { null }
+        }
+    }
 
     if (event == null) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("Событие не найдено")
+            CircularProgressIndicator()
         }
         return
     }
+    @Suppress("NAME_SHADOWING") val event = event!!
 
     Box(
         modifier = Modifier

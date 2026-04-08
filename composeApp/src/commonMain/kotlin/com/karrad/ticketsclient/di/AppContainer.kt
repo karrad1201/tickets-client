@@ -7,6 +7,9 @@ import com.karrad.ticketsclient.data.api.DiscoveryService
 import com.karrad.ticketsclient.data.api.FakeAuthService
 import com.karrad.ticketsclient.data.api.FakeDiscoveryApiService
 import com.karrad.ticketsclient.data.api.FakeScannerService
+import com.karrad.ticketsclient.data.api.EventApiService
+import com.karrad.ticketsclient.data.api.EventService
+import com.karrad.ticketsclient.data.api.FakeEventService
 import com.karrad.ticketsclient.data.api.FakeOrderService
 import com.karrad.ticketsclient.data.api.FakeTicketService
 import com.karrad.ticketsclient.data.api.OrderApiService
@@ -48,6 +51,9 @@ object AppContainer {
     lateinit var orderService: OrderService
         private set
 
+    lateinit var eventService: EventService
+        private set
+
     val searchCitiesUseCase: SearchCitiesUseCase by lazy {
         SearchCitiesUseCase(LocalCityRepository())
     }
@@ -79,6 +85,11 @@ object AppContainer {
             FakeOrderService()
         } else {
             OrderApiService(httpClient, BASE_URL)
+        }
+        eventService = if (useMock) {
+            FakeEventService()
+        } else {
+            EventApiService(httpClient, BASE_URL)
         }
     }
 }

@@ -22,10 +22,12 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -44,21 +46,33 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.karrad.ticketsclient.AppSession
 import com.karrad.ticketsclient.data.api.dto.EventDto
+import com.karrad.ticketsclient.di.AppContainer
 import com.karrad.ticketsclient.ui.navigation.EventDetailScreen
 import com.karrad.ticketsclient.ui.screen.feed.EventImagePlaceholder
 import com.karrad.ticketsclient.ui.util.formatPrice
+import kotlinx.coroutines.delay
 
 @Composable
 fun SearchScreen() {
     val navigator = LocalNavigator.currentOrThrow
     var queryValue by remember { mutableStateOf(TextFieldValue("")) }
     val query = queryValue.text
+    var results by remember { mutableStateOf<List<EventDto>>(emptyList()) }
+    var loading by remember { mutableStateOf(false) }
 
-    val results = remember(query) {
-        if (query.length < 2) emptyList()
-        else AppSession.cachedEvents.filter { event ->
-            event.label.contains(query, ignoreCase = true) ||
-            event.description.contains(query, ignoreCase = true)
+    LaunchedEffect(query) {
+        if (query.length < 2) {
+            results = emptyList()
+            return@LaunchedEffect
+        }
+        delay(300) // debounce
+        loading = true
+        results = try {
+            AppContainer.eventService.search(query, AppSession.city)
+        } catch (_: Exception) {
+            emptyList()
+        } finally {
+            loading = false
         }
     }
 
@@ -133,12 +147,13 @@ fun SearchScreen() {
         }
 
         // ─── Результаты / подсказки ───────────────────────────────────────────
-        if (query.length < 2) {
-            EmptyHint()
-        } else if (results.isEmpty()) {
-            NotFound(query)
-        } else {
-            LazyColumn(
+        when {
+            query.length < 2 -> EmptyHint()
+            loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+            results.isEmpty() -> NotFound(query)
+            else -> LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(0.dp)
             ) {
