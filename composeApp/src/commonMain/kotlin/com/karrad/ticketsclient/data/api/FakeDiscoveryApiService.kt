@@ -31,7 +31,8 @@ class FakeDiscoveryApiService : DiscoveryService {
             venueId = "venue-bolshoi",
             categoryId = "cat-theatre",
             time = "2026-04-05T15:00:00Z",
-            minPrice = 2000
+            minPrice = 2000,
+            hasSeatMap = true
         )
         private val newYearParty = EventDto(
             id = "evt-002",
@@ -40,7 +41,8 @@ class FakeDiscoveryApiService : DiscoveryService {
             venueId = "venue-arena",
             categoryId = "cat-concert",
             time = "2026-04-06T17:00:00Z",
-            minPrice = 1500
+            minPrice = 1500,
+            hasSeatMap = true
         )
         private val sleepingBeauty = EventDto(
             id = "evt-003",
@@ -49,7 +51,8 @@ class FakeDiscoveryApiService : DiscoveryService {
             venueId = "venue-bolshoi",
             categoryId = "cat-theatre",
             time = "2026-04-07T14:00:00Z",
-            minPrice = 1800
+            minPrice = 1800,
+            hasSeatMap = true
         )
 
         // ---- tomorrow (2026-04-02) ----
@@ -60,7 +63,8 @@ class FakeDiscoveryApiService : DiscoveryService {
             venueId = "venue-theater",
             categoryId = "cat-theatre",
             time = "2026-04-02T15:00:00Z",
-            minPrice = 800
+            minPrice = 800,
+            hasSeatMap = true
         )
         private val blackPanther = EventDto(
             id = "evt-012",
@@ -69,7 +73,8 @@ class FakeDiscoveryApiService : DiscoveryService {
             venueId = "venue-cinema",
             categoryId = "cat-cinema",
             time = "2026-04-02T16:30:00Z",
-            minPrice = 350
+            minPrice = 350,
+            hasSeatMap = false
         )
 
         // ---- dayAfterTomorrow (2026-04-03) ----
@@ -80,7 +85,8 @@ class FakeDiscoveryApiService : DiscoveryService {
             venueId = "venue-arena",
             categoryId = "cat-concert",
             time = "2026-04-03T18:00:00Z",
-            minPrice = 1200
+            minPrice = 1200,
+            hasSeatMap = true
         )
 
         // ---- byCategory — Theatre ----
@@ -91,7 +97,8 @@ class FakeDiscoveryApiService : DiscoveryService {
             venueId = "venue-bolshoi",
             categoryId = "cat-theatre",
             time = "2026-04-08T13:00:00Z",
-            minPrice = 1600
+            minPrice = 1600,
+            hasSeatMap = true
         )
 
         // ---- byCategory — Cinema ----
@@ -102,7 +109,8 @@ class FakeDiscoveryApiService : DiscoveryService {
             venueId = "venue-cinema",
             categoryId = "cat-cinema",
             time = "2026-04-04T14:00:00Z",
-            minPrice = 350
+            minPrice = 350,
+            hasSeatMap = false
         )
         private val oppenheimer = EventDto(
             id = "evt-042",
@@ -111,7 +119,8 @@ class FakeDiscoveryApiService : DiscoveryService {
             venueId = "venue-cinema",
             categoryId = "cat-cinema",
             time = "2026-04-04T17:00:00Z",
-            minPrice = 350
+            minPrice = 350,
+            hasSeatMap = false
         )
 
         // ---- byCategory — Standup ----
@@ -122,7 +131,8 @@ class FakeDiscoveryApiService : DiscoveryService {
             venueId = "venue-club",
             categoryId = "cat-standup",
             time = "2026-04-05T19:00:00Z",
-            minPrice = 900
+            minPrice = 900,
+            hasSeatMap = false
         )
         private val standupBattle = EventDto(
             id = "evt-052",
@@ -131,7 +141,8 @@ class FakeDiscoveryApiService : DiscoveryService {
             venueId = "venue-club",
             categoryId = "cat-standup",
             time = "2026-04-09T19:00:00Z",
-            minPrice = 700
+            minPrice = 700,
+            hasSeatMap = false
         )
 
         // ---- byCategory — Exhibit ----
@@ -142,7 +153,8 @@ class FakeDiscoveryApiService : DiscoveryService {
             venueId = "venue-museum",
             categoryId = "cat-exhibit",
             time = "2026-04-10T10:00:00Z",
-            minPrice = 400
+            minPrice = 400,
+            hasSeatMap = false
         )
 
         val FEED = DiscoveryFeedResponseDto(
