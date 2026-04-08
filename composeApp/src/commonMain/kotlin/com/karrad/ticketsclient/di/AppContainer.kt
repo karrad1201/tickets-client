@@ -24,6 +24,9 @@ object AppContainer {
 
     private const val BASE_URL = "http://10.0.2.2:8080"
 
+    var isMock: Boolean = false
+        private set
+
     lateinit var authService: AuthService
         private set
 
@@ -38,6 +41,7 @@ object AppContainer {
     }
 
     fun init(useMock: Boolean) {
+        isMock = useMock
         val httpClient = createHttpClient()
         authService = if (useMock) {
             FakeAuthService()
