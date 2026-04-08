@@ -20,6 +20,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Phone
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -32,6 +33,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -44,9 +46,11 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import com.karrad.ticketsclient.di.AppContainer
 import com.karrad.ticketsclient.ui.navigation.MainScreen
 import com.karrad.ticketsclient.ui.navigation.RegisterScreen
 import com.karrad.ticketsclient.ui.navigation.SmsCodeScreen
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 import ticketsclient.composeapp.generated.resources.Res
 import ticketsclient.composeapp.generated.resources.ic_google
@@ -55,7 +59,10 @@ import ticketsclient.composeapp.generated.resources.ic_vk
 @Composable
 fun LoginScreen() {
     val navigator = LocalNavigator.currentOrThrow
+    val scope = rememberCoroutineScope()
     var phone by remember { mutableStateOf("") }
+    var loading by remember { mutableStateOf(false) }
+    var error by remember { mutableStateOf<String?>(null) }
 
     Box(
         modifier = Modifier
@@ -90,7 +97,7 @@ fun LoginScreen() {
 
             OutlinedTextField(
                 value = phone,
-                onValueChange = { phone = it },
+                onValueChange = { phone = it; error = null },
                 label = { Text("Номер телефона") },
                 placeholder = { Text("+7 (000) 000-00-00") },
                 leadingIcon = {
@@ -102,6 +109,8 @@ fun LoginScreen() {
                 },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                 singleLine = true,
+                isError = error != null,
+                supportingText = error?.let { { Text(it, color = MaterialTheme.colorScheme.error) } },
                 shape = RoundedCornerShape(12.dp),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = MaterialTheme.colorScheme.primary,
@@ -114,8 +123,21 @@ fun LoginScreen() {
             Spacer(modifier = Modifier.height(12.dp))
 
             Button(
-                onClick = { navigator.push(SmsCodeScreen(isRegistration = false)) },
-                enabled = phone.isNotBlank(),
+                onClick = {
+                    loading = true
+                    error = null
+                    scope.launch {
+                        try {
+                            AppContainer.authService.sendCode(phone)
+                            navigator.push(SmsCodeScreen(isRegistration = false, phone = phone))
+                        } catch (e: Exception) {
+                            error = "Не удалось отправить код. Проверьте номер."
+                        } finally {
+                            loading = false
+                        }
+                    }
+                },
+                enabled = phone.isNotBlank() && !loading,
                 shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(
@@ -124,7 +146,15 @@ fun LoginScreen() {
                     disabledContentColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.6f)
                 )
             ) {
-                Text("Войти", modifier = Modifier.padding(vertical = 4.dp))
+                if (loading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(18.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                } else {
+                    Text("Войти", modifier = Modifier.padding(vertical = 4.dp))
+                }
             }
         }
 
@@ -145,13 +175,10 @@ fun LoginScreen() {
             Spacer(modifier = Modifier.height(16.dp))
 
             Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
-                // VK
                 IconButton(
                     onClick = {},
                     enabled = false,
-                    modifier = Modifier
-                        .size(52.dp)
-                        .clip(CircleShape)
+                    modifier = Modifier.size(52.dp).clip(CircleShape)
                 ) {
                     Icon(
                         painter = painterResource(Res.drawable.ic_vk),
@@ -160,13 +187,8 @@ fun LoginScreen() {
                         modifier = Modifier.size(52.dp)
                     )
                 }
-
-                // Google
                 Surface(
-                    modifier = Modifier
-                        .size(52.dp)
-                        .clip(CircleShape)
-                        .border(1.dp, Color(0xFFE0E0E0), CircleShape),
+                    modifier = Modifier.size(52.dp).clip(CircleShape).border(1.dp, Color(0xFFE0E0E0), CircleShape),
                     color = Color.White
                 ) {
                     Box(contentAlignment = Alignment.Center) {
@@ -185,12 +207,8 @@ fun LoginScreen() {
             TextButton(onClick = { navigator.push(RegisterScreen) }) {
                 Text(
                     text = buildAnnotatedString {
-                        withStyle(SpanStyle(color = Color(0xFF8E8E93))) {
-                            append("Нет аккаунта? ")
-                        }
-                        withStyle(SpanStyle(color = MaterialTheme.colorScheme.primary)) {
-                            append("Зарегистрироваться")
-                        }
+                        withStyle(SpanStyle(color = Color(0xFF8E8E93))) { append("Нет аккаунта? ") }
+                        withStyle(SpanStyle(color = MaterialTheme.colorScheme.primary)) { append("Зарегистрироваться") }
                     },
                     style = MaterialTheme.typography.bodyMedium
                 )

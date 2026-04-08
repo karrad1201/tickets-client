@@ -3,21 +3,23 @@ package com.karrad.ticketsclient
 import com.karrad.ticketsclient.data.api.dto.EventDto
 
 /**
- * In-memory app session. Holds user-selected city, auth token and a short-lived
- * event reference used when navigating to EventDetailScreen.
+ * In-memory app session. Holds auth state and short-lived navigation data.
+ * Не переживает рестарт приложения — токен хранится только в памяти.
  */
 object AppSession {
-    var city: String = "Москва"
     var authToken: String? = null
+    var userId: String? = null
+
+    var city: String = "Москва"
 
     /** Set before pushing EventDetailScreen; read inside that screen. */
     var currentEvent: EventDto? = null
 
-    // Profile — хранится локально до появления реального API
-    var userName: String = "Иван Иванов"
-    var userPhone: String = "+7 (999) 123-45-67"
+    // Profile — заполняется при входе/регистрации
+    var userName: String = ""
+    var userPhone: String = ""
     var userCity: String = city
-    var userInterests: List<String> = listOf("Театры", "Кино", "Концерты")
+    var userInterests: List<String> = emptyList()
 
     // Кеш всех событий — заполняется FeedViewModel после загрузки, используется поиском
     var cachedEvents: List<EventDto> = emptyList()
@@ -29,6 +31,23 @@ object AppSession {
         MockTicket("t-003", "Дюна: Часть вторая", "Кинотеатр Октябрь", "2 мар 2026, 14:00", "Ряд 5, место 9", 350, TicketStatus.USED),
         MockTicket("t-004", "Вечер стендапа", "Известия Hall", "15 фев 2026, 19:00", "Балкон, место 4", 900, TicketStatus.USED)
     )
+
+    fun login(token: String, userId: String, phone: String, name: String?) {
+        this.authToken = token
+        this.userId = userId
+        this.userPhone = phone
+        this.userName = name ?: ""
+    }
+
+    fun logout() {
+        authToken = null
+        userId = null
+        userName = ""
+        userPhone = ""
+        userInterests = emptyList()
+        cachedEvents = emptyList()
+        currentEvent = null
+    }
 }
 
 data class MockTicket(

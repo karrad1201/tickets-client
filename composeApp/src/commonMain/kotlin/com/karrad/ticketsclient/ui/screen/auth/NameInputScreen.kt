@@ -29,6 +29,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import com.karrad.ticketsclient.AppSession
 import com.karrad.ticketsclient.ui.navigation.CitySelectionScreen
 
 @Composable
@@ -77,7 +78,10 @@ fun NameInputScreen() {
         Spacer(modifier = Modifier.height(16.dp))
 
         Button(
-            onClick = { navigator.push(CitySelectionScreen) },
+            onClick = {
+                AppSession.userName = name
+                navigator.push(CitySelectionScreen)
+            },
             enabled = name.isNotBlank(),
             shape = RoundedCornerShape(12.dp),
             modifier = Modifier.fillMaxWidth(),
