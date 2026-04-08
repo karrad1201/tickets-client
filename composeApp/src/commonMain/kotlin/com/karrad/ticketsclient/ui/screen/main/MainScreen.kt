@@ -36,10 +36,17 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import cafe.adriel.voyager.navigator.tab.CurrentTab
 import cafe.adriel.voyager.navigator.tab.LocalTabNavigator
 import cafe.adriel.voyager.navigator.tab.Tab
 import cafe.adriel.voyager.navigator.tab.TabNavigator
+import com.karrad.ticketsclient.AppSession
+import com.karrad.ticketsclient.di.AppContainer
 import com.karrad.ticketsclient.ui.screen.feed.FeedTab
 import com.karrad.ticketsclient.ui.screen.profile.ProfileTab
 import com.karrad.ticketsclient.ui.screen.scanner.ScannerTab
@@ -49,6 +56,20 @@ import kotlin.math.roundToInt
 
 @Composable
 fun MainScreen() {
+    // В mock-режиме таб сканера всегда виден.
+    // В prod — появляется только если пользователь состоит в организации.
+    var showScanner by remember { mutableStateOf(AppContainer.isMock) }
+
+    LaunchedEffect(Unit) {
+        if (!AppContainer.isMock) {
+            showScanner = try {
+                AppContainer.scannerService.getMyOrgEvents(AppSession.authToken).isNotEmpty()
+            } catch (e: Exception) {
+                false
+            }
+        }
+    }
+
     TabNavigator(tab = FeedTab) {
         Box(
             modifier = Modifier
@@ -59,15 +80,21 @@ fun MainScreen() {
             CurrentTab()
 
             // Плавающий нав-бар поверх контента
-            AppBottomBar(modifier = Modifier.align(Alignment.BottomCenter))
+            AppBottomBar(
+                showScanner = showScanner,
+                modifier = Modifier.align(Alignment.BottomCenter)
+            )
         }
     }
 }
 
 @Composable
-private fun AppBottomBar(modifier: Modifier = Modifier) {
+private fun AppBottomBar(showScanner: Boolean, modifier: Modifier = Modifier) {
     val tabNavigator = LocalTabNavigator.current
-    val tabs: List<Tab> = listOf(FeedTab, TicketsTab, ScannerTab, ProfileTab)
+    val tabs: List<Tab> = remember(showScanner) {
+        if (showScanner) listOf(FeedTab, TicketsTab, ScannerTab, ProfileTab)
+        else listOf(FeedTab, TicketsTab, ProfileTab)
+    }
     val selectedIndex = tabs.indexOfFirst { tabNavigator.current == it }.coerceAtLeast(0)
 
     val density = LocalDensity.current
