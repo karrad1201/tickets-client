@@ -64,22 +64,21 @@ import kotlinx.datetime.toLocalDateTime
 fun EventDetailScreen(eventId: String) {
     val navigator = LocalNavigator.currentOrThrow
     val scope = rememberCoroutineScope()
-    var event by remember { mutableStateOf(AppSession.currentEvent?.takeIf { it.id == eventId }) }
+    var loadedEvent by remember { mutableStateOf(AppSession.currentEvent?.takeIf { it.id == eventId }) }
     var buyLoading by remember { mutableStateOf(false) }
 
     LaunchedEffect(eventId) {
-        if (event == null) {
-            event = try { AppContainer.eventService.getEvent(eventId) } catch (_: Exception) { null }
+        if (loadedEvent == null) {
+            loadedEvent = try { AppContainer.eventService.getEvent(eventId) } catch (_: Exception) { null }
         }
     }
 
-    if (event == null) {
+    val event = loadedEvent ?: run {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator()
         }
         return
     }
-    @Suppress("NAME_SHADOWING") val event = event!!
 
     Box(
         modifier = Modifier
