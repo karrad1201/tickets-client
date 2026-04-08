@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.karrad.ticketsclient.AppSession
+import com.karrad.ticketsclient.ui.navigation.LoginScreen
 import com.karrad.ticketsclient.ui.navigation.AboutScreen
 import com.karrad.ticketsclient.ui.navigation.EditProfileScreen
 import com.karrad.ticketsclient.ui.navigation.FavoritesScreen
@@ -88,7 +89,10 @@ fun ProfileScreen() {
                     .size(36.dp)
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.primary)
-                    .clickable { /* TODO: выход */ },
+                    .clickable {
+                        AppSession.logout()
+                        rootNavigator.replaceAll(LoginScreen)
+                    },
                 contentAlignment = Alignment.Center
             ) {
                 Icon(

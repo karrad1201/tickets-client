@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -15,6 +16,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -24,19 +26,26 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
-import com.karrad.ticketsclient.ui.navigation.CitySelectionScreen
+import com.karrad.ticketsclient.AppSession
+import com.karrad.ticketsclient.di.AppContainer
+import com.karrad.ticketsclient.ui.navigation.MainScreen
 import com.karrad.ticketsclient.ui.navigation.NameInputScreen
+import kotlinx.coroutines.launch
 
 @Composable
-fun SmsCodeScreen(isRegistration: Boolean = false) {
+fun SmsCodeScreen(isRegistration: Boolean = false, phone: String = "") {
     val navigator = LocalNavigator.currentOrThrow
+    val scope = rememberCoroutineScope()
     var code by remember { mutableStateOf("") }
+    var loading by remember { mutableStateOf(false) }
+    var error by remember { mutableStateOf<String?>(null) }
 
     Column(
         modifier = Modifier
@@ -59,7 +68,7 @@ fun SmsCodeScreen(isRegistration: Boolean = false) {
 
         OutlinedTextField(
             value = code,
-            onValueChange = { if (it.length <= 4) code = it },
+            onValueChange = { if (it.length <= 4) { code = it; error = null } },
             label = { Text("Код") },
             leadingIcon = {
                 Icon(
@@ -70,6 +79,8 @@ fun SmsCodeScreen(isRegistration: Boolean = false) {
             },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
             singleLine = true,
+            isError = error != null,
+            supportingText = error?.let { { Text(it, color = MaterialTheme.colorScheme.error) } },
             shape = RoundedCornerShape(12.dp),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = MaterialTheme.colorScheme.primary,
@@ -83,10 +94,36 @@ fun SmsCodeScreen(isRegistration: Boolean = false) {
 
         Button(
             onClick = {
-                if (isRegistration) navigator.push(NameInputScreen)
-                else navigator.push(CitySelectionScreen)
+                loading = true
+                error = null
+                scope.launch {
+                    try {
+                        val response = if (isRegistration) {
+                            AppContainer.authService.register(phone, code)
+                        } else {
+                            AppContainer.authService.login(phone, code)
+                        }
+                        AppSession.login(
+                            token = response.token,
+                            userId = response.user.id,
+                            phone = response.user.phone,
+                            name = response.user.name
+                        )
+                        if (isRegistration) {
+                            // Новый пользователь — спрашиваем имя и город
+                            navigator.push(NameInputScreen)
+                        } else {
+                            // Существующий — сразу в приложение
+                            navigator.replaceAll(MainScreen)
+                        }
+                    } catch (e: Exception) {
+                        error = "Неверный код. Попробуйте ещё раз."
+                    } finally {
+                        loading = false
+                    }
+                }
             },
-            enabled = code.length == 4,
+            enabled = code.length == 4 && !loading,
             shape = RoundedCornerShape(12.dp),
             modifier = Modifier.fillMaxWidth(),
             colors = ButtonDefaults.buttonColors(
@@ -95,7 +132,15 @@ fun SmsCodeScreen(isRegistration: Boolean = false) {
                 disabledContentColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.6f)
             )
         ) {
-            Text("Продолжить", modifier = Modifier.padding(vertical = 4.dp))
+            if (loading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(18.dp),
+                    strokeWidth = 2.dp,
+                    color = MaterialTheme.colorScheme.onPrimary
+                )
+            } else {
+                Text("Продолжить", modifier = Modifier.padding(vertical = 4.dp))
+            }
         }
     }
 }
