@@ -26,7 +26,8 @@ data class EventDto(
     val time: String,
     val imageUrl: String? = null,
     val minPrice: Int? = null,
-    val ageRating: String? = null,   // TODO backend #25: "0+", "6+", "12+", "18+"
+    val ageRating: String? = null,
+    val hasSeatMap: Boolean = false,   // true → выбор мест; false → типы билетов
     val organizationId: String? = null,
     val salesClosedAt: String? = null
 )

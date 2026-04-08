@@ -46,17 +46,14 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.rememberCoroutineScope
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.karrad.ticketsclient.AppSession
-import com.karrad.ticketsclient.data.api.dto.EventDto
 import com.karrad.ticketsclient.di.AppContainer
-import com.karrad.ticketsclient.ui.navigation.OrderConfirmScreen
 import com.karrad.ticketsclient.ui.navigation.SeatMapScreen
+import com.karrad.ticketsclient.ui.navigation.TicketTypeScreen
 import com.karrad.ticketsclient.ui.screen.feed.EventImagePlaceholder
 import com.karrad.ticketsclient.ui.util.formatPrice
-import kotlinx.coroutines.launch
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -64,9 +61,7 @@ import kotlinx.datetime.toLocalDateTime
 @Composable
 fun EventDetailScreen(eventId: String) {
     val navigator = LocalNavigator.currentOrThrow
-    val scope = rememberCoroutineScope()
     var loadedEvent by remember { mutableStateOf(AppSession.currentEvent?.takeIf { it.id == eventId }) }
-    var buyLoading by remember { mutableStateOf(false) }
 
     LaunchedEffect(eventId) {
         if (loadedEvent == null) {
@@ -244,86 +239,39 @@ fun EventDetailScreen(eventId: String) {
             shadowElevation = 8.dp,
             color = MaterialTheme.colorScheme.surface
         ) {
-            Column(
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                // Основная кнопка — выбор мест
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(52.dp)
-                        .clip(RoundedCornerShape(14.dp))
-                        .background(MaterialTheme.colorScheme.primary)
-                        .clickable { navigator.push(SeatMapScreen(event.id)) },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 20.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            "Выбрать места",
-                            color = Color.White,
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 16.sp
-                        )
-                        event.minPrice?.let { price ->
-                            Text(
-                                "от ${price.formatPrice()} ₽",
-                                color = Color.White.copy(alpha = 0.9f),
-                                fontWeight = FontWeight.Medium,
-                                fontSize = 14.sp
-                            )
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                    .height(52.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(MaterialTheme.colorScheme.primary)
+                    .clickable {
+                        if (event.hasSeatMap) {
+                            navigator.push(SeatMapScreen(event.id))
+                        } else {
+                            navigator.push(TicketTypeScreen(event.id))
                         }
-                    }
-                }
-
-                // Вторичная — прямая покупка без выбора мест
-                Box(
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(44.dp)
-                        .clip(RoundedCornerShape(14.dp))
-                        .background(MaterialTheme.colorScheme.surfaceVariant)
-                        .clickable(enabled = !buyLoading) {
-                            buyLoading = true
-                            scope.launch {
-                                try {
-                                    val order = AppContainer.orderService.createOrder(
-                                        eventId = event.id,
-                                        authToken = AppSession.authToken ?: ""
-                                    )
-                                    navigator.push(
-                                        OrderConfirmScreen(
-                                            eventId = event.id,
-                                            orderId = order.id,
-                                            totalPrice = order.totalPrice
-                                        )
-                                    )
-                                } catch (_: Exception) {
-                                } finally {
-                                    buyLoading = false
-                                }
-                            }
-                        },
-                    contentAlignment = Alignment.Center
+                        .padding(horizontal = 20.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    if (buyLoading) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(18.dp),
-                            strokeWidth = 2.dp,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    } else {
+                    Text(
+                        "Выбрать",
+                        color = Color.White,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 16.sp
+                    )
+                    event.minPrice?.let { price ->
                         Text(
-                            "Купить без выбора мест",
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            "от ${price.formatPrice()} ₽",
+                            color = Color.White.copy(alpha = 0.9f),
                             fontWeight = FontWeight.Medium,
                             fontSize = 14.sp
                         )
