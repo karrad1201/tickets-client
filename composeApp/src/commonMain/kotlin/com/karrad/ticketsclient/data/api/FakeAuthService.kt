@@ -23,19 +23,19 @@ class FakeAuthService : AuthService {
             user = UserDto(
                 id = "fake-user-id",
                 phone = phone,
-                name = "Пользователь"
+                fullName = "Пользователь"
             )
         )
     }
 
-    override suspend fun register(phone: String, code: String): AuthResponseDto {
+    override suspend fun register(phone: String, code: String, fullName: String): AuthResponseDto {
         if (code == "0000") error("Неверный код")
         return AuthResponseDto(
             token = "fake-token-register",
             user = UserDto(
                 id = "fake-user-id-new",
                 phone = phone,
-                name = null
+                fullName = fullName
             )
         )
     }

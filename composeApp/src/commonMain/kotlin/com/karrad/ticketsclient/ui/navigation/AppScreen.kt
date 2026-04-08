@@ -22,9 +22,9 @@ data class SmsCodeScreen(val isRegistration: Boolean = false, val phone: String 
     )
 }
 
-object NameInputScreen : Screen {
+data class NameInputScreen(val phone: String = "", val code: String = "") : Screen {
     @androidx.compose.runtime.Composable
-    override fun Content() = com.karrad.ticketsclient.ui.screen.auth.NameInputScreen()
+    override fun Content() = com.karrad.ticketsclient.ui.screen.auth.NameInputScreen(phone, code)
 }
 
 object CitySelectionScreen : Screen {

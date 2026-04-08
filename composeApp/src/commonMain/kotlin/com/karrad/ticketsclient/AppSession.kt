@@ -32,11 +32,14 @@ object AppSession {
         MockTicket("t-004", "Вечер стендапа", "Известия Hall", "15 фев 2026, 19:00", "Балкон, место 4", 900, TicketStatus.USED)
     )
 
-    fun login(token: String, userId: String, phone: String, name: String?) {
+    var userRole: String = "USER"
+
+    fun login(token: String, userId: String, phone: String?, fullName: String, role: String) {
         this.authToken = token
         this.userId = userId
-        this.userPhone = phone
-        this.userName = name ?: ""
+        this.userPhone = phone ?: ""
+        this.userName = fullName
+        this.userRole = role
     }
 
     fun logout() {
@@ -44,6 +47,7 @@ object AppSession {
         userId = null
         userName = ""
         userPhone = ""
+        userRole = "USER"
         userInterests = emptyList()
         cachedEvents = emptyList()
         currentEvent = null

@@ -29,9 +29,9 @@ class AuthApiService(
             setBody(LoginRequest(phone, code))
         }.body()
 
-    override suspend fun register(phone: String, code: String): AuthResponseDto =
+    override suspend fun register(phone: String, code: String, fullName: String): AuthResponseDto =
         httpClient.post("$baseUrl/auth/register") {
             contentType(ContentType.Application.Json)
-            setBody(RegisterRequest(phone, code))
+            setBody(RegisterRequest(phone, code, fullName))
         }.body()
 }

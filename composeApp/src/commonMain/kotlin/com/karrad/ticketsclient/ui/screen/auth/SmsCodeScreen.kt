@@ -98,22 +98,19 @@ fun SmsCodeScreen(isRegistration: Boolean = false, phone: String = "") {
                 error = null
                 scope.launch {
                     try {
-                        val response = if (isRegistration) {
-                            AppContainer.authService.register(phone, code)
-                        } else {
-                            AppContainer.authService.login(phone, code)
-                        }
-                        AppSession.login(
-                            token = response.token,
-                            userId = response.user.id,
-                            phone = response.user.phone,
-                            name = response.user.name
-                        )
                         if (isRegistration) {
-                            // Новый пользователь — спрашиваем имя и город
-                            navigator.push(NameInputScreen)
+                            // Имя собираем на следующем экране — регистрацию вызывает NameInputScreen
+                            navigator.push(NameInputScreen(phone = phone, code = code))
+                            loading = false
                         } else {
-                            // Существующий — сразу в приложение
+                            val response = AppContainer.authService.login(phone, code)
+                            AppSession.login(
+                                token = response.token,
+                                userId = response.user.id,
+                                phone = response.user.phone,
+                                fullName = response.user.fullName,
+                                role = response.user.role
+                            )
                             navigator.replaceAll(MainScreen)
                         }
                     } catch (e: Exception) {
