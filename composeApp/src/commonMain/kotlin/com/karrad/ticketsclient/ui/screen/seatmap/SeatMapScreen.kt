@@ -32,6 +32,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.ConfirmationNumber
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -54,10 +55,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.runtime.rememberCoroutineScope
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.karrad.ticketsclient.AppSession
+import com.karrad.ticketsclient.di.AppContainer
+import com.karrad.ticketsclient.ui.navigation.OrderConfirmScreen
 import com.karrad.ticketsclient.ui.util.formatPrice
+import kotlinx.coroutines.launch
 
 // ─── Модели ────────────────────────────────────────────────────────────────────
 
@@ -89,11 +94,13 @@ private fun seatLabel(row: Int, col: Int) = "${rowLabel(row)}${col + 1}"
 @Composable
 fun SeatMapScreen(eventId: String) {
     val navigator = LocalNavigator.currentOrThrow
+    val scope = rememberCoroutineScope()
     val event = AppSession.currentEvent
 
     val allSeats = remember { buildSeats() }
     var selectedTime by remember { mutableStateOf(SESSION_TIMES[1]) }
     var selectedSeats by remember { mutableStateOf(setOf<Seat>()) }
+    var buyLoading by remember { mutableStateOf(false) }
 
     var scale by remember { mutableFloatStateOf(1f) }
     var offset by remember { mutableStateOf(Offset.Zero) }
@@ -290,34 +297,62 @@ fun SeatMapScreen(eventId: String) {
                             .height(52.dp)
                             .clip(RoundedCornerShape(14.dp))
                             .background(
-                                if (selectedSeats.isEmpty())
+                                if (selectedSeats.isEmpty() || buyLoading)
                                     MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
                                 else
                                     MaterialTheme.colorScheme.primary
                             )
-                            .clickable(enabled = selectedSeats.isNotEmpty()) { },
+                            .clickable(enabled = selectedSeats.isNotEmpty() && !buyLoading) {
+                                buyLoading = true
+                                scope.launch {
+                                    try {
+                                        val order = AppContainer.orderService.createOrder(
+                                            eventId = eventId,
+                                            authToken = AppSession.authToken ?: ""
+                                        )
+                                        navigator.push(
+                                            OrderConfirmScreen(
+                                                eventId = eventId,
+                                                orderId = order.id,
+                                                totalPrice = totalPrice
+                                            )
+                                        )
+                                    } catch (_: Exception) {
+                                    } finally {
+                                        buyLoading = false
+                                    }
+                                }
+                            },
                         contentAlignment = Alignment.Center
                     ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 20.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                "Купить билеты",
-                                color = Color.White,
-                                fontWeight = FontWeight.SemiBold,
-                                fontSize = 16.sp
+                        if (buyLoading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(22.dp),
+                                strokeWidth = 2.dp,
+                                color = Color.White
                             )
-                            if (selectedSeats.isNotEmpty()) {
+                        } else {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 20.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
                                 Text(
-                                    "${totalPrice.formatPrice()} ₽",
-                                    color = Color.White.copy(alpha = 0.9f),
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 15.sp
+                                    "Купить билеты",
+                                    color = Color.White,
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 16.sp
                                 )
+                                if (selectedSeats.isNotEmpty()) {
+                                    Text(
+                                        "${totalPrice.formatPrice()} ₽",
+                                        color = Color.White.copy(alpha = 0.9f),
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 15.sp
+                                    )
+                                }
                             }
                         }
                     }
