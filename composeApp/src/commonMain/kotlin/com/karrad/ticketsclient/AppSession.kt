@@ -27,6 +27,12 @@ object AppSession {
     // Кеш всех событий — заполняется FeedViewModel после загрузки, используется поиском
     var cachedEvents: List<EventDto> = emptyList()
 
+    // Кеш билетов для автономного режима — обновляется при каждом успешном запросе
+    var cachedTickets: List<com.karrad.ticketsclient.data.api.dto.TicketDto> by mutableStateOf(emptyList())
+
+    // true если последний запрос к API завершился ошибкой сети
+    var isOffline: Boolean by mutableStateOf(false)
+
     // Локальное избранное (in-memory до реализации бэка, issue #22)
     private val _favorites = mutableSetOf<String>()
     fun isFavorite(eventId: String): Boolean = eventId in _favorites
