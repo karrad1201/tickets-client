@@ -25,6 +25,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.FilterList
 import androidx.compose.material.icons.outlined.LocationOn
@@ -349,6 +350,7 @@ private fun EventCard(
     onClick: () -> Unit
 ) {
     val widthMod = if (cardWidth != null) Modifier.width(cardWidth) else Modifier.fillMaxWidth()
+    var isFav by remember { mutableStateOf(AppSession.isFavorite(event.id)) }
 
     Column(modifier = widthMod.clickable { onClick() }) {
         // ── Фото ──────────────────────────────────────────────────────────────
@@ -384,12 +386,15 @@ private fun EventCard(
                     .size(28.dp)
                     .clip(CircleShape)
                     .background(Color.Black.copy(alpha = 0.35f))
-                    .clickable { /* TODO: избранное */ }
+                    .clickable {
+                        isFav = !isFav
+                        AppSession.toggleFavorite(event.id, isFav)
+                    }
             ) {
                 Icon(
-                    Icons.Outlined.FavoriteBorder,
-                    contentDescription = "В избранное",
-                    tint = Color.White,
+                    if (isFav) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
+                    contentDescription = if (isFav) "Убрать из избранного" else "В избранное",
+                    tint = if (isFav) Color(0xFFFF4D6D) else Color.White,
                     modifier = Modifier
                         .size(15.dp)
                         .align(Alignment.Center)
