@@ -1,5 +1,6 @@
 package com.karrad.ticketsclient.ui.screen.feed
 
+import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.karrad.ticketsclient.AppSession
@@ -8,6 +9,7 @@ import com.karrad.ticketsclient.data.api.dto.DiscoveryFeedResponseDto
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
 sealed interface FeedState {
@@ -24,7 +26,11 @@ class FeedViewModel(
     val state: StateFlow<FeedState> = _state.asStateFlow()
 
     init {
-        load()
+        viewModelScope.launch {
+            snapshotFlow { AppSession.city }
+                .distinctUntilChanged()
+                .collect { load() }
+        }
     }
 
     fun load() {
