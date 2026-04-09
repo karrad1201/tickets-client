@@ -128,6 +128,7 @@ fun TicketsScreen() {
             TicketsPager(
                 tickets = current,
                 isArchived = selectedTab == 1,
+                modifier = Modifier.weight(1f),
                 onTicketClick = { ticket ->
                     val event = AppSession.cachedEvents.find { it.label == ticket.eventLabel }
                         ?: EventDto(
@@ -154,16 +155,22 @@ fun TicketsScreen() {
 private fun TicketsPager(
     tickets: List<TicketDto>,
     isArchived: Boolean,
+    modifier: Modifier = Modifier,
     onTicketClick: (TicketDto) -> Unit
 ) {
     val pagerState = rememberPagerState { tickets.size }
 
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
         HorizontalPager(
             state = pagerState,
             contentPadding = PaddingValues(horizontal = 16.dp),
             pageSpacing = 12.dp,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
         ) { page ->
             TicketCard(
                 ticket = tickets[page],
