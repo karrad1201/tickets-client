@@ -35,10 +35,11 @@ class FeedViewModel(
                     city = AppSession.city,
                     authToken = AppSession.authToken
                 )
-                // Кешируем все события для поиска
                 AppSession.cachedEvents = (feed.forYou + feed.byCategory.flatMap { it.events }).distinctBy { it.id }
+                AppSession.isOffline = false
                 _state.value = FeedState.Success(feed)
             } catch (e: Exception) {
+                AppSession.isOffline = true
                 _state.value = FeedState.Error(e.message ?: "Ошибка загрузки ленты")
             }
         }

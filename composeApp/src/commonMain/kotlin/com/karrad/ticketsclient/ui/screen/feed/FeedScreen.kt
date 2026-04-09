@@ -61,6 +61,7 @@ import com.karrad.ticketsclient.data.api.dto.EventDto
 import com.karrad.ticketsclient.di.AppContainer
 import com.karrad.ticketsclient.ui.navigation.EventDetailScreen
 import com.karrad.ticketsclient.ui.navigation.SearchScreen
+import com.karrad.ticketsclient.ui.screen.tickets.OfflineBanner
 import com.karrad.ticketsclient.ui.util.formatPrice
 import kotlinx.datetime.Clock
 import kotlinx.datetime.DateTimeUnit
@@ -98,6 +99,10 @@ fun FeedScreen() {
             onFilterClick = { showFilters = true },
             onCityClick = { rootNavigator.push(com.karrad.ticketsclient.ui.navigation.CityPickerScreen) }
         )
+
+        if (AppSession.isOffline) {
+            OfflineBanner("Нет подключения · афиша недоступна")
+        }
 
         when (val s = state) {
             is FeedState.Loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

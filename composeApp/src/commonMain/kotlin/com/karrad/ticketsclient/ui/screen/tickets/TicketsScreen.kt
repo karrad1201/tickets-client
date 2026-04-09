@@ -60,12 +60,25 @@ fun TicketsScreen() {
     var tickets by remember { mutableStateOf<List<TicketDto>>(emptyList()) }
     var loading by remember { mutableStateOf(true) }
     var selectedTab by remember { mutableIntStateOf(0) }
+    var isFromCache by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         try {
-            tickets = AppContainer.ticketService.getMyTickets(AppSession.authToken ?: "")
+            val loaded = AppContainer.ticketService.getMyTickets(AppSession.authToken ?: "")
+            tickets = loaded
+            AppSession.cachedTickets = loaded   // обновляем кеш при успехе
+            AppSession.isOffline = false
+            isFromCache = false
         } catch (_: Exception) {
-            tickets = emptyList()
+            // Нет сети — показываем кешированные билеты
+            if (AppSession.cachedTickets.isNotEmpty()) {
+                tickets = AppSession.cachedTickets
+                isFromCache = true
+            } else {
+                tickets = emptyList()
+                isFromCache = false
+            }
+            AppSession.isOffline = true
         } finally {
             loading = false
         }
@@ -87,6 +100,11 @@ fun TicketsScreen() {
             style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp)
         )
+
+        // ─── Offline banner ───────────────────────────────────────────────────
+        if (isFromCache) {
+            OfflineBanner()
+        }
 
         // ─── Pill tabs ────────────────────────────────────────────────────────
         Row(
@@ -479,6 +497,31 @@ private fun EmptyTickets(isUpcoming: Boolean) {
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
+        )
+    }
+}
+
+// ─── Оффлайн-баннер ────────────────────────────────────────────────────────────
+
+@Composable
+fun OfflineBanner(message: String = "Нет подключения · показаны сохранённые данные") {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.errorContainer)
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Text(
+            text = "⚠",
+            color = MaterialTheme.colorScheme.onErrorContainer,
+            style = MaterialTheme.typography.bodySmall
+        )
+        Text(
+            text = message,
+            color = MaterialTheme.colorScheme.onErrorContainer,
+            style = MaterialTheme.typography.bodySmall
         )
     }
 }
