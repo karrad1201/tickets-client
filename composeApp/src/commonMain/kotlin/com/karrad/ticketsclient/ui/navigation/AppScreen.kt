@@ -1,6 +1,8 @@
 package com.karrad.ticketsclient.ui.navigation
 
 import cafe.adriel.voyager.core.screen.Screen
+import cafe.adriel.voyager.navigator.LocalNavigator
+import cafe.adriel.voyager.navigator.currentOrThrow
 
 // Auth — Login flow
 object LoginScreen : Screen {
@@ -30,6 +32,17 @@ data class NameInputScreen(val phone: String = "", val code: String = "") : Scre
 object CitySelectionScreen : Screen {
     @androidx.compose.runtime.Composable
     override fun Content() = com.karrad.ticketsclient.ui.screen.auth.CitySelectionScreen()
+}
+
+// Смена города из главной ленты (pop после выбора, без перехода на Interests)
+object CityPickerScreen : Screen {
+    @androidx.compose.runtime.Composable
+    override fun Content() {
+        val navigator = LocalNavigator.currentOrThrow
+        com.karrad.ticketsclient.ui.screen.auth.CitySelectionScreen(
+            onCitySelected = { navigator.pop() }
+        )
+    }
 }
 
 object InterestsScreen : Screen {

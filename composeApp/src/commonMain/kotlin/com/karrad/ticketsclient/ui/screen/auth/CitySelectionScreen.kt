@@ -35,8 +35,12 @@ import com.karrad.ticketsclient.data.api.dto.CityDto
 import com.karrad.ticketsclient.di.AppContainer
 import com.karrad.ticketsclient.ui.navigation.InterestsScreen
 
+/**
+ * @param onCitySelected если передан — вызывается вместо перехода на InterestsScreen.
+ *   Используется при смене города из главной ленты.
+ */
 @Composable
-fun CitySelectionScreen() {
+fun CitySelectionScreen(onCitySelected: ((String) -> Unit)? = null) {
     val navigator = LocalNavigator.currentOrThrow
 
     var allCities by remember { mutableStateOf<List<CityDto>>(emptyList()) }
@@ -108,8 +112,14 @@ fun CitySelectionScreen() {
 
         Button(
             onClick = {
-                selectedCity?.let { AppSession.city = it.name }
-                navigator.push(InterestsScreen)
+                selectedCity?.let { city ->
+                    AppSession.city = city.name
+                    if (onCitySelected != null) {
+                        onCitySelected(city.name)
+                    } else {
+                        navigator.push(InterestsScreen)
+                    }
+                }
             },
             enabled = selectedCity != null,
             shape = RoundedCornerShape(12.dp),
