@@ -1,5 +1,8 @@
 package com.karrad.ticketsclient
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import com.karrad.ticketsclient.data.api.dto.EventDto
 
 /**
@@ -10,7 +13,7 @@ object AppSession {
     var authToken: String? = null
     var userId: String? = null
 
-    var city: String = "Москва"
+    var city: String by mutableStateOf("Москва")
 
     /** Set before pushing EventDetailScreen; read inside that screen. */
     var currentEvent: EventDto? = null

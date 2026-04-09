@@ -95,7 +95,8 @@ fun FeedScreen() {
     ) {
         FeedHeader(
             onSearchClick = { searchNavigator.push(SearchScreen) },
-            onFilterClick = { showFilters = true }
+            onFilterClick = { showFilters = true },
+            onCityClick = { rootNavigator.push(com.karrad.ticketsclient.ui.navigation.CityPickerScreen) }
         )
 
         when (val s = state) {
@@ -127,7 +128,11 @@ fun FeedScreen() {
 // ─── Header ────────────────────────────────────────────────────────────────────
 
 @Composable
-private fun FeedHeader(onSearchClick: () -> Unit = {}, onFilterClick: () -> Unit = {}) {
+private fun FeedHeader(
+    onSearchClick: () -> Unit = {},
+    onFilterClick: () -> Unit = {},
+    onCityClick: () -> Unit = {}
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -135,18 +140,26 @@ private fun FeedHeader(onSearchClick: () -> Unit = {}, onFilterClick: () -> Unit
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(
-            Icons.Outlined.LocationOn,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(18.dp)
-        )
-        Spacer(Modifier.width(4.dp))
-        Text(
-            text = AppSession.city,
-            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
-            modifier = Modifier.weight(1f)
-        )
+        Row(
+            modifier = Modifier
+                .clip(RoundedCornerShape(8.dp))
+                .clickable { onCityClick() }
+                .padding(horizontal = 4.dp, vertical = 2.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                Icons.Outlined.LocationOn,
+                contentDescription = "Сменить город",
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(18.dp)
+            )
+            Spacer(Modifier.width(4.dp))
+            Text(
+                text = AppSession.city,
+                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold)
+            )
+        }
+        Spacer(Modifier.weight(1f))
         IconButton(
             onClick = onSearchClick,
             modifier = Modifier
