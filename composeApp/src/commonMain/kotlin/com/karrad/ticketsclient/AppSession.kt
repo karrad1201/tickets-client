@@ -27,6 +27,13 @@ object AppSession {
     // Кеш всех событий — заполняется FeedViewModel после загрузки, используется поиском
     var cachedEvents: List<EventDto> = emptyList()
 
+    // Локальное избранное (in-memory до реализации бэка, issue #22)
+    private val _favorites = mutableSetOf<String>()
+    fun isFavorite(eventId: String): Boolean = eventId in _favorites
+    fun toggleFavorite(eventId: String, add: Boolean) {
+        if (add) _favorites.add(eventId) else _favorites.remove(eventId)
+    }
+
     var userRole: String = "USER"
 
     fun login(token: String, userId: String, phone: String?, fullName: String, role: String) {

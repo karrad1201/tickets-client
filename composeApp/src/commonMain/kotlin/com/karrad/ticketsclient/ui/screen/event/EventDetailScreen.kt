@@ -20,9 +20,13 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.outlined.CalendarMonth
+import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
@@ -62,6 +66,12 @@ import kotlinx.datetime.toLocalDateTime
 fun EventDetailScreen(eventId: String) {
     val navigator = LocalNavigator.currentOrThrow
     var loadedEvent by remember { mutableStateOf(AppSession.currentEvent?.takeIf { it.id == eventId }) }
+    var isFavorite by remember { mutableStateOf(AppSession.isFavorite(eventId)) }
+    val favoriteColor by animateColorAsState(
+        targetValue = if (isFavorite) Color(0xFFE53935) else Color.Black,
+        animationSpec = tween(200),
+        label = "favColor"
+    )
 
     LaunchedEffect(eventId) {
         if (loadedEvent == null) {
@@ -106,22 +116,48 @@ fun EventDetailScreen(eventId: String) {
                         )
                 )
 
-                // Кнопка назад
-                Box(
+                // Кнопки: назад (слева) + избранное (справа)
+                Row(
                     modifier = Modifier
+                        .fillMaxWidth()
                         .windowInsetsPadding(WindowInsets.statusBars)
                         .padding(12.dp)
-                        .size(36.dp)
-                        .clip(CircleShape)
-                        .background(Color.White.copy(alpha = 0.85f))
                         .align(Alignment.TopStart),
-                    contentAlignment = Alignment.Center
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    IconButton(onClick = { navigator.pop() }) {
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(Color.White.copy(alpha = 0.85f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        IconButton(onClick = { navigator.pop() }) {
+                            Icon(
+                                Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Назад",
+                                tint = Color.Black,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(Color.White.copy(alpha = 0.85f))
+                            .clickable {
+                                isFavorite = !isFavorite
+                                AppSession.toggleFavorite(eventId, isFavorite)
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
                         Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Назад",
-                            tint = Color.Black,
+                            imageVector = if (isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
+                            contentDescription = if (isFavorite) "Убрать из избранного" else "В избранное",
+                            tint = favoriteColor,
                             modifier = Modifier.size(18.dp)
                         )
                     }
