@@ -22,10 +22,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ConfirmationNumber
 import androidx.compose.material.icons.outlined.DateRange
 import androidx.compose.material.icons.outlined.LocationOn
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -310,16 +314,26 @@ private fun TicketCard(ticket: TicketDto, isArchived: Boolean, onClick: () -> Un
                     Spacer(Modifier.height(12.dp))
                 }
 
-                QrCode(modifier = Modifier.size(160.dp))
+                var showQrFullscreen by remember { mutableStateOf(false) }
+
+                QrCode(
+                    modifier = Modifier
+                        .size(160.dp)
+                        .clickable { showQrFullscreen = true }
+                )
 
                 Spacer(Modifier.height(8.dp))
 
                 Text(
-                    "Покажите QR-код на входе",
+                    "Нажмите на QR, чтобы увеличить",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(Modifier.height(8.dp))
+
+                if (showQrFullscreen) {
+                    QrFullscreenDialog(onDismiss = { showQrFullscreen = false })
+                }
             }
         }
     }
@@ -327,48 +341,109 @@ private fun TicketCard(ticket: TicketDto, isArchived: Boolean, onClick: () -> Un
 
 // ─── QR-код ────────────────────────────────────────────────────────────────────
 
+// QR-паттерн вынесен на уровень файла — один экземпляр для всех вызовов
+private val QR_PATTERN = listOf(
+    listOf(1,1,1,1,1,1,1,0,1,0,1,0,1,1,1,1,1,1,1),
+    listOf(1,0,0,0,0,0,1,0,0,1,0,1,1,0,0,0,0,0,1),
+    listOf(1,0,1,1,1,0,1,0,1,0,1,0,1,0,1,1,1,0,1),
+    listOf(1,0,1,1,1,0,1,0,0,1,1,0,1,0,1,1,1,0,1),
+    listOf(1,0,1,1,1,0,1,0,1,1,0,1,1,0,1,1,1,0,1),
+    listOf(1,0,0,0,0,0,1,0,0,0,1,0,1,0,0,0,0,0,1),
+    listOf(1,1,1,1,1,1,1,0,1,0,1,0,1,1,1,1,1,1,1),
+    listOf(0,0,0,0,0,0,0,0,1,1,0,1,0,0,0,0,0,0,0),
+    listOf(1,0,1,1,0,1,1,1,0,1,1,0,1,1,0,1,1,1,0),
+    listOf(0,1,0,0,1,0,0,0,1,0,0,1,0,0,1,0,0,0,1),
+    listOf(1,1,0,1,0,1,1,0,1,1,0,0,1,0,1,1,0,1,1),
+    listOf(0,0,0,0,0,0,0,0,1,0,1,1,0,1,1,0,1,0,0),
+    listOf(1,1,1,1,1,1,1,0,0,1,0,1,1,0,0,1,0,1,0),
+    listOf(1,0,0,0,0,0,1,0,1,0,1,0,0,1,1,0,1,0,1),
+    listOf(1,0,1,1,1,0,1,0,0,1,1,1,0,1,0,1,0,1,0),
+    listOf(1,0,1,1,1,0,1,0,1,0,0,0,1,0,1,0,1,0,1),
+    listOf(1,0,1,1,1,0,1,0,0,1,0,1,1,1,0,1,1,1,0),
+    listOf(1,0,0,0,0,0,1,0,1,1,1,0,0,0,1,0,0,0,1),
+    listOf(1,1,1,1,1,1,1,0,0,0,1,1,0,1,0,1,0,1,0),
+)
+
+/**
+ * Отрисовка QR-кода.
+ * Ячейка: [cellDp]dp, зазор [gapDp]dp.
+ * Итоговый размер сетки: 19 * cellDp + 18 * gapDp.
+ * При cellDp=6, gapDp=1 → 114 + 18 = 132dp — помещается в 136dp (160 - 2*12 padding).
+ */
 @Composable
-private fun QrCode(modifier: Modifier = Modifier) {
+private fun QrCode(modifier: Modifier = Modifier, cellDp: Float = 6f, gapDp: Float = 1f) {
+    // Белый фон с rounded corners — clip ДО background, чтобы скруглить именно фон
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(12.dp))
-            .background(Color.White)
+            .background(Color.White, RoundedCornerShape(12.dp))
             .padding(12.dp),
         contentAlignment = Alignment.Center
     ) {
-        val pattern = listOf(
-            listOf(1,1,1,1,1,1,1,0,1,0,1,0,1,1,1,1,1,1,1),
-            listOf(1,0,0,0,0,0,1,0,0,1,0,1,1,0,0,0,0,0,1),
-            listOf(1,0,1,1,1,0,1,0,1,0,1,0,1,0,1,1,1,0,1),
-            listOf(1,0,1,1,1,0,1,0,0,1,1,0,1,0,1,1,1,0,1),
-            listOf(1,0,1,1,1,0,1,0,1,1,0,1,1,0,1,1,1,0,1),
-            listOf(1,0,0,0,0,0,1,0,0,0,1,0,1,0,0,0,0,0,1),
-            listOf(1,1,1,1,1,1,1,0,1,0,1,0,1,1,1,1,1,1,1),
-            listOf(0,0,0,0,0,0,0,0,1,1,0,1,0,0,0,0,0,0,0),
-            listOf(1,0,1,1,0,1,1,1,0,1,1,0,1,1,0,1,1,1,0),
-            listOf(0,1,0,0,1,0,0,0,1,0,0,1,0,0,1,0,0,0,1),
-            listOf(1,1,0,1,0,1,1,0,1,1,0,0,1,0,1,1,0,1,1),
-            listOf(0,0,0,0,0,0,0,0,1,0,1,1,0,1,1,0,1,0,0),
-            listOf(1,1,1,1,1,1,1,0,0,1,0,1,1,0,0,1,0,1,0),
-            listOf(1,0,0,0,0,0,1,0,1,0,1,0,0,1,1,0,1,0,1),
-            listOf(1,0,1,1,1,0,1,0,0,1,1,1,0,1,0,1,0,1,0),
-            listOf(1,0,1,1,1,0,1,0,1,0,0,0,1,0,1,0,1,0,1),
-            listOf(1,0,1,1,1,0,1,0,0,1,0,1,1,1,0,1,1,1,0),
-            listOf(1,0,0,0,0,0,1,0,1,1,1,0,0,0,1,0,0,0,1),
-            listOf(1,1,1,1,1,1,1,0,0,0,1,1,0,1,0,1,0,1,0),
-        )
-        Column(verticalArrangement = Arrangement.spacedBy(1.5.dp)) {
-            pattern.forEach { row ->
-                Row(horizontalArrangement = Arrangement.spacedBy(1.5.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(gapDp.dp)) {
+            QR_PATTERN.forEach { row ->
+                Row(horizontalArrangement = Arrangement.spacedBy(gapDp.dp)) {
                     row.forEach { cell ->
                         Box(
                             Modifier
-                                .size(6.dp)
-                                .clip(RoundedCornerShape(1.dp))
-                                .background(if (cell == 1) Color.Black else Color.White)
+                                .size(cellDp.dp)
+                                .background(
+                                    color = if (cell == 1) Color.Black else Color.White,
+                                    shape = RoundedCornerShape(1.dp)
+                                )
                         )
                     }
                 }
+            }
+        }
+    }
+}
+
+// ─── Fullscreen QR диалог ──────────────────────────────────────────────────────
+
+@Composable
+private fun QrFullscreenDialog(onDismiss: () -> Unit) {
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.92f))
+                .clickable { onDismiss() },
+            contentAlignment = Alignment.Center
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                // QR увеличен: cellDp=14, gapDp=2 → 19*14 + 18*2 = 266+36 = 302dp + 32dp padding = 334dp
+                QrCode(
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .clickable { /* не пропускать клик наружу */ },
+                    cellDp = 14f,
+                    gapDp = 2f
+                )
+                Spacer(Modifier.height(24.dp))
+                Text(
+                    "Нажмите для закрытия",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.White.copy(alpha = 0.6f)
+                )
+            }
+
+            // Кнопка закрыть
+            IconButton(
+                onClick = onDismiss,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(16.dp)
+                    .statusBarsPadding()
+            ) {
+                Icon(
+                    Icons.Filled.Close,
+                    contentDescription = "Закрыть",
+                    tint = Color.White,
+                    modifier = Modifier.size(28.dp)
+                )
             }
         }
     }
