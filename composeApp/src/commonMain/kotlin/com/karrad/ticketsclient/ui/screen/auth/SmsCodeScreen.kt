@@ -109,7 +109,9 @@ fun SmsCodeScreen(isRegistration: Boolean = false, phone: String = "") {
                                 userId = response.user.id,
                                 phone = response.user.phone,
                                 fullName = response.user.fullName,
-                                role = response.user.role
+                                role = response.user.role,
+                                avatarUrl = response.user.avatarUrl,
+                                interests = response.user.interests
                             )
                             navigator.replaceAll(MainScreen)
                         }

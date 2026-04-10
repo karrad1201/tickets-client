@@ -7,6 +7,7 @@ interface DiscoveryService {
         city: String,
         authToken: String? = null,
         page: Int = 0,
-        size: Int = 20
+        size: Int = 20,
+        date: String? = null
     ): DiscoveryFeedResponseDto
 }

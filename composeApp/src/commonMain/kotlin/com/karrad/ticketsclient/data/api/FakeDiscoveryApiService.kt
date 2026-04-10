@@ -11,7 +11,8 @@ class FakeDiscoveryApiService : DiscoveryService {
         city: String,
         authToken: String?,
         page: Int,
-        size: Int
+        size: Int,
+        date: String?
     ): DiscoveryFeedResponseDto {
         return FEED
     }

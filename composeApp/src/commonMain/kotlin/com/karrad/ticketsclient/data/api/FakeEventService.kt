@@ -1,6 +1,7 @@
 package com.karrad.ticketsclient.data.api
 
 import com.karrad.ticketsclient.data.api.dto.EventDto
+import com.karrad.ticketsclient.data.api.dto.TicketTypeDto
 
 /**
  * Мок-реализация для разработки без бекенда.
@@ -23,4 +24,10 @@ class FakeEventService : EventService {
             it.label.contains(query, ignoreCase = true) ||
                 it.description.contains(query, ignoreCase = true)
         }
+
+    override suspend fun getTicketTypes(eventId: String): List<TicketTypeDto> = listOf(
+        TicketTypeDto("tt-1", "Входной билет", 500, 100, 87),
+        TicketTypeDto("tt-2", "Льготный", 250, 50, 42),
+        TicketTypeDto("tt-3", "Семейный", 1200, 20, 15)
+    )
 }

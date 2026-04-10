@@ -122,10 +122,16 @@ fun FeedScreen() {
                 }
             }
             is FeedState.Success -> {
-                FeedContent(feed = s.feed, onEventClick = { event ->
-                    AppSession.currentEvent = event
-                    rootNavigator.push(EventDetailScreen(event.id))
-                })
+                val selectedDay by viewModel.selectedDay.collectAsState()
+                FeedContent(
+                    feed = s.feed,
+                    selectedDay = selectedDay,
+                    onDaySelect = { viewModel.selectDay(it) },
+                    onEventClick = { event ->
+                        AppSession.currentEvent = event
+                        rootNavigator.push(EventDetailScreen(event.id))
+                    }
+                )
             }
         }
     }
@@ -246,15 +252,18 @@ private fun DayOfWeek.shortRu(): String = when (this) {
 // ─── Feed content ──────────────────────────────────────────────────────────────
 
 @Composable
-private fun FeedContent(feed: DiscoveryFeedResponseDto, onEventClick: (EventDto) -> Unit) {
-    var selectedDay by remember { mutableStateOf(0) }
-
+private fun FeedContent(
+    feed: DiscoveryFeedResponseDto,
+    selectedDay: Int,
+    onDaySelect: (Int) -> Unit,
+    onEventClick: (EventDto) -> Unit
+) {
     LazyColumn(
         modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
         contentPadding = PaddingValues(bottom = 96.dp) // место под плавающий нав-бар
     ) {
         stickyHeader {
-            DateStrip(selectedDay = selectedDay, onDaySelect = { selectedDay = it })
+            DateStrip(selectedDay = selectedDay, onDaySelect = onDaySelect)
         }
 
         if (feed.forYou.isNotEmpty()) {

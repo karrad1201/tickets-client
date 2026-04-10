@@ -18,6 +18,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.Check
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -32,6 +33,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,6 +44,8 @@ import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.karrad.ticketsclient.AppSession
+import com.karrad.ticketsclient.di.AppContainer
+import kotlinx.coroutines.launch
 
 private val ALL_INTERESTS = listOf(
     "Театры", "Кино", "Концерты", "Стендап", "Выставки",
@@ -52,12 +56,15 @@ private val ALL_INTERESTS = listOf(
 @Composable
 fun EditProfileScreen() {
     val navigator = LocalNavigator.currentOrThrow
+    val scope = rememberCoroutineScope()
 
     var nameValue by remember { mutableStateOf(TextFieldValue(AppSession.userName)) }
     val name = nameValue.text
     var cityValue by remember { mutableStateOf(TextFieldValue(AppSession.userCity)) }
     val city = cityValue.text
     var selectedInterests by remember { mutableStateOf(AppSession.userInterests.toSet()) }
+    var saving by remember { mutableStateOf(false) }
+    var saveError by remember { mutableStateOf<String?>(null) }
 
     Column(
         modifier = Modifier
@@ -160,20 +167,59 @@ fun EditProfileScreen() {
             Spacer(Modifier.height(32.dp))
 
             // ─── Save button ─────────────────────────────────────────────────
+            if (saveError != null) {
+                Text(
+                    text = saveError!!,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+            }
             ElevatedButton(
                 onClick = {
-                    AppSession.userName = name.trim().ifBlank { AppSession.userName }
-                    AppSession.userCity = city.trim().ifBlank { AppSession.userCity }
-                    AppSession.userInterests = selectedInterests.toList()
-                    navigator.pop()
+                    saving = true
+                    saveError = null
+                    scope.launch {
+                        try {
+                            val token = AppSession.authToken
+                            if (token != null) {
+                                val updated = AppContainer.profileService.updateProfile(
+                                    authToken = token,
+                                    fullName = name.trim().ifBlank { null },
+                                    interests = selectedInterests.toList()
+                                )
+                                AppSession.userName = updated.fullName
+                                AppSession.userInterests = updated.interests
+                                AppSession.userAvatarUrl = updated.avatarUrl
+                            } else {
+                                AppSession.userName = name.trim().ifBlank { AppSession.userName }
+                                AppSession.userInterests = selectedInterests.toList()
+                            }
+                            AppSession.userCity = city.trim().ifBlank { AppSession.userCity }
+                            navigator.pop()
+                        } catch (e: Exception) {
+                            saveError = "Ошибка сохранения: ${e.message}"
+                        } finally {
+                            saving = false
+                        }
+                    }
                 },
+                enabled = !saving,
                 modifier = Modifier.fillMaxWidth().height(52.dp),
                 colors = ButtonDefaults.elevatedButtonColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     contentColor = MaterialTheme.colorScheme.onPrimary
                 )
             ) {
-                Text("Сохранить", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+                if (saving) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                } else {
+                    Text("Сохранить", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+                }
             }
 
             Spacer(Modifier.height(32.dp))

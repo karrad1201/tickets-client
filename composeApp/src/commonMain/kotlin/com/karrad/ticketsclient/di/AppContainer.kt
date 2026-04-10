@@ -17,6 +17,8 @@ import com.karrad.ticketsclient.data.api.GeoService
 import com.karrad.ticketsclient.data.api.FakeTicketService
 import com.karrad.ticketsclient.data.api.OrderApiService
 import com.karrad.ticketsclient.data.api.OrderService
+import com.karrad.ticketsclient.data.api.ProfileApiService
+import com.karrad.ticketsclient.data.api.ProfileService
 import com.karrad.ticketsclient.data.api.ScannerApiService
 import com.karrad.ticketsclient.data.api.ScannerService
 import com.karrad.ticketsclient.data.api.TicketApiService
@@ -58,6 +60,9 @@ object AppContainer {
         private set
 
     lateinit var geoService: GeoService
+        private set
+
+    lateinit var profileService: ProfileService
         private set
 
     val searchCitiesUseCase: SearchCitiesUseCase by lazy {
@@ -102,5 +107,6 @@ object AppContainer {
         } else {
             GeoApiService(httpClient, BASE_URL)
         }
+        profileService = ProfileApiService(httpClient, BASE_URL)
     }
 }
