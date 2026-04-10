@@ -15,12 +15,14 @@ class DiscoveryApiService(
         city: String,
         authToken: String?,
         page: Int,
-        size: Int
+        size: Int,
+        date: String?
     ): DiscoveryFeedResponseDto {
         return httpClient.get("$baseUrl/api/discovery") {
             parameter("city", city)
             parameter("page", page)
             parameter("size", size)
+            date?.let { parameter("date", it) }
             authToken?.let { header("Authorization", "Bearer $it") }
         }.body()
     }

@@ -23,6 +23,7 @@ object AppSession {
     var userPhone: String = ""
     var userCity: String = city
     var userInterests: List<String> = emptyList()
+    var userAvatarUrl: String? = null
 
     // Кеш всех событий — заполняется FeedViewModel после загрузки, используется поиском
     var cachedEvents: List<EventDto> = emptyList()
@@ -42,12 +43,22 @@ object AppSession {
 
     var userRole: String = "USER"
 
-    fun login(token: String, userId: String, phone: String?, fullName: String, role: String) {
+    fun login(
+        token: String,
+        userId: String,
+        phone: String?,
+        fullName: String,
+        role: String,
+        avatarUrl: String? = null,
+        interests: List<String> = emptyList()
+    ) {
         this.authToken = token
         this.userId = userId
         this.userPhone = phone ?: ""
         this.userName = fullName
         this.userRole = role
+        this.userAvatarUrl = avatarUrl
+        this.userInterests = interests
     }
 
     fun logout() {
@@ -57,6 +68,7 @@ object AppSession {
         userPhone = ""
         userRole = "USER"
         userInterests = emptyList()
+        userAvatarUrl = null
         cachedEvents = emptyList()
         currentEvent = null
     }

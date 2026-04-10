@@ -20,5 +20,7 @@ data class UserDto(
     val fullName: String,
     val phone: String? = null,
     val email: String? = null,
-    val role: String = "USER"
+    val role: String = "USER",
+    val avatarUrl: String? = null,
+    val interests: List<String> = emptyList()
 )
