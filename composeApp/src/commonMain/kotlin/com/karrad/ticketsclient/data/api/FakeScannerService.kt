@@ -6,8 +6,8 @@ import com.karrad.ticketsclient.data.api.dto.TicketValidationResponse
 class FakeScannerService : ScannerService {
 
     private val orgEvents = listOf(
-        OrgEventItem("evt-001", "Лебединое озеро", "2026-07-05T15:00:00Z"),
-        OrgEventItem("evt-021", "Вечеринка 90-х", "2026-07-06T18:00:00Z")
+        OrgEventItem("evt-001", "Лебединое озеро", "2026-04-05T15:00:00Z"),
+        OrgEventItem("evt-021", "Вечеринка 90-х", "2026-04-03T18:00:00Z")
     )
 
     override suspend fun getMyOrgEvents(authToken: String?): List<OrgEventItem> = orgEvents
