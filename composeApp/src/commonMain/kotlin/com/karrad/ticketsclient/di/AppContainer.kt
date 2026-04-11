@@ -17,6 +17,7 @@ import com.karrad.ticketsclient.data.api.GeoService
 import com.karrad.ticketsclient.data.api.FakeTicketService
 import com.karrad.ticketsclient.data.api.OrderApiService
 import com.karrad.ticketsclient.data.api.OrderService
+import com.karrad.ticketsclient.data.api.FakeProfileService
 import com.karrad.ticketsclient.data.api.ProfileApiService
 import com.karrad.ticketsclient.data.api.ProfileService
 import com.karrad.ticketsclient.data.api.ScannerApiService
@@ -24,8 +25,6 @@ import com.karrad.ticketsclient.data.api.ScannerService
 import com.karrad.ticketsclient.data.api.TicketApiService
 import com.karrad.ticketsclient.data.api.TicketService
 import com.karrad.ticketsclient.data.api.createHttpClient
-import com.karrad.ticketsclient.data.repository.LocalCityRepository
-import com.karrad.ticketsclient.domain.usecase.SearchCitiesUseCase
 
 /**
  * Manual dependency container. Call [init] once at app startup (MainActivity / MainViewController)
@@ -65,10 +64,6 @@ object AppContainer {
     lateinit var profileService: ProfileService
         private set
 
-    val searchCitiesUseCase: SearchCitiesUseCase by lazy {
-        SearchCitiesUseCase(LocalCityRepository())
-    }
-
     fun init(useMock: Boolean) {
         isMock = useMock
         val httpClient = createHttpClient()
@@ -107,6 +102,10 @@ object AppContainer {
         } else {
             GeoApiService(httpClient, BASE_URL)
         }
-        profileService = ProfileApiService(httpClient, BASE_URL)
+        profileService = if (useMock) {
+            FakeProfileService()
+        } else {
+            ProfileApiService(httpClient, BASE_URL)
+        }
     }
 }

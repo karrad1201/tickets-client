@@ -19,7 +19,10 @@ object ImageCache {
 
     private data class Entry(val data: ByteArray, val cachedAt: Long)
 
-    private val store = LinkedHashMap<String, Entry>()
+    private val store = object : LinkedHashMap<String, Entry>(MAX_SIZE + 1, 0.75f, true) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, Entry>?): Boolean =
+            size > MAX_SIZE
+    }
 
     /** Получить байты по URL если TTL не истёк. */
     fun get(url: String, ttlMs: Long = DEFAULT_TTL_MS): ByteArray? {
@@ -50,4 +53,7 @@ object ImageCache {
     const val EVENT_IMAGE_TTL_MS = 60L * 60 * 1_000
 
     private const val DEFAULT_TTL_MS = AVATAR_TTL_MS
+
+    /** Максимальное число записей в кеше (LRU-вытеснение). */
+    private const val MAX_SIZE = 200
 }
