@@ -53,6 +53,7 @@ import androidx.compose.runtime.LaunchedEffect
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.karrad.ticketsclient.AppSession
+import com.karrad.ticketsclient.data.api.dto.EventDto
 import com.karrad.ticketsclient.di.AppContainer
 import com.karrad.ticketsclient.ui.navigation.SeatMapScreen
 import com.karrad.ticketsclient.ui.navigation.TicketTypeScreen
@@ -65,7 +66,7 @@ import kotlinx.datetime.toLocalDateTime
 @Composable
 fun EventDetailScreen(eventId: String) {
     val navigator = LocalNavigator.currentOrThrow
-    var loadedEvent by remember { mutableStateOf(AppSession.currentEvent?.takeIf { it.id == eventId }) }
+    var loadedEvent by remember { mutableStateOf<EventDto?>(null) }
     var isFavorite by remember { mutableStateOf(AppSession.isFavorite(eventId)) }
     val favoriteColor by animateColorAsState(
         targetValue = if (isFavorite) Color(0xFFE53935) else Color.Black,
@@ -74,9 +75,7 @@ fun EventDetailScreen(eventId: String) {
     )
 
     LaunchedEffect(eventId) {
-        if (loadedEvent == null) {
-            loadedEvent = try { AppContainer.eventService.getEvent(eventId) } catch (_: Exception) { null }
-        }
+        loadedEvent = try { AppContainer.eventService.getEvent(eventId) } catch (_: Exception) { null }
     }
 
     val event = loadedEvent ?: run {

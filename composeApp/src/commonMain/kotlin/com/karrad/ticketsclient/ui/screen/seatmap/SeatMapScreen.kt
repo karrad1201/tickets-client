@@ -58,7 +58,10 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.runtime.rememberCoroutineScope
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import androidx.compose.runtime.LaunchedEffect
 import com.karrad.ticketsclient.AppSession
+import com.karrad.ticketsclient.data.api.dto.EventDto
+import com.karrad.ticketsclient.data.api.dto.SeatMapDto
 import com.karrad.ticketsclient.di.AppContainer
 import com.karrad.ticketsclient.ui.navigation.OrderConfirmScreen
 import com.karrad.ticketsclient.ui.util.formatPrice
@@ -66,28 +69,24 @@ import kotlinx.coroutines.launch
 
 // ─── Модели ────────────────────────────────────────────────────────────────────
 
-private data class Seat(val row: Int, val col: Int, val available: Boolean)
+private data class Seat(val row: Int, val col: Int, val available: Boolean, val price: Int = 0)
 
 private val SESSION_TIMES = listOf("13:00", "17:00", "23:00")
 
-private fun buildSeats(): List<Seat> {
-    val seats = mutableListOf<Seat>()
-    for (row in 0..7) {
-        for (col in 0..9) {
-            val available = !((row == 2 && col in 3..5) ||
-                    (row == 5 && col in 6..8) ||
-                    (row == 1 && col == 8) ||
-                    (row == 4 && col == 2) ||
-                    (row == 6 && col in 0..1) ||
-                    (row == 7 && col in 7..9))
-            seats += Seat(row, col, available)
-        }
-    }
-    return seats
-}
-
 private fun rowLabel(row: Int) = ('A' + row).toString()
 private fun seatLabel(row: Int, col: Int) = "${rowLabel(row)}${col + 1}"
+
+private fun SeatMapDto.toSeats(): List<Seat> {
+    val result = mutableListOf<Seat>()
+    sections.forEach { section ->
+        section.rows.forEachIndexed { rowIdx, row ->
+            row.seats.forEachIndexed { colIdx, seat ->
+                result += Seat(rowIdx, colIdx, seat.available, seat.price)
+            }
+        }
+    }
+    return result
+}
 
 // ─── Screen ────────────────────────────────────────────────────────────────────
 
@@ -95,9 +94,15 @@ private fun seatLabel(row: Int, col: Int) = "${rowLabel(row)}${col + 1}"
 fun SeatMapScreen(eventId: String) {
     val navigator = LocalNavigator.currentOrThrow
     val scope = rememberCoroutineScope()
-    val event = AppSession.currentEvent
+    var event by remember { mutableStateOf<EventDto?>(null) }
+    var seatMap by remember { mutableStateOf<SeatMapDto?>(null) }
 
-    val allSeats = remember { buildSeats() }
+    LaunchedEffect(eventId) {
+        event = try { AppContainer.eventService.getEvent(eventId) } catch (_: Exception) { null }
+        seatMap = try { AppContainer.eventService.getSeatMap(eventId) } catch (_: Exception) { null }
+    }
+
+    val allSeats = remember(seatMap) { seatMap?.toSeats() ?: emptyList() }
     var selectedTime by remember { mutableStateOf(SESSION_TIMES[1]) }
     var selectedSeats by remember { mutableStateOf(setOf<Seat>()) }
     var buyLoading by remember { mutableStateOf(false) }
@@ -109,8 +114,7 @@ fun SeatMapScreen(eventId: String) {
         offset += panChange
     }
 
-    val seatPrice = 1400
-    val totalPrice = selectedSeats.size * seatPrice
+    val totalPrice = selectedSeats.sumOf { it.price }
 
     Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         Column(
@@ -264,7 +268,7 @@ fun SeatMapScreen(eventId: String) {
                                             in 2..4 -> "а"
                                             else -> "ов"
                                         }
-                                    } · ${seatPrice.formatPrice()} ₽/шт",
+                                    } · ${(selectedSeats.firstOrNull()?.price ?: 0).formatPrice()} ₽/шт",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )

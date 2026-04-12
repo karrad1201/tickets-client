@@ -15,9 +15,6 @@ object AppSession {
 
     var city: String by mutableStateOf("Москва")
 
-    /** Set before pushing EventDetailScreen; read inside that screen. */
-    var currentEvent: EventDto? = null
-
     // Profile — заполняется при входе/регистрации
     var userName: String = ""
     var userPhone: String = ""
@@ -70,6 +67,5 @@ object AppSession {
         userInterests = emptyList()
         userAvatarUrl = null
         cachedEvents = emptyList()
-        currentEvent = null
     }
 }

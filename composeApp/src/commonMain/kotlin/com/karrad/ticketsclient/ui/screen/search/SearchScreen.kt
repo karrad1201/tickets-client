@@ -159,7 +159,6 @@ fun SearchScreen() {
             ) {
                 items(results, key = { it.id }) { event ->
                     SearchResultRow(event = event, onClick = {
-                        AppSession.currentEvent = event
                         navigator.push(EventDetailScreen(event.id))
                     })
                 }

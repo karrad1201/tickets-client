@@ -1,6 +1,7 @@
 package com.karrad.ticketsclient.data.api
 
 import com.karrad.ticketsclient.data.api.dto.EventDto
+import com.karrad.ticketsclient.data.api.dto.SeatMapDto
 import com.karrad.ticketsclient.data.api.dto.TicketTypeDto
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -24,4 +25,7 @@ class EventApiService(
 
     override suspend fun getTicketTypes(eventId: String): List<TicketTypeDto> =
         httpClient.get("$baseUrl/api/inventory/$eventId/ticket-types").body()
+
+    override suspend fun getSeatMap(eventId: String): SeatMapDto =
+        httpClient.get("$baseUrl/api/inventory/$eventId/seat-map").body()
 }
