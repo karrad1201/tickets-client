@@ -115,7 +115,6 @@ fun FavoritesScreen() {
                             .clip(RoundedCornerShape(14.dp))
                             .background(MaterialTheme.colorScheme.surface)
                             .clickable {
-                                AppSession.currentEvent = event
                                 rootNavigator.push(EventDetailScreen(event.id))
                             }
                     ) {

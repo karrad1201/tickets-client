@@ -22,6 +22,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -34,20 +35,35 @@ import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.karrad.ticketsclient.AppSession
+import com.karrad.ticketsclient.data.api.dto.EventDto
 import com.karrad.ticketsclient.di.AppContainer
 import com.karrad.ticketsclient.ui.navigation.MainScreen
 import com.karrad.ticketsclient.ui.util.formatPrice
 import kotlinx.coroutines.launch
+import kotlinx.datetime.Instant
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 
 @Composable
 fun OrderConfirmScreen(eventId: String, orderId: String, totalPrice: Int) {
     val navigator = LocalNavigator.currentOrThrow
     val scope = rememberCoroutineScope()
-    val event = AppSession.currentEvent
+    var event by remember { mutableStateOf<EventDto?>(null) }
+    var orderStatus by remember { mutableStateOf("PENDING_PAYMENT") }
 
     var loading by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
     var success by remember { mutableStateOf(false) }
+
+    LaunchedEffect(eventId) {
+        event = try { AppContainer.eventService.getEvent(eventId) } catch (_: Exception) { null }
+    }
+
+    LaunchedEffect(orderId) {
+        try {
+            orderStatus = AppContainer.orderService.getOrder(orderId, AppSession.authToken ?: "").status
+        } catch (_: Exception) { }
+    }
 
     Column(
         modifier = Modifier
@@ -109,9 +125,31 @@ fun OrderConfirmScreen(eventId: String, orderId: String, totalPrice: Int) {
             )
             Spacer(Modifier.height(16.dp))
 
-            OrderRow(label = "Событие", value = event?.label ?: eventId)
+            OrderRow(label = "Событие", value = event?.label ?: "…")
+            event?.time?.let { iso ->
+                val dt = try {
+                    Instant.parse(iso).toLocalDateTime(TimeZone.currentSystemDefault())
+                } catch (_: Exception) { null }
+                if (dt != null) {
+                    val dateStr = "%02d.%02d.%04d %02d:%02d".format(
+                        dt.dayOfMonth, dt.monthNumber, dt.year, dt.hour, dt.minute
+                    )
+                    OrderRow(label = "Дата", value = dateStr)
+                }
+            }
             HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
             OrderRow(label = "Номер заказа", value = orderId.takeLast(8).uppercase())
+            HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
+            OrderRow(
+                label = "Статус",
+                value = when (orderStatus) {
+                    "PENDING_PAYMENT" -> "Ожидает оплаты"
+                    "PAID" -> "Оплачен"
+                    "EXPIRED" -> "Истёк"
+                    "PAYMENT_FAILED" -> "Ошибка оплаты"
+                    else -> orderStatus
+                }
+            )
             HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
             OrderRow(
                 label = "К оплате",

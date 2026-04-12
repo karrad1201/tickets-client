@@ -162,7 +162,6 @@ fun TicketsScreen() {
                             time = ticket.eventTime ?: "",
                             minPrice = ticket.price
                         )
-                    AppSession.currentEvent = event
                     rootNavigator.push(EventDetailScreen(event.id))
                 }
             )

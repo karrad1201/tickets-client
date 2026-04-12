@@ -128,7 +128,6 @@ fun FeedScreen() {
                     selectedDay = selectedDay,
                     onDaySelect = { viewModel.selectDay(it) },
                     onEventClick = { event ->
-                        AppSession.currentEvent = event
                         rootNavigator.push(EventDetailScreen(event.id))
                     }
                 )
