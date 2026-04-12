@@ -57,6 +57,7 @@ import com.karrad.ticketsclient.data.api.dto.EventDto
 import com.karrad.ticketsclient.di.AppContainer
 import com.karrad.ticketsclient.ui.navigation.SeatMapScreen
 import com.karrad.ticketsclient.ui.navigation.TicketTypeScreen
+import com.karrad.ticketsclient.ui.component.EventImage
 import com.karrad.ticketsclient.ui.screen.feed.EventImagePlaceholder
 import com.karrad.ticketsclient.ui.util.formatPrice
 import kotlinx.datetime.Instant
@@ -101,7 +102,7 @@ fun EventDetailScreen(eventId: String) {
                     .fillMaxWidth()
                     .height(280.dp)
             ) {
-                EventImagePlaceholder(seed = event.id, modifier = Modifier.fillMaxSize())
+                EventImage(imageUrl = event.imageUrl, seed = event.id, modifier = Modifier.fillMaxSize())
 
                 // тёмный градиент снизу
                 Box(

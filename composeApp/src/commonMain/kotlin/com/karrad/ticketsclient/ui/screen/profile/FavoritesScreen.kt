@@ -24,7 +24,12 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -34,16 +39,34 @@ import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.karrad.ticketsclient.AppSession
+import com.karrad.ticketsclient.data.api.dto.EventDto
+import com.karrad.ticketsclient.di.AppContainer
 import com.karrad.ticketsclient.ui.navigation.EventDetailScreen
+import com.karrad.ticketsclient.ui.component.EventImage
 import com.karrad.ticketsclient.ui.screen.feed.EventImagePlaceholder
 import com.karrad.ticketsclient.ui.util.formatPrice
-
 @Composable
 fun FavoritesScreen() {
     val navigator = LocalNavigator.currentOrThrow
     val rootNavigator = navigator.parent ?: navigator
+    val scope = rememberCoroutineScope()
 
-    val favorites = remember { AppSession.cachedEvents.filter { AppSession.isFavorite(it.id) } }
+    var favorites by remember { mutableStateOf<List<EventDto>>(emptyList()) }
+    var loading by remember { mutableStateOf(true) }
+
+    LaunchedEffect(Unit) {
+        val token = AppSession.authToken
+        if (token != null) {
+            runCatching { AppContainer.favoriteService.list(token) }
+                .onSuccess { list ->
+                    favorites = list
+                    AppSession.setFavorites(list.map { it.id })
+                }
+        } else {
+            favorites = AppSession.cachedEvents.filter { AppSession.isFavorite(it.id) }
+        }
+        loading = false
+    }
 
     Column(
         modifier = Modifier
@@ -125,7 +148,7 @@ fun FavoritesScreen() {
                                     .height(160.dp)
                                     .clip(RoundedCornerShape(topStart = 14.dp, topEnd = 14.dp))
                             ) {
-                                EventImagePlaceholder(seed = event.id, modifier = Modifier.fillMaxSize())
+                                EventImage(imageUrl = event.imageUrl, seed = event.id, modifier = Modifier.fillMaxSize())
                             }
                             Column(modifier = Modifier.padding(12.dp)) {
                                 Text(

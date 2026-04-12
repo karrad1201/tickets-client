@@ -4,10 +4,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.karrad.ticketsclient.data.api.dto.EventDto
+import com.karrad.ticketsclient.data.store.SessionSnapshot
+import com.karrad.ticketsclient.data.store.TokenStore
 
 /**
  * In-memory app session. Holds auth state and short-lived navigation data.
- * Не переживает рестарт приложения — токен хранится только в памяти.
+ * Токен сохраняется через TokenStore (SharedPreferences/NSUserDefaults).
  */
 object AppSession {
     var authToken: String? = null
@@ -30,11 +32,15 @@ object AppSession {
     // true если последний запрос к API завершился ошибкой сети
     var isOffline: Boolean by mutableStateOf(false)
 
-    // Локальное избранное (in-memory до реализации бэка, issue #22)
+    // Избранное (in-memory, синхронизируется с API в FavoritesScreen/FeedScreen)
     private val _favorites = mutableSetOf<String>()
     fun isFavorite(eventId: String): Boolean = eventId in _favorites
     fun toggleFavorite(eventId: String, add: Boolean) {
         if (add) _favorites.add(eventId) else _favorites.remove(eventId)
+    }
+    fun setFavorites(ids: Collection<String>) {
+        _favorites.clear()
+        _favorites.addAll(ids)
     }
 
     var userRole: String = "USER"
@@ -55,6 +61,18 @@ object AppSession {
         this.userRole = role
         this.userAvatarUrl = avatarUrl
         this.userInterests = interests
+        TokenStore.save(SessionSnapshot(token, userId, fullName, phone ?: "", role))
+    }
+
+    /** Восстановить сессию из персистентного хранилища (вызывать при старте приложения). */
+    fun restoreFromStore(): Boolean {
+        val s = TokenStore.load() ?: return false
+        authToken = s.token
+        userId = s.userId
+        userName = s.fullName
+        userPhone = s.phone
+        userRole = s.role
+        return true
     }
 
     fun logout() {
@@ -66,5 +84,7 @@ object AppSession {
         userInterests = emptyList()
         userAvatarUrl = null
         cachedEvents = emptyList()
+        _favorites.clear()
+        TokenStore.clear()
     }
 }
