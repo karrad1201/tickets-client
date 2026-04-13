@@ -37,7 +37,9 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -86,10 +88,52 @@ fun FeedScreen() {
     val viewModel = viewModel { FeedViewModel(AppContainer.discoveryService) }
     val state by viewModel.state.collectAsState()
     var showFilters by rememberSaveable { mutableStateOf(false) }
-    val searchNavigator = rootNavigator
+    val scope = rememberCoroutineScope()
+
+    // #93 — filter state and filtered results
+    var activeFilter by remember { mutableStateOf<FilterState?>(null) }
+    var filteredEvents by remember { mutableStateOf<List<EventDto>?>(null) }
+    var filterLoading by remember { mutableStateOf(false) }
 
     if (showFilters) {
-        FiltersBottomSheet(onDismiss = { showFilters = false })
+        FiltersBottomSheet(
+            onDismiss = { showFilters = false },
+            onApply = { filter ->
+                activeFilter = filter
+                if (!filter.hasActiveFilters) {
+                    filteredEvents = null
+                    return@FiltersBottomSheet
+                }
+                filterLoading = true
+                scope.launch {
+                    val dateStr = when (filter.selectedDate) {
+                        "Завтра" -> {
+                            val tz = kotlinx.datetime.TimeZone.currentSystemDefault()
+                            Clock.System.now().toLocalDateTime(tz).date
+                                .plus(1, DateTimeUnit.DAY).toString()
+                        }
+                        "Послезавтра" -> {
+                            val tz = kotlinx.datetime.TimeZone.currentSystemDefault()
+                            Clock.System.now().toLocalDateTime(tz).date
+                                .plus(2, DateTimeUnit.DAY).toString()
+                        }
+                        else -> null
+                    }
+                    val query = filter.categories.firstOrNull() ?: ""
+                    runCatching {
+                        AppContainer.eventService.search(
+                            query = query,
+                            city = AppSession.city,
+                            dateFrom = dateStr,
+                            dateTo = dateStr
+                        )
+                    }.onSuccess { results ->
+                        filteredEvents = results
+                    }
+                    filterLoading = false
+                }
+            }
+        )
     }
 
     Column(
@@ -99,41 +143,78 @@ fun FeedScreen() {
             .statusBarsPadding()
     ) {
         FeedHeader(
-            onSearchClick = { searchNavigator.push(SearchScreen) },
+            onSearchClick = { rootNavigator.push(SearchScreen) },
             onFilterClick = { showFilters = true },
-            onCityClick = { rootNavigator.push(com.karrad.ticketsclient.ui.navigation.CityPickerScreen) }
+            onCityClick = { rootNavigator.push(com.karrad.ticketsclient.ui.navigation.CityPickerScreen) },
+            hasActiveFilter = activeFilter?.hasActiveFilters == true
         )
 
         if (AppSession.isOffline) {
             OfflineBanner("Нет подключения · афиша недоступна")
         }
 
-        when (val s = state) {
-            is FeedState.Loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
-            }
-            is FeedState.Error -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("Не удалось загрузить события",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Spacer(Modifier.height(12.dp))
-                    Button(
-                        onClick = { viewModel.load() },
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-                    ) { Text("Повторить") }
+        // #93 — active filter banner
+        if (activeFilter?.hasActiveFilters == true) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.primaryContainer)
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    "Фильтры активны",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+                androidx.compose.material3.TextButton(onClick = {
+                    activeFilter = null
+                    filteredEvents = null
+                }) {
+                    Text("Сбросить", style = MaterialTheme.typography.bodySmall)
                 }
             }
-            is FeedState.Success -> {
-                val selectedDay by viewModel.selectedDay.collectAsState()
-                FeedContent(
-                    feed = s.feed,
-                    selectedDay = selectedDay,
-                    onDaySelect = { viewModel.selectDay(it) },
-                    onEventClick = { event ->
-                        rootNavigator.push(EventDetailScreen(event.id))
+        }
+
+        if (filterLoading) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+            }
+        } else if (filteredEvents != null) {
+            // #93 — show filtered results
+            FilteredResultsList(
+                events = filteredEvents!!,
+                onEventClick = { rootNavigator.push(EventDetailScreen(it.id)) }
+            )
+        } else {
+            when (val s = state) {
+                is FeedState.Loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                }
+                is FeedState.Error -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("Не удалось загрузить события",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Spacer(Modifier.height(12.dp))
+                        Button(
+                            onClick = { viewModel.load() },
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                        ) { Text("Повторить") }
                     }
-                )
+                }
+                is FeedState.Success -> {
+                    val selectedDay by viewModel.selectedDay.collectAsState()
+                    FeedContent(
+                        feed = s.feed,
+                        selectedDay = selectedDay,
+                        onDaySelect = { viewModel.selectDay(it) },
+                        onEventClick = { event -> rootNavigator.push(EventDetailScreen(event.id)) },
+                        hasMore = s.hasMore,
+                        onLoadMore = { viewModel.loadMore() }
+                    )
+                }
             }
         }
     }
@@ -145,7 +226,8 @@ fun FeedScreen() {
 private fun FeedHeader(
     onSearchClick: () -> Unit = {},
     onFilterClick: () -> Unit = {},
-    onCityClick: () -> Unit = {}
+    onCityClick: () -> Unit = {},
+    hasActiveFilter: Boolean = false
 ) {
     Row(
         modifier = Modifier
@@ -185,15 +267,46 @@ private fun FeedHeader(
                 tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(18.dp))
         }
         Spacer(Modifier.width(20.dp))
-        IconButton(
-            onClick = onFilterClick,
-            modifier = Modifier
-                .size(36.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.surfaceVariant)
+        Box {
+            IconButton(
+                onClick = onFilterClick,
+                modifier = Modifier
+                    .size(36.dp)
+                    .clip(CircleShape)
+                    .background(
+                        if (hasActiveFilter) MaterialTheme.colorScheme.primary
+                        else MaterialTheme.colorScheme.surfaceVariant
+                    )
+            ) {
+                Icon(Icons.Outlined.FilterList, contentDescription = "Фильтры",
+                    tint = if (hasActiveFilter) Color.White else MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.size(18.dp))
+            }
+        }
+    }
+}
+
+// ─── Filtered results list (#93) ───────────────────────────────────────────────
+
+@Composable
+private fun FilteredResultsList(events: List<EventDto>, onEventClick: (EventDto) -> Unit) {
+    if (events.isEmpty()) {
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Text(
+                "Ничего не найдено",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    } else {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
+            contentPadding = PaddingValues(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 96.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Icon(Icons.Outlined.FilterList, contentDescription = "Фильтры",
-                tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(18.dp))
+            items(events, key = { it.id }) { event ->
+                EventCard(event = event, cardWidth = null, onClick = { onEventClick(event) })
+            }
         }
     }
 }
@@ -258,9 +371,26 @@ private fun FeedContent(
     feed: DiscoveryFeedResponseDto,
     selectedDay: Int,
     onDaySelect: (Int) -> Unit,
-    onEventClick: (EventDto) -> Unit
+    onEventClick: (EventDto) -> Unit,
+    hasMore: Boolean = false,
+    onLoadMore: () -> Unit = {}
 ) {
+    val listState = rememberLazyListState()
+
+    // #99 — detect bottom of list for infinite scroll
+    val reachedBottom by remember {
+        derivedStateOf {
+            val lastVisible = listState.layoutInfo.visibleItemsInfo.lastOrNull()
+            val total = listState.layoutInfo.totalItemsCount
+            lastVisible != null && total > 0 && lastVisible.index >= total - 2
+        }
+    }
+    LaunchedEffect(reachedBottom) {
+        if (reachedBottom && hasMore) onLoadMore()
+    }
+
     LazyColumn(
+        state = listState,
         modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
         contentPadding = PaddingValues(bottom = 96.dp) // место под плавающий нав-бар
     ) {
@@ -279,6 +409,21 @@ private fun FeedContent(
             item {
                 SectionHeader(entry.category.label, hasMore = true)
                 HorizontalEventRow(events = entry.events, onEventClick = onEventClick)
+            }
+        }
+
+        if (hasMore) {
+            item {
+                Box(
+                    modifier = Modifier.fillMaxWidth().padding(16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
             }
         }
     }

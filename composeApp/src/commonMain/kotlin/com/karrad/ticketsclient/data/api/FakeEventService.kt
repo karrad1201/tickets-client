@@ -22,7 +22,13 @@ class FakeEventService : EventService {
     override suspend fun getEvent(eventId: String): EventDto =
         allEvents.find { it.id == eventId } ?: error("Event not found: $eventId")
 
-    override suspend fun search(query: String, city: String, page: Int): List<EventDto> =
+    override suspend fun search(
+        query: String,
+        city: String,
+        page: Int,
+        dateFrom: String?,
+        dateTo: String?
+    ): List<EventDto> =
         if (query.length < 2) emptyList()
         else allEvents.filter {
             it.label.contains(query, ignoreCase = true) ||
