@@ -13,5 +13,11 @@ class FakeFavoriteService : FavoriteService {
         added.remove(eventId)
     }
 
-    override suspend fun list(token: String): List<EventDto> = emptyList()
+    override suspend fun list(token: String): List<EventDto> {
+        if (added.isEmpty()) return emptyList()
+        val feed = FakeDiscoveryApiService.FEED
+        val allEvents = (feed.forYou + feed.tomorrow + feed.dayAfterTomorrow +
+            feed.byCategory.flatMap { it.events }).distinctBy { it.id }
+        return allEvents.filter { it.id in added }
+    }
 }

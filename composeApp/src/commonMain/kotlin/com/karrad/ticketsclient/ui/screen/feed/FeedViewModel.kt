@@ -28,7 +28,10 @@ sealed interface FeedState {
 }
 
 class FeedViewModel(
-    private val discoveryService: DiscoveryService
+    private val discoveryService: DiscoveryService,
+    private val getAuthToken: () -> String? = { AppSession.authToken },
+    private val onCacheUpdated: (List<EventDto>) -> Unit = { AppSession.cachedEvents = it },
+    private val onOfflineChanged: (Boolean) -> Unit = { AppSession.isOffline = it }
 ) : ViewModel() {
 
     private val _state = MutableStateFlow<FeedState>(FeedState.Loading)
@@ -79,13 +82,13 @@ class FeedViewModel(
                 currentPage++
                 val next = discoveryService.getDiscoveryFeed(
                     city = AppSession.city,
-                    authToken = AppSession.authToken,
+                    authToken = getAuthToken(),
                     page = currentPage,
                     date = currentDate
                 )
                 accumulatedForYou.addAll(next.forYou)
                 val merged = current.feed.copy(forYou = accumulatedForYou.toList())
-                AppSession.cachedEvents = (merged.forYou + merged.byCategory.flatMap { it.events }).distinctBy { it.id }
+                onCacheUpdated((merged.forYou + merged.byCategory.flatMap { it.events }).distinctBy { it.id })
                 _state.value = FeedState.Success(merged, hasMore = next.forYou.isNotEmpty())
             } catch (_: Exception) {
                 // Keep current state, loadMore failed silently
@@ -103,16 +106,16 @@ class FeedViewModel(
             try {
                 val feed = discoveryService.getDiscoveryFeed(
                     city = AppSession.city,
-                    authToken = AppSession.authToken,
+                    authToken = getAuthToken(),
                     page = 0,
                     date = currentDate
                 )
                 accumulatedForYou = feed.forYou.toMutableList()
-                AppSession.cachedEvents = (feed.forYou + feed.byCategory.flatMap { it.events }).distinctBy { it.id }
-                AppSession.isOffline = false
+                onCacheUpdated((feed.forYou + feed.byCategory.flatMap { it.events }).distinctBy { it.id })
+                onOfflineChanged(false)
                 _state.value = FeedState.Success(feed, hasMore = feed.forYou.isNotEmpty())
             } catch (e: Exception) {
-                AppSession.isOffline = true
+                onOfflineChanged(true)
                 _state.value = FeedState.Error(e.message ?: "Ошибка загрузки ленты")
             }
         }

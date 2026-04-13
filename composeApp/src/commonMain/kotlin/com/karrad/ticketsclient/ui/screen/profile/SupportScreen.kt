@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.outlined.Phone
@@ -55,7 +56,7 @@ fun SupportScreen() {
                     .clickable { navigator.pop() },
                 contentAlignment = Alignment.Center
             ) {
-                Icon(Icons.Outlined.ArrowBack, "Назад",
+                Icon(Icons.AutoMirrored.Outlined.ArrowBack, "Назад",
                     modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSurface)
             }
             Text("Поддержка",

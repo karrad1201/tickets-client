@@ -5,7 +5,6 @@ import com.karrad.ticketsclient.data.api.dto.CityDto
 
 /**
  * Мок-реализация для разработки без бекенда.
- * Возвращает тот же список городов, что и LocalCityRepository.
  */
 class FakeGeoService : GeoService {
 

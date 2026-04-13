@@ -20,7 +20,14 @@ class FakeEventService : EventService {
     }
 
     override suspend fun getEvent(eventId: String): EventDto =
-        allEvents.find { it.id == eventId } ?: error("Event not found: $eventId")
+        allEvents.find { it.id == eventId } ?: EventDto(
+            id = eventId,
+            label = "Событие недоступно",
+            description = "",
+            venueId = "",
+            categoryId = "",
+            time = ""
+        )
 
     override suspend fun search(
         query: String,

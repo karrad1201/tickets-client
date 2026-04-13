@@ -65,6 +65,7 @@ fun MainScreen() {
             showScanner = try {
                 AppContainer.scannerService.getMyOrgEvents(AppSession.authToken).isNotEmpty()
             } catch (e: Exception) {
+                println("MainScreen: не удалось проверить доступ к сканеру — ${e.message}")
                 false
             }
         }

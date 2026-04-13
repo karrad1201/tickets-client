@@ -33,6 +33,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import androidx.compose.ui.text.style.TextAlign
 import com.karrad.ticketsclient.AppSession
 import com.karrad.ticketsclient.di.AppContainer
 import com.karrad.ticketsclient.ui.navigation.MainScreen
@@ -63,6 +64,17 @@ fun SmsCodeScreen(isRegistration: Boolean = false, phone: String = "") {
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
+
+        if (AppContainer.isMock) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Тест-режим: код 1234 — успешный вход, 0000 — ошибка",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.75f),
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
 
         Spacer(modifier = Modifier.height(32.dp))
 
