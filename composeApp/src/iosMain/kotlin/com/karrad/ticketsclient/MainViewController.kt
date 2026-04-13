@@ -5,5 +5,6 @@ import com.karrad.ticketsclient.di.AppContainer
 
 fun MainViewController() = ComposeUIViewController {
     AppContainer.init(useMock = false)
+    AppSession.restoreFromStore()
     App()
 }
