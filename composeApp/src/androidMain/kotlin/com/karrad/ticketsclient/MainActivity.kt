@@ -12,7 +12,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
-        AppContainer.init(useMock = BuildConfig.USE_MOCK)
+        AppContainer.init(useMock = BuildConfig.USE_MOCK, baseUrl = BuildConfig.BASE_URL)
 
         setContent {
             App()

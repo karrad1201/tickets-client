@@ -35,8 +35,6 @@ import com.karrad.ticketsclient.data.api.createHttpClient
  */
 object AppContainer {
 
-    private const val BASE_URL = "http://10.0.2.2:8080"
-
     var isMock: Boolean = false
         private set
 
@@ -64,48 +62,48 @@ object AppContainer {
     lateinit var profileService: ProfileService
         private set
 
-    fun init(useMock: Boolean) {
+    fun init(useMock: Boolean, baseUrl: String = "http://10.0.2.2:8080") {
         isMock = useMock
         val httpClient = createHttpClient()
         authService = if (useMock) {
             FakeAuthService()
         } else {
-            AuthApiService(httpClient, BASE_URL)
+            AuthApiService(httpClient, baseUrl)
         }
         discoveryService = if (useMock) {
             FakeDiscoveryApiService()
         } else {
-            DiscoveryApiService(httpClient, BASE_URL)
+            DiscoveryApiService(httpClient, baseUrl)
         }
         scannerService = if (useMock) {
             FakeScannerService()
         } else {
-            ScannerApiService(httpClient, BASE_URL)
+            ScannerApiService(httpClient, baseUrl)
         }
         ticketService = if (useMock) {
             FakeTicketService()
         } else {
-            TicketApiService(httpClient, BASE_URL)
+            TicketApiService(httpClient, baseUrl)
         }
         orderService = if (useMock) {
             FakeOrderService()
         } else {
-            OrderApiService(httpClient, BASE_URL)
+            OrderApiService(httpClient, baseUrl)
         }
         eventService = if (useMock) {
             FakeEventService()
         } else {
-            EventApiService(httpClient, BASE_URL)
+            EventApiService(httpClient, baseUrl)
         }
         geoService = if (useMock) {
             FakeGeoService()
         } else {
-            GeoApiService(httpClient, BASE_URL)
+            GeoApiService(httpClient, baseUrl)
         }
         profileService = if (useMock) {
             FakeProfileService()
         } else {
-            ProfileApiService(httpClient, BASE_URL)
+            ProfileApiService(httpClient, baseUrl)
         }
     }
 }

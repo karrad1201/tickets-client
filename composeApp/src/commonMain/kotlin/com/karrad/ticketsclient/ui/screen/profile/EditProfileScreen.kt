@@ -60,7 +60,7 @@ fun EditProfileScreen() {
 
     var nameValue by remember { mutableStateOf(TextFieldValue(AppSession.userName)) }
     val name = nameValue.text
-    var cityValue by remember { mutableStateOf(TextFieldValue(AppSession.userCity)) }
+    var cityValue by remember { mutableStateOf(TextFieldValue(AppSession.city)) }
     val city = cityValue.text
     var selectedInterests by remember { mutableStateOf(AppSession.userInterests.toSet()) }
     var saving by remember { mutableStateOf(false) }
@@ -195,7 +195,7 @@ fun EditProfileScreen() {
                                 AppSession.userName = name.trim().ifBlank { AppSession.userName }
                                 AppSession.userInterests = selectedInterests.toList()
                             }
-                            AppSession.userCity = city.trim().ifBlank { AppSession.userCity }
+                            AppSession.city = city.trim().ifBlank { AppSession.city }
                             navigator.pop()
                         } catch (e: Exception) {
                             saveError = "Ошибка сохранения: ${e.message}"

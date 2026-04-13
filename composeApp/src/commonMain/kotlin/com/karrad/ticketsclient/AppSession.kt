@@ -18,7 +18,6 @@ object AppSession {
     // Profile — заполняется при входе/регистрации
     var userName: String = ""
     var userPhone: String = ""
-    var userCity: String = city
     var userInterests: List<String> = emptyList()
     var userAvatarUrl: String? = null
 

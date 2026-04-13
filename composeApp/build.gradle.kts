@@ -95,10 +95,12 @@ android {
             applicationIdSuffix = ".mock"
             versionNameSuffix = "-mock"
             buildConfigField("boolean", "USE_MOCK", "true")
+            buildConfigField("String", "BASE_URL", "\"http://10.0.2.2:8080\"")
         }
         create("prod") {
             dimension = "mode"
             buildConfigField("boolean", "USE_MOCK", "false")
+            buildConfigField("String", "BASE_URL", "\"http://10.0.2.2:8080\"")
         }
     }
 
