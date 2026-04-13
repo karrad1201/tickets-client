@@ -17,7 +17,10 @@ import com.karrad.ticketsclient.data.api.GeoService
 import com.karrad.ticketsclient.data.api.FakeTicketService
 import com.karrad.ticketsclient.data.api.OrderApiService
 import com.karrad.ticketsclient.data.api.OrderService
+import com.karrad.ticketsclient.data.api.FakeFavoriteService
 import com.karrad.ticketsclient.data.api.FakeProfileService
+import com.karrad.ticketsclient.data.api.FavoriteApiService
+import com.karrad.ticketsclient.data.api.FavoriteService
 import com.karrad.ticketsclient.data.api.ProfileApiService
 import com.karrad.ticketsclient.data.api.ProfileService
 import com.karrad.ticketsclient.data.api.ScannerApiService
@@ -62,9 +65,16 @@ object AppContainer {
     lateinit var profileService: ProfileService
         private set
 
+    lateinit var favoriteService: FavoriteService
+        private set
+
+    lateinit var httpClient: io.ktor.client.HttpClient
+        private set
+
     fun init(useMock: Boolean, baseUrl: String = "http://10.0.2.2:8080") {
         isMock = useMock
         val httpClient = createHttpClient()
+        this.httpClient = httpClient
         authService = if (useMock) {
             FakeAuthService()
         } else {
@@ -104,6 +114,11 @@ object AppContainer {
             FakeProfileService()
         } else {
             ProfileApiService(httpClient, baseUrl)
+        }
+        favoriteService = if (useMock) {
+            FakeFavoriteService()
+        } else {
+            FavoriteApiService(httpClient, baseUrl)
         }
     }
 }

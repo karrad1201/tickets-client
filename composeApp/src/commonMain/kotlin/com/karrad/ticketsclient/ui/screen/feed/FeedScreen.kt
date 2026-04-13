@@ -41,8 +41,10 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -60,6 +62,7 @@ import com.karrad.ticketsclient.data.api.dto.CategoryEventsEntryDto
 import com.karrad.ticketsclient.data.api.dto.DiscoveryFeedResponseDto
 import com.karrad.ticketsclient.data.api.dto.EventDto
 import com.karrad.ticketsclient.di.AppContainer
+import com.karrad.ticketsclient.ui.component.EventImage
 import com.karrad.ticketsclient.ui.navigation.EventDetailScreen
 import com.karrad.ticketsclient.ui.navigation.SearchScreen
 import com.karrad.ticketsclient.ui.screen.tickets.OfflineBanner
@@ -359,6 +362,7 @@ private fun EventCard(
 ) {
     val widthMod = if (cardWidth != null) Modifier.width(cardWidth) else Modifier.fillMaxWidth()
     var isFav by remember { mutableStateOf(AppSession.isFavorite(event.id)) }
+    val scope = rememberCoroutineScope()
 
     Column(modifier = widthMod.clickable { onClick() }) {
         // ── Фото ──────────────────────────────────────────────────────────────
@@ -368,7 +372,7 @@ private fun EventCard(
                 .height(imageHeight)
                 .clip(RoundedCornerShape(14.dp))
         ) {
-            EventImagePlaceholder(seed = event.id, modifier = Modifier.fillMaxSize())
+            EventImage(imageUrl = event.imageUrl, seed = event.id, modifier = Modifier.fillMaxSize())
 
             // Age rating — top left (полупрозрачный тёмный)
             Box(
@@ -395,8 +399,22 @@ private fun EventCard(
                     .clip(CircleShape)
                     .background(Color.Black.copy(alpha = 0.35f))
                     .clickable {
-                        isFav = !isFav
-                        AppSession.toggleFavorite(event.id, isFav)
+                        val newFav = !isFav
+                        isFav = newFav
+                        AppSession.toggleFavorite(event.id, newFav)
+                        val token = AppSession.authToken
+                        if (token != null) {
+                            scope.launch {
+                                runCatching {
+                                    if (newFav) AppContainer.favoriteService.add(event.id, token)
+                                    else AppContainer.favoriteService.remove(event.id, token)
+                                }.onFailure {
+                                    // rollback on error
+                                    isFav = !newFav
+                                    AppSession.toggleFavorite(event.id, !newFav)
+                                }
+                            }
+                        }
                     }
             ) {
                 Icon(
