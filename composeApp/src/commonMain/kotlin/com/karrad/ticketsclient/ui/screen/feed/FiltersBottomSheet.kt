@@ -70,11 +70,25 @@ private val SHOW_COUNT = 5          // показываем первых N, ос
 private val ageOptions = listOf("0+", "6+", "12+", "18+")
 private val dateOptions = listOf("Сегодня", "Завтра", "Послезавтра")
 
+// ─── Filter state passed to caller ─────────────────────────────────────────────
+
+data class FilterState(
+    val categories: List<String> = emptyList(),
+    val ageRating: String? = null,
+    val selectedDate: String = dateOptions[0],
+    val priceFrom: Int? = null,
+    val priceTo: Int? = null
+) {
+    val hasActiveFilters: Boolean
+        get() = categories.isNotEmpty() || ageRating != null ||
+                selectedDate != dateOptions[0] || priceFrom != null || priceTo != null
+}
+
 // ─── Sheet ─────────────────────────────────────────────────────────────────────
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FiltersBottomSheet(onDismiss: () -> Unit) {
+fun FiltersBottomSheet(onDismiss: () -> Unit, onApply: (FilterState) -> Unit = {}) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     val selectedCategories = remember { mutableStateListOf<String>() }
@@ -226,7 +240,16 @@ fun FiltersBottomSheet(onDismiss: () -> Unit) {
                         .height(52.dp)
                         .clip(RoundedCornerShape(14.dp))
                         .background(MaterialTheme.colorScheme.primary)
-                        .clickable { onDismiss() },
+                        .clickable {
+                            onApply(FilterState(
+                                categories = selectedCategories.toList(),
+                                ageRating = selectedAge,
+                                selectedDate = selectedDate,
+                                priceFrom = priceFrom.toIntOrNull(),
+                                priceTo = priceTo.toIntOrNull()
+                            ))
+                            onDismiss()
+                        },
                     contentAlignment = Alignment.Center
                 ) {
                     Text(

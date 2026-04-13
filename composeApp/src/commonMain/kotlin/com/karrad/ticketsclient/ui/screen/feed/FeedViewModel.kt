@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.karrad.ticketsclient.AppSession
 import com.karrad.ticketsclient.data.api.DiscoveryService
 import com.karrad.ticketsclient.data.api.dto.DiscoveryFeedResponseDto
+import com.karrad.ticketsclient.data.api.dto.EventDto
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -19,7 +20,10 @@ import kotlinx.datetime.toLocalDateTime
 
 sealed interface FeedState {
     data object Loading : FeedState
-    data class Success(val feed: DiscoveryFeedResponseDto) : FeedState
+    data class Success(
+        val feed: DiscoveryFeedResponseDto,
+        val hasMore: Boolean = true
+    ) : FeedState
     data class Error(val message: String) : FeedState
 }
 
@@ -34,6 +38,9 @@ class FeedViewModel(
     val selectedDay: StateFlow<Int> = _selectedDay.asStateFlow()
 
     private var currentDate: String? = null
+    private var currentPage = 0
+    private var accumulatedForYou = mutableListOf<EventDto>()
+    private var isLoadingMore = false
 
     init {
         viewModelScope.launch {
@@ -42,7 +49,7 @@ class FeedViewModel(
                 .collect {
                     currentDate = null
                     _selectedDay.value = 0
-                    load()
+                    resetAndLoad()
                 }
         }
     }
@@ -56,21 +63,54 @@ class FeedViewModel(
             val today = Clock.System.now().toLocalDateTime(tz).date
             today.plus(offset, DateTimeUnit.DAY).toString()
         }
-        load()
+        resetAndLoad()
     }
 
-    fun load() {
+    fun load() = resetAndLoad()
+
+    fun loadMore() {
+        if (isLoadingMore) return
+        val current = _state.value as? FeedState.Success ?: return
+        if (!current.hasMore) return
+
+        isLoadingMore = true
+        viewModelScope.launch {
+            try {
+                currentPage++
+                val next = discoveryService.getDiscoveryFeed(
+                    city = AppSession.city,
+                    authToken = AppSession.authToken,
+                    page = currentPage,
+                    date = currentDate
+                )
+                accumulatedForYou.addAll(next.forYou)
+                val merged = current.feed.copy(forYou = accumulatedForYou.toList())
+                AppSession.cachedEvents = (merged.forYou + merged.byCategory.flatMap { it.events }).distinctBy { it.id }
+                _state.value = FeedState.Success(merged, hasMore = next.forYou.isNotEmpty())
+            } catch (_: Exception) {
+                // Keep current state, loadMore failed silently
+            } finally {
+                isLoadingMore = false
+            }
+        }
+    }
+
+    private fun resetAndLoad() {
+        currentPage = 0
+        accumulatedForYou = mutableListOf()
         viewModelScope.launch {
             _state.value = FeedState.Loading
             try {
                 val feed = discoveryService.getDiscoveryFeed(
                     city = AppSession.city,
                     authToken = AppSession.authToken,
+                    page = 0,
                     date = currentDate
                 )
+                accumulatedForYou = feed.forYou.toMutableList()
                 AppSession.cachedEvents = (feed.forYou + feed.byCategory.flatMap { it.events }).distinctBy { it.id }
                 AppSession.isOffline = false
-                _state.value = FeedState.Success(feed)
+                _state.value = FeedState.Success(feed, hasMore = feed.forYou.isNotEmpty())
             } catch (e: Exception) {
                 AppSession.isOffline = true
                 _state.value = FeedState.Error(e.message ?: "Ошибка загрузки ленты")
