@@ -84,6 +84,7 @@ object AppSession {
         userInterests = emptyList()
         userAvatarUrl = null
         cachedEvents = emptyList()
+        cachedTickets = emptyList()
         _favorites.clear()
         TokenStore.clear()
     }
