@@ -35,6 +35,7 @@ kotlin {
             implementation(libs.camerax.lifecycle)
             implementation(libs.camerax.view)
             implementation(libs.mlkit.barcode)
+            implementation(libs.androidx.security.crypto)
         }
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)
@@ -100,7 +101,10 @@ android {
         create("prod") {
             dimension = "mode"
             buildConfigField("boolean", "USE_MOCK", "false")
-            buildConfigField("String", "BASE_URL", "\"http://10.0.2.2:8080\"")
+            buildConfigField(
+                "String", "BASE_URL",
+                "\"${project.findProperty("PROD_BASE_URL") ?: "https://api.example.com"}\""
+            )
         }
     }
 

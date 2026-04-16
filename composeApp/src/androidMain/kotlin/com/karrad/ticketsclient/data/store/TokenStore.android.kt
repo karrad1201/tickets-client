@@ -2,13 +2,24 @@ package com.karrad.ticketsclient.data.store
 
 import android.content.Context
 import android.content.SharedPreferences
+import androidx.security.crypto.EncryptedSharedPreferences
+import androidx.security.crypto.MasterKey
 
 actual object TokenStore {
     private var prefs: SharedPreferences? = null
 
     /** Вызывать из MainActivity.onCreate перед AppContainer.init */
     fun init(context: Context) {
-        prefs = context.getSharedPreferences("auth_prefs", Context.MODE_PRIVATE)
+        val masterKey = MasterKey.Builder(context)
+            .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+            .build()
+        prefs = EncryptedSharedPreferences.create(
+            context,
+            "secure_auth_prefs",
+            masterKey,
+            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+        )
     }
 
     actual fun save(snapshot: SessionSnapshot) {
