@@ -12,7 +12,7 @@ class TicketApiService(
 ) : TicketService {
 
     override suspend fun getMyTickets(authToken: String): List<TicketDto> =
-        httpClient.get("$baseUrl/api/tickets/me") {
+        httpClient.get("$baseUrl/api/v1/tickets/me") {
             bearerAuth(authToken)
         }.body()
 }

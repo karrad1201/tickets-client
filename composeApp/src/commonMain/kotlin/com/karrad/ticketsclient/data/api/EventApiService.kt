@@ -14,7 +14,7 @@ class EventApiService(
 ) : EventService {
 
     override suspend fun getEvent(eventId: String): EventDto =
-        httpClient.get("$baseUrl/api/events/$eventId").body()
+        httpClient.get("$baseUrl/api/v1/events/$eventId").body()
 
     override suspend fun search(
         query: String,
@@ -23,7 +23,7 @@ class EventApiService(
         dateFrom: String?,
         dateTo: String?
     ): List<EventDto> =
-        httpClient.get("$baseUrl/api/events/search") {
+        httpClient.get("$baseUrl/api/v1/events/search") {
             parameter("q", query)
             parameter("city", city)
             parameter("page", page)
@@ -32,8 +32,8 @@ class EventApiService(
         }.body()
 
     override suspend fun getTicketTypes(eventId: String): List<TicketTypeDto> =
-        httpClient.get("$baseUrl/api/inventory/$eventId/ticket-types").body()
+        httpClient.get("$baseUrl/api/v1/inventory/$eventId/ticket-types").body()
 
     override suspend fun getSeatMap(eventId: String): SeatMapDto =
-        httpClient.get("$baseUrl/api/inventory/$eventId/seat-map").body()
+        httpClient.get("$baseUrl/api/v1/inventory/$eventId/seat-map").body()
 }

@@ -21,7 +21,7 @@ class FavoriteApiService(
 ) : FavoriteService {
 
     override suspend fun add(eventId: String, token: String) {
-        httpClient.post("$baseUrl/api/favorites") {
+        httpClient.post("$baseUrl/api/v1/favorites") {
             bearerAuth(token)
             contentType(ContentType.Application.Json)
             setBody(AddFavoriteRequest(eventId))
@@ -29,13 +29,13 @@ class FavoriteApiService(
     }
 
     override suspend fun remove(eventId: String, token: String) {
-        httpClient.delete("$baseUrl/api/favorites/$eventId") {
+        httpClient.delete("$baseUrl/api/v1/favorites/$eventId") {
             bearerAuth(token)
         }
     }
 
     override suspend fun list(token: String): List<EventDto> =
-        httpClient.get("$baseUrl/api/favorites") {
+        httpClient.get("$baseUrl/api/v1/favorites") {
             bearerAuth(token)
         }.body()
 }

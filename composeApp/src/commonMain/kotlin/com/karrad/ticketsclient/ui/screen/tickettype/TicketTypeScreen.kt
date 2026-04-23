@@ -48,6 +48,8 @@ import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.karrad.ticketsclient.AppSession
+import com.karrad.ticketsclient.data.api.dto.AdmissionInventoryItemRequestDto
+import com.karrad.ticketsclient.data.api.dto.CreateOrderRequestDto
 import com.karrad.ticketsclient.data.api.dto.TicketTypeDto
 import com.karrad.ticketsclient.di.AppContainer
 import com.karrad.ticketsclient.ui.navigation.OrderConfirmScreen
@@ -264,7 +266,17 @@ fun TicketTypeScreen(eventId: String) {
                                 try {
                                     val order = AppContainer.orderService.createOrder(
                                         eventId = eventId,
-                                        authToken = AppSession.authToken ?: ""
+                                        authToken = AppSession.authToken ?: "",
+                                        request = CreateOrderRequestDto(
+                                            admissionItems = quantities
+                                                .filterValues { it > 0 }
+                                                .map { (ticketTypeId, quantity) ->
+                                                    AdmissionInventoryItemRequestDto(
+                                                        ticketTypeId = ticketTypeId,
+                                                        quantity = quantity
+                                                    )
+                                                }
+                                        )
                                     )
                                     navigator.push(
                                         OrderConfirmScreen(

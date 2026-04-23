@@ -14,7 +14,7 @@ class ScannerApiService(
 ) : ScannerService {
 
     override suspend fun getMyOrgEvents(authToken: String?): List<OrgEventItem> =
-        httpClient.get("$baseUrl/api/my/organization/events") {
+        httpClient.get("$baseUrl/api/v1/my/organization/events") {
             authToken?.let { header("Authorization", "Bearer $it") }
         }.body()
 
@@ -23,7 +23,7 @@ class ScannerApiService(
         ticketId: String,
         authToken: String?
     ): TicketValidationResponse =
-        httpClient.post("$baseUrl/api/events/$eventId/tickets/$ticketId/validate") {
+        httpClient.post("$baseUrl/api/v1/events/$eventId/tickets/$ticketId/validate") {
             authToken?.let { header("Authorization", "Bearer $it") }
         }.body()
 }
