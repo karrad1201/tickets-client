@@ -85,8 +85,20 @@ android {
         applicationId = "com.karrad.ticketsclient"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = (System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 1)
+        versionName = "1.0.${System.getenv("GITHUB_RUN_NUMBER") ?: "0-local"}"
+    }
+
+    signingConfigs {
+        val keystorePath = System.getenv("KEYSTORE_PATH")
+        if (keystorePath != null) {
+            create("release") {
+                storeFile = file(keystorePath)
+                storePassword = System.getenv("KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("KEY_ALIAS")
+                keyPassword = System.getenv("KEY_PASSWORD")
+            }
+        }
     }
 
     flavorDimensions += "mode"
@@ -103,7 +115,7 @@ android {
             buildConfigField("boolean", "USE_MOCK", "false")
             buildConfigField(
                 "String", "BASE_URL",
-                "\"${project.findProperty("PROD_BASE_URL") ?: "https://api.example.com"}\""
+                "\"${System.getenv("PROD_BASE_URL") ?: project.findProperty("PROD_BASE_URL") ?: "https://api.example.com"}\""
             )
         }
     }
@@ -115,7 +127,16 @@ android {
     }
     buildTypes {
         getByName("release") {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+            val releaseSigningConfig = signingConfigs.findByName("release")
+            if (releaseSigningConfig != null) {
+                signingConfig = releaseSigningConfig
+            }
         }
     }
     compileOptions {
