@@ -6,6 +6,7 @@ import com.karrad.ticketsclient.data.api.dto.RegisterRequest
 import com.karrad.ticketsclient.data.api.dto.SendCodeRequest
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
@@ -34,4 +35,10 @@ class AuthApiService(
             contentType(ContentType.Application.Json)
             setBody(RegisterRequest(phone, code, fullName))
         }.body()
+
+    override suspend fun logout(token: String) {
+        httpClient.post("$baseUrl/auth/logout") {
+            bearerAuth(token)
+        }
+    }
 }
