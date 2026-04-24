@@ -107,3 +107,15 @@ object AboutScreen : Screen {
     @androidx.compose.runtime.Composable
     override fun Content() = com.karrad.ticketsclient.ui.screen.profile.AboutScreen()
 }
+
+// Org management (OWNER)
+object OrgManagementScreen : Screen {
+    @androidx.compose.runtime.Composable
+    override fun Content() = com.karrad.ticketsclient.ui.screen.org.OrgManagementScreen()
+}
+
+// Member management (MANAGER)
+object MemberManagementScreen : Screen {
+    @androidx.compose.runtime.Composable
+    override fun Content() = com.karrad.ticketsclient.ui.screen.org.MemberManagementScreen()
+}

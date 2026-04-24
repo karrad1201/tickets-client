@@ -4,6 +4,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.karrad.ticketsclient.data.api.dto.EventDto
+import com.karrad.ticketsclient.data.api.dto.OrgMembershipDto
 import com.karrad.ticketsclient.data.store.SessionSnapshot
 import com.karrad.ticketsclient.data.store.TokenStore
 
@@ -45,6 +46,9 @@ object AppSession {
 
     var userRole: String = "USER"
 
+    // Членство в организации — загружается после входа в MainScreen
+    var orgMembership: OrgMembershipDto? by mutableStateOf(null)
+
     fun login(
         token: String,
         userId: String,
@@ -85,6 +89,7 @@ object AppSession {
         userAvatarUrl = null
         cachedEvents = emptyList()
         cachedTickets = emptyList()
+        orgMembership = null
         _favorites.clear()
         TokenStore.clear()
     }

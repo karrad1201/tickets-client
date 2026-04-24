@@ -8,6 +8,7 @@ import com.karrad.ticketsclient.data.api.FakeGeoService
 import com.karrad.ticketsclient.data.api.FakeOrderService
 import com.karrad.ticketsclient.data.api.FakeProfileService
 import com.karrad.ticketsclient.data.api.FakeScannerService
+import com.karrad.ticketsclient.data.api.FakeOrgMemberService
 import com.karrad.ticketsclient.data.api.FakeTicketService
 import com.karrad.ticketsclient.data.api.createHttpClient
 import com.karrad.ticketsclient.di.AppContainer
@@ -25,6 +26,7 @@ fun initContainer(baseUrl: String) {
         eventService = FakeEventService(),
         geoService = FakeGeoService(),
         profileService = FakeProfileService(),
-        favoriteService = FakeFavoriteService()
+        favoriteService = FakeFavoriteService(),
+        orgMemberService = FakeOrgMemberService()
     )
 }
