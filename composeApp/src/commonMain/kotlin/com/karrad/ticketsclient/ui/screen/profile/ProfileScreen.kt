@@ -30,6 +30,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -43,7 +44,9 @@ import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.karrad.ticketsclient.AppSession
+import com.karrad.ticketsclient.di.AppContainer
 import com.karrad.ticketsclient.ui.navigation.LoginScreen
+import kotlinx.coroutines.launch
 import com.karrad.ticketsclient.ui.navigation.AboutScreen
 import com.karrad.ticketsclient.ui.navigation.EditProfileScreen
 import com.karrad.ticketsclient.ui.navigation.FavoritesScreen
@@ -56,6 +59,7 @@ fun ProfileScreen() {
     // EditProfileScreen открывается поверх табов
     val rootNavigator = navigator.parent ?: navigator
 
+    val scope = rememberCoroutineScope()
     var name by remember { mutableStateOf(AppSession.userName) }
     var phone by remember { mutableStateOf(AppSession.userPhone) }
 
@@ -90,8 +94,14 @@ fun ProfileScreen() {
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.primary)
                     .clickable {
+                        val token = AppSession.authToken
                         AppSession.logout()
                         rootNavigator.replaceAll(LoginScreen)
+                        if (token != null) {
+                            scope.launch {
+                                runCatching { AppContainer.authService.logout(token) }
+                            }
+                        }
                     },
                 contentAlignment = Alignment.Center
             ) {

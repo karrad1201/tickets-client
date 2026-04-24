@@ -39,4 +39,8 @@ class FakeAuthService : AuthService {
             )
         )
     }
+
+    override suspend fun logout(token: String) {
+        // Мок: выход всегда успешен
+    }
 }

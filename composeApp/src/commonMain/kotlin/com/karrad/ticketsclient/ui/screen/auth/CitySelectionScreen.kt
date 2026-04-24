@@ -158,9 +158,9 @@ private fun CityCard(city: CityDto, selected: Boolean, onClick: () -> Unit) {
                 style = MaterialTheme.typography.bodyLarge,
                 color = textColor
             )
-            if (city.region != null) {
+            city.region?.let { region ->
                 Text(
-                    text = city.region,
+                    text = region,
                     style = MaterialTheme.typography.bodySmall,
                     color = regionColor
                 )
