@@ -5,6 +5,12 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class CityDto(
     val id: String,
-    val name: String,
-    val region: String? = null
-)
+    val label: String,
+    val subject: SubjectDto? = null
+) {
+    val name: String get() = label
+    val region: String? get() = subject?.label
+}
+
+@Serializable
+data class SubjectDto(val id: String, val label: String)

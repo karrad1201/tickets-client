@@ -12,8 +12,8 @@ class GeoApiService(
 ) : GeoService {
 
     override suspend fun getCities(): List<CityDto> =
-        httpClient.get("$baseUrl/api/geo/cities").body()
+        httpClient.get("$baseUrl/api/v1/geo/cities").body()
 
     override suspend fun getCategories(): List<CategoryDto> =
-        httpClient.get("$baseUrl/api/categories").body()
+        httpClient.get("$baseUrl/api/v1/categories").body()
 }

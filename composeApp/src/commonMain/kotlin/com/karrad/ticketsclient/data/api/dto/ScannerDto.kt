@@ -13,8 +13,8 @@ data class OrgEventItem(
 data class TicketValidationResponse(
     val status: String,
     val holderName: String? = null,
-    val seat: String? = null,
+    @kotlinx.serialization.SerialName("seatInfo") val seat: String? = null,
     val usedAt: String? = null,
     val ticketEventLabel: String? = null,
-    val scannedEventLabel: String? = null
+    @kotlinx.serialization.SerialName("eventLabel") val scannedEventLabel: String? = null
 )

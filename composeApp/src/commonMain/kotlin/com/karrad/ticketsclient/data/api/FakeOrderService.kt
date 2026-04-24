@@ -1,5 +1,6 @@
 package com.karrad.ticketsclient.data.api
 
+import com.karrad.ticketsclient.data.api.dto.CreateOrderRequestDto
 import com.karrad.ticketsclient.data.api.dto.OrderDto
 import kotlinx.coroutines.delay
 
@@ -9,13 +10,19 @@ import kotlinx.coroutines.delay
  */
 class FakeOrderService : OrderService {
 
-    override suspend fun createOrder(eventId: String, authToken: String): OrderDto {
+    override suspend fun createOrder(eventId: String, authToken: String, request: CreateOrderRequestDto): OrderDto {
         delay(800)
+        val totalPrice = when {
+            request.seatKeys != null -> request.seatKeys.size * 1500
+            request.admissionItems != null -> request.admissionItems.sumOf { it.quantity } * 1500
+            else -> 1500
+        }
         return OrderDto(
             id = "order-fake-${eventId.takeLast(6)}",
             eventId = eventId,
-            status = "PENDING",
-            totalPrice = 1500
+            status = "PENDING_PAYMENT",
+            totalPrice = totalPrice,
+            amount = totalPrice
         )
     }
 
@@ -24,8 +31,9 @@ class FakeOrderService : OrderService {
         return OrderDto(
             id = orderId,
             eventId = "e-fake",
-            status = "CONFIRMED",
+            status = "PAID",
             totalPrice = 1500,
+            amount = 1500,
             ticketId = "ticket-fake-001"
         )
     }
@@ -34,8 +42,9 @@ class FakeOrderService : OrderService {
         return OrderDto(
             id = orderId,
             eventId = "e-fake",
-            status = "CONFIRMED",
-            totalPrice = 1500
+            status = "PAID",
+            totalPrice = 1500,
+            amount = 1500
         )
     }
 }

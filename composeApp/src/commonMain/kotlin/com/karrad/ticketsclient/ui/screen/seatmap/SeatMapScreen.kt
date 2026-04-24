@@ -60,7 +60,9 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import androidx.compose.runtime.LaunchedEffect
 import com.karrad.ticketsclient.AppSession
+import com.karrad.ticketsclient.data.api.dto.CreateOrderRequestDto
 import com.karrad.ticketsclient.data.api.dto.EventDto
+import com.karrad.ticketsclient.data.api.dto.SeatKeyRequestDto
 import com.karrad.ticketsclient.data.api.dto.SeatMapDto
 import com.karrad.ticketsclient.di.AppContainer
 import com.karrad.ticketsclient.ui.navigation.OrderConfirmScreen
@@ -69,7 +71,7 @@ import kotlinx.coroutines.launch
 
 // ─── Модели ────────────────────────────────────────────────────────────────────
 
-private data class Seat(val row: Int, val col: Int, val available: Boolean, val price: Int = 0)
+private data class Seat(val sectionKey: String, val rowKey: String, val seatKey: String, val row: Int, val col: Int, val available: Boolean, val price: Int = 0)
 
 private val SESSION_TIMES = listOf("13:00", "17:00", "23:00")
 
@@ -81,7 +83,7 @@ private fun SeatMapDto.toSeats(): List<Seat> {
     sections.forEach { section ->
         section.rows.forEachIndexed { rowIdx, row ->
             row.seats.forEachIndexed { colIdx, seat ->
-                result += Seat(rowIdx, colIdx, seat.available, seat.price)
+                result += Seat(section.key, row.key, seat.key, rowIdx, colIdx, seat.available, seat.price)
             }
         }
     }
@@ -312,7 +314,16 @@ fun SeatMapScreen(eventId: String) {
                                     try {
                                         val order = AppContainer.orderService.createOrder(
                                             eventId = eventId,
-                                            authToken = AppSession.authToken ?: ""
+                                            authToken = AppSession.authToken ?: "",
+                                            request = CreateOrderRequestDto(
+                                                seatKeys = selectedSeats.map { seat ->
+                                                    SeatKeyRequestDto(
+                                                        sectionKey = seat.sectionKey,
+                                                        rowKey = seat.rowKey,
+                                                        seatKey = seat.seatKey
+                                                    )
+                                                }
+                                            )
                                         )
                                         navigator.push(
                                             OrderConfirmScreen(

@@ -18,7 +18,7 @@ class DiscoveryApiService(
         size: Int,
         date: String?
     ): DiscoveryFeedResponseDto {
-        return httpClient.get("$baseUrl/api/discovery") {
+        return httpClient.get("$baseUrl/api/v1/discovery") {
             parameter("city", city)
             parameter("page", page)
             parameter("size", size)
