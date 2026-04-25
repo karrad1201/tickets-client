@@ -4,6 +4,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.karrad.ticketsclient.AppSession
+import com.karrad.ticketsclient.crash.CrashReporter
 import com.karrad.ticketsclient.data.api.DiscoveryService
 import com.karrad.ticketsclient.data.api.dto.DiscoveryFeedResponseDto
 import com.karrad.ticketsclient.data.api.dto.EventDto
@@ -115,6 +116,7 @@ class FeedViewModel(
                 onOfflineChanged(false)
                 _state.value = FeedState.Success(feed, hasMore = feed.forYou.isNotEmpty())
             } catch (e: Exception) {
+                CrashReporter.log(e)
                 onOfflineChanged(true)
                 _state.value = FeedState.Error(e.message ?: "Ошибка загрузки ленты")
             }

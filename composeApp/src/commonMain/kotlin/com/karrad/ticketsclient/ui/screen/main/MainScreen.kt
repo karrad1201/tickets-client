@@ -42,6 +42,7 @@ import cafe.adriel.voyager.navigator.tab.LocalTabNavigator
 import cafe.adriel.voyager.navigator.tab.Tab
 import cafe.adriel.voyager.navigator.tab.TabNavigator
 import com.karrad.ticketsclient.AppSession
+import com.karrad.ticketsclient.crash.CrashReporter
 import com.karrad.ticketsclient.di.AppContainer
 import com.karrad.ticketsclient.ui.screen.feed.FeedTab
 import com.karrad.ticketsclient.ui.screen.profile.ProfileTab
@@ -57,6 +58,7 @@ fun MainScreen() {
     var showScanner by remember { mutableStateOf(AppContainer.isMock) }
 
     LaunchedEffect(Unit) {
+        AppSession.userId?.let { CrashReporter.setUserId(it) }
         if (!AppContainer.isMock) {
             val token = AppSession.authToken ?: return@LaunchedEffect
             val membership = try {
