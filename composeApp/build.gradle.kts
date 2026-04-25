@@ -7,6 +7,8 @@ plugins {
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.kotlinSerialization)
+    alias(libs.plugins.googleServices)
+    alias(libs.plugins.firebaseCrashlytics)
 }
 
 kotlin {
@@ -36,6 +38,7 @@ kotlin {
             implementation(libs.camerax.view)
             implementation(libs.mlkit.barcode)
             implementation(libs.androidx.security.crypto)
+            implementation(libs.firebase.crashlytics.ktx)
         }
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)

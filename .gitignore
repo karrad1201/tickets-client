@@ -19,3 +19,5 @@ captures
 node_modules/
 references/ticketsbackend/
 .claude/settings.local.json
+# Firebase — реальный файл с ключами не коммитится; в репо только заглушка
+# composeApp/google-services.json.real

@@ -1,5 +1,8 @@
 [versions]
 agp = "8.13.2"
+firebase-crashlytics-ktx = "19.4.1"
+google-services = "4.4.2"
+firebase-crashlytics-gradle = "3.0.3"
 androidx-security-crypto = "1.1.0-alpha06"
 camerax = "1.4.2"
 mlkit-barcode = "17.3.0"
@@ -57,6 +60,7 @@ camerax-view = { module = "androidx.camera:camera-view", version.ref = "camerax"
 mlkit-barcode = { module = "com.google.mlkit:barcode-scanning", version.ref = "mlkit-barcode" }
 androidx-security-crypto = { module = "androidx.security:security-crypto", version.ref = "androidx-security-crypto" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
+firebase-crashlytics-ktx = { module = "com.google.firebase:firebase-crashlytics-ktx", version.ref = "firebase-crashlytics-ktx" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
@@ -65,3 +69,5 @@ composeMultiplatform = { id = "org.jetbrains.compose", version.ref = "composeMul
 composeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+googleServices = { id = "com.google.gms.google-services", version.ref = "google-services" }
+firebaseCrashlytics = { id = "com.google.firebase.crashlytics", version.ref = "firebase-crashlytics-gradle" }
