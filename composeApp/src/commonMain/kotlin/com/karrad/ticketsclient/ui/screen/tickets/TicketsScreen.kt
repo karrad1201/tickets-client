@@ -64,7 +64,7 @@ fun TicketsScreen() {
 
     LaunchedEffect(Unit) {
         try {
-            val loaded = AppContainer.ticketService.getMyTickets(AppSession.authToken ?: "")
+            val loaded = AppContainer.ticketService.getMyTickets()
             tickets = loaded
             AppSession.cachedTickets = loaded   // обновляем кеш при успехе
             AppSession.isOffline = false

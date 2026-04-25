@@ -30,7 +30,6 @@ sealed interface FeedState {
 
 class FeedViewModel(
     private val discoveryService: DiscoveryService,
-    private val getAuthToken: () -> String? = { AppSession.authToken },
     private val onCacheUpdated: (List<EventDto>) -> Unit = { AppSession.cachedEvents = it },
     private val onOfflineChanged: (Boolean) -> Unit = { AppSession.isOffline = it }
 ) : ViewModel() {
@@ -83,7 +82,6 @@ class FeedViewModel(
                 currentPage++
                 val next = discoveryService.getDiscoveryFeed(
                     city = AppSession.city,
-                    authToken = getAuthToken(),
                     page = currentPage,
                     date = currentDate
                 )
@@ -92,7 +90,7 @@ class FeedViewModel(
                 onCacheUpdated((merged.forYou + merged.byCategory.flatMap { it.events }).distinctBy { it.id })
                 _state.value = FeedState.Success(merged, hasMore = next.forYou.isNotEmpty())
             } catch (_: Exception) {
-                // Keep current state, loadMore failed silently
+                // loadMore fails silently — keep current state
             } finally {
                 isLoadingMore = false
             }
@@ -107,7 +105,6 @@ class FeedViewModel(
             try {
                 val feed = discoveryService.getDiscoveryFeed(
                     city = AppSession.city,
-                    authToken = getAuthToken(),
                     page = 0,
                     date = currentDate
                 )

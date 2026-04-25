@@ -42,7 +42,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
-import com.karrad.ticketsclient.AppSession
 import com.karrad.ticketsclient.data.api.dto.VenueAccessGrantDto
 import com.karrad.ticketsclient.di.AppContainer
 import kotlinx.coroutines.launch
@@ -62,10 +61,9 @@ fun VenueAccessScreen() {
         scope.launch {
             isLoading = true
             error = null
-            val token = AppSession.authToken ?: return@launch
             try {
-                incoming = AppContainer.venueAccessGrantService.getIncomingRequests(token)
-                outgoing = AppContainer.venueAccessGrantService.getOutgoingRequests(token)
+                incoming = AppContainer.venueAccessGrantService.getIncomingRequests()
+                outgoing = AppContainer.venueAccessGrantService.getOutgoingRequests()
             } catch (e: Exception) {
                 error = e.message
             } finally {
@@ -136,18 +134,16 @@ fun VenueAccessScreen() {
                                 isIncoming = selectedTab == 0,
                                 onApprove = {
                                     scope.launch {
-                                        val token = AppSession.authToken ?: return@launch
                                         runCatching {
-                                            AppContainer.venueAccessGrantService.approve(token, grant.venueId, grant.id)
+                                            AppContainer.venueAccessGrantService.approve(grant.venueId, grant.id)
                                         }
                                         load()
                                     }
                                 },
                                 onReject = {
                                     scope.launch {
-                                        val token = AppSession.authToken ?: return@launch
                                         runCatching {
-                                            AppContainer.venueAccessGrantService.reject(token, grant.venueId, grant.id)
+                                            AppContainer.venueAccessGrantService.reject(grant.venueId, grant.id)
                                         }
                                         load()
                                     }

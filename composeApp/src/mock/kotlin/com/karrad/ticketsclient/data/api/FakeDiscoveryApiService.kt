@@ -9,13 +9,10 @@ class FakeDiscoveryApiService : DiscoveryService {
 
     override suspend fun getDiscoveryFeed(
         city: String,
-        authToken: String?,
         page: Int,
         size: Int,
         date: String?
-    ): DiscoveryFeedResponseDto {
-        return FEED
-    }
+    ): DiscoveryFeedResponseDto = FEED
 
     companion object {
         private val catTheatre  = CategoryDto("cat-theatre",  "theatre",  "Театры")

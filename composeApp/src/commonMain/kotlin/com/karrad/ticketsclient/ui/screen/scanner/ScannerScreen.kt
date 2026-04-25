@@ -75,7 +75,7 @@ fun ScannerScreen() {
 
     LaunchedEffect(Unit) {
         try {
-            val events = AppContainer.scannerService.getMyOrgEvents(AppSession.authToken)
+            val events = AppContainer.scannerService.getMyOrgEvents()
             state = if (events.isEmpty()) ScannerState.NoAccess else ScannerState.EventList(events)
         } catch (e: Exception) {
             state = ScannerState.NoAccess
@@ -94,7 +94,7 @@ fun ScannerScreen() {
             onBack = {
                 scope.launch {
                     try {
-                        val events = AppContainer.scannerService.getMyOrgEvents(AppSession.authToken)
+                        val events = AppContainer.scannerService.getMyOrgEvents()
                         state = if (events.isEmpty()) ScannerState.NoAccess else ScannerState.EventList(events)
                     } catch (e: Exception) {
                         state = ScannerState.NoAccess
@@ -108,8 +108,7 @@ fun ScannerScreen() {
                         try {
                             val result = AppContainer.scannerService.validateTicket(
                                 eventId = s.event.id,
-                                ticketId = ticketId,
-                                authToken = AppSession.authToken
+                                ticketId = ticketId
                             )
                             state = s.copy(validating = false, result = result)
                         } catch (e: Exception) {

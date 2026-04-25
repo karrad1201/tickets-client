@@ -5,15 +5,15 @@ import com.karrad.ticketsclient.data.api.dto.EventDto
 class FakeFavoriteService : FavoriteService {
     private val added = mutableSetOf<String>()
 
-    override suspend fun add(eventId: String, token: String) {
+    override suspend fun add(eventId: String) {
         added.add(eventId)
     }
 
-    override suspend fun remove(eventId: String, token: String) {
+    override suspend fun remove(eventId: String) {
         added.remove(eventId)
     }
 
-    override suspend fun list(token: String): List<EventDto> {
+    override suspend fun list(): List<EventDto> {
         if (added.isEmpty()) return emptyList()
         val feed = FakeDiscoveryApiService.FEED
         val allEvents = (feed.forYou + feed.tomorrow + feed.dayAfterTomorrow +

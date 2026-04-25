@@ -60,9 +60,8 @@ fun MainScreen() {
     LaunchedEffect(Unit) {
         AppSession.userId?.let { CrashReporter.setUserId(it) }
         if (!AppContainer.isMock) {
-            val token = AppSession.authToken ?: return@LaunchedEffect
             val membership = try {
-                AppContainer.orgMemberService.getMyMembership(token)
+                AppContainer.orgMemberService.getMyMembership()
             } catch (e: Exception) {
                 println("MainScreen: не удалось получить членство — ${e.message}")
                 null

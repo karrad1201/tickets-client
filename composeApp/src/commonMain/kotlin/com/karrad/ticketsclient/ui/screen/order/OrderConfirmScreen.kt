@@ -61,7 +61,7 @@ fun OrderConfirmScreen(eventId: String, orderId: String, totalPrice: Int) {
 
     LaunchedEffect(orderId) {
         try {
-            orderStatus = AppContainer.orderService.getOrder(orderId, AppSession.authToken ?: "").status
+            orderStatus = AppContainer.orderService.getOrder(orderId).status
         } catch (_: Exception) { }
     }
 
@@ -174,7 +174,7 @@ fun OrderConfirmScreen(eventId: String, orderId: String, totalPrice: Int) {
                     error = null
                     scope.launch {
                         try {
-                            AppContainer.orderService.confirmPayment(orderId, AppSession.authToken ?: "")
+                            AppContainer.orderService.confirmPayment(orderId)
                             success = true
                         } catch (e: Exception) {
                             error = "Ошибка оплаты. Попробуйте ещё раз."

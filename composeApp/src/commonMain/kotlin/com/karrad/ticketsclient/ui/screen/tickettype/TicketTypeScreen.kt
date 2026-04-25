@@ -266,7 +266,6 @@ fun TicketTypeScreen(eventId: String) {
                                 try {
                                     val order = AppContainer.orderService.createOrder(
                                         eventId = eventId,
-                                        authToken = AppSession.authToken ?: "",
                                         request = CreateOrderRequestDto(
                                             admissionItems = quantities
                                                 .filterValues { it > 0 }

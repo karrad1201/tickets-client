@@ -55,16 +55,14 @@ fun FavoritesScreen() {
     var loading by remember { mutableStateOf(true) }
 
     LaunchedEffect(Unit) {
-        val token = AppSession.authToken
-        if (token != null) {
-            runCatching { AppContainer.favoriteService.list(token) }
-                .onSuccess { list ->
-                    favorites = list
-                    AppSession.setFavorites(list.map { it.id })
-                }
-        } else {
-            favorites = AppSession.cachedEvents.filter { AppSession.isFavorite(it.id) }
-        }
+        runCatching { AppContainer.favoriteService.list() }
+            .onSuccess { list ->
+                favorites = list
+                AppSession.setFavorites(list.map { it.id })
+            }
+            .onFailure {
+                favorites = AppSession.cachedEvents.filter { AppSession.isFavorite(it.id) }
+            }
         loading = false
     }
 
