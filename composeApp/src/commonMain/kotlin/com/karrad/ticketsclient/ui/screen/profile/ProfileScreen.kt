@@ -54,6 +54,7 @@ import com.karrad.ticketsclient.ui.navigation.InterestsScreen
 import com.karrad.ticketsclient.ui.navigation.MemberManagementScreen
 import com.karrad.ticketsclient.ui.navigation.OrgManagementScreen
 import com.karrad.ticketsclient.ui.navigation.SupportScreen
+import com.karrad.ticketsclient.ui.navigation.VenueAccessScreen
 
 @Composable
 fun ProfileScreen() {
@@ -160,10 +161,17 @@ fun ProfileScreen() {
         if (membership != null) {
             MenuCard {
                 when (membership.role) {
-                    "OWNER" -> MenuItem(
-                        label = "Управление организацией",
-                        onClick = { rootNavigator.push(OrgManagementScreen) }
-                    )
+                    "OWNER" -> {
+                        MenuItem(
+                            label = "Управление организацией",
+                            onClick = { rootNavigator.push(OrgManagementScreen) }
+                        )
+                        MenuDivider()
+                        MenuItem(
+                            label = "Аренда площадок",
+                            onClick = { rootNavigator.push(VenueAccessScreen) }
+                        )
+                    }
                     "MANAGER" -> MenuItem(
                         label = "Сотрудники",
                         onClick = { rootNavigator.push(MemberManagementScreen) }
