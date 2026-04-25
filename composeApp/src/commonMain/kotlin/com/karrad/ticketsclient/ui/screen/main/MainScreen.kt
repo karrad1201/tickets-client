@@ -58,12 +58,15 @@ fun MainScreen() {
 
     LaunchedEffect(Unit) {
         if (!AppContainer.isMock) {
-            showScanner = try {
-                AppContainer.scannerService.getMyOrgEvents(AppSession.authToken).isNotEmpty()
+            val token = AppSession.authToken ?: return@LaunchedEffect
+            val membership = try {
+                AppContainer.orgMemberService.getMyMembership(token)
             } catch (e: Exception) {
-                println("MainScreen: не удалось проверить доступ к сканеру — ${e.message}")
-                false
+                println("MainScreen: не удалось получить членство — ${e.message}")
+                null
             }
+            AppSession.orgMembership = membership
+            showScanner = membership != null
         }
     }
 

@@ -10,6 +10,8 @@ import com.karrad.ticketsclient.data.api.FavoriteApiService
 import com.karrad.ticketsclient.data.api.FavoriteService
 import com.karrad.ticketsclient.data.api.GeoApiService
 import com.karrad.ticketsclient.data.api.GeoService
+import com.karrad.ticketsclient.data.api.OrgMemberApiService
+import com.karrad.ticketsclient.data.api.OrgMemberService
 import com.karrad.ticketsclient.data.api.OrderApiService
 import com.karrad.ticketsclient.data.api.OrderService
 import com.karrad.ticketsclient.data.api.ProfileApiService
@@ -56,6 +58,9 @@ object AppContainer {
     lateinit var favoriteService: FavoriteService
         private set
 
+    lateinit var orgMemberService: OrgMemberService
+        private set
+
     lateinit var httpClient: io.ktor.client.HttpClient
         private set
 
@@ -70,7 +75,8 @@ object AppContainer {
         eventService: EventService,
         geoService: GeoService,
         profileService: ProfileService,
-        favoriteService: FavoriteService
+        favoriteService: FavoriteService,
+        orgMemberService: OrgMemberService
     ) {
         this.isMock = isMock
         this.httpClient = httpClient
@@ -83,6 +89,7 @@ object AppContainer {
         this.geoService = geoService
         this.profileService = profileService
         this.favoriteService = favoriteService
+        this.orgMemberService = orgMemberService
     }
 }
 
@@ -99,6 +106,7 @@ fun AppContainer.initReal(baseUrl: String) {
         eventService = EventApiService(client, baseUrl),
         geoService = GeoApiService(client, baseUrl),
         profileService = ProfileApiService(client, baseUrl),
-        favoriteService = FavoriteApiService(client, baseUrl)
+        favoriteService = FavoriteApiService(client, baseUrl),
+        orgMemberService = OrgMemberApiService(client, baseUrl)
     )
 }

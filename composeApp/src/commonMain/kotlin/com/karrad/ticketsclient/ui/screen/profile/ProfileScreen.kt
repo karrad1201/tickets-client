@@ -51,6 +51,8 @@ import com.karrad.ticketsclient.ui.navigation.AboutScreen
 import com.karrad.ticketsclient.ui.navigation.EditProfileScreen
 import com.karrad.ticketsclient.ui.navigation.FavoritesScreen
 import com.karrad.ticketsclient.ui.navigation.InterestsScreen
+import com.karrad.ticketsclient.ui.navigation.MemberManagementScreen
+import com.karrad.ticketsclient.ui.navigation.OrgManagementScreen
 import com.karrad.ticketsclient.ui.navigation.SupportScreen
 
 @Composable
@@ -154,6 +156,23 @@ fun ProfileScreen() {
         Spacer(Modifier.height(16.dp))
 
         // ─── Меню ────────────────────────────────────────────────────────────
+        val membership = AppSession.orgMembership
+        if (membership != null) {
+            MenuCard {
+                when (membership.role) {
+                    "OWNER" -> MenuItem(
+                        label = "Управление организацией",
+                        onClick = { rootNavigator.push(OrgManagementScreen) }
+                    )
+                    "MANAGER" -> MenuItem(
+                        label = "Сотрудники",
+                        onClick = { rootNavigator.push(MemberManagementScreen) }
+                    )
+                }
+            }
+            Spacer(Modifier.height(12.dp))
+        }
+
         MenuCard {
             MenuItem(label = "Избранное", onClick = { rootNavigator.push(FavoritesScreen) })
             MenuDivider()
