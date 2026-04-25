@@ -20,6 +20,8 @@ import com.karrad.ticketsclient.data.api.ScannerApiService
 import com.karrad.ticketsclient.data.api.ScannerService
 import com.karrad.ticketsclient.data.api.TicketApiService
 import com.karrad.ticketsclient.data.api.TicketService
+import com.karrad.ticketsclient.data.api.VenueAccessGrantApiService
+import com.karrad.ticketsclient.data.api.VenueAccessGrantService
 import com.karrad.ticketsclient.data.api.createHttpClient
 
 /**
@@ -61,6 +63,9 @@ object AppContainer {
     lateinit var orgMemberService: OrgMemberService
         private set
 
+    lateinit var venueAccessGrantService: VenueAccessGrantService
+        private set
+
     lateinit var httpClient: io.ktor.client.HttpClient
         private set
 
@@ -76,7 +81,8 @@ object AppContainer {
         geoService: GeoService,
         profileService: ProfileService,
         favoriteService: FavoriteService,
-        orgMemberService: OrgMemberService
+        orgMemberService: OrgMemberService,
+        venueAccessGrantService: VenueAccessGrantService
     ) {
         this.isMock = isMock
         this.httpClient = httpClient
@@ -90,6 +96,7 @@ object AppContainer {
         this.profileService = profileService
         this.favoriteService = favoriteService
         this.orgMemberService = orgMemberService
+        this.venueAccessGrantService = venueAccessGrantService
     }
 }
 
@@ -107,6 +114,7 @@ fun AppContainer.initReal(baseUrl: String) {
         geoService = GeoApiService(client, baseUrl),
         profileService = ProfileApiService(client, baseUrl),
         favoriteService = FavoriteApiService(client, baseUrl),
-        orgMemberService = OrgMemberApiService(client, baseUrl)
+        orgMemberService = OrgMemberApiService(client, baseUrl),
+        venueAccessGrantService = VenueAccessGrantApiService(client, baseUrl)
     )
 }

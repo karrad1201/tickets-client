@@ -119,3 +119,9 @@ object MemberManagementScreen : Screen {
     @androidx.compose.runtime.Composable
     override fun Content() = com.karrad.ticketsclient.ui.screen.org.MemberManagementScreen()
 }
+
+// Venue access grants (OWNER)
+object VenueAccessScreen : Screen {
+    @androidx.compose.runtime.Composable
+    override fun Content() = com.karrad.ticketsclient.ui.screen.org.VenueAccessScreen()
+}
