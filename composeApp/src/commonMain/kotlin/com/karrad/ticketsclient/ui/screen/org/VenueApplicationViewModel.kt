@@ -3,6 +3,7 @@ package com.karrad.ticketsclient.ui.screen.org
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.karrad.ticketsclient.crash.CrashReporter
+import com.karrad.ticketsclient.data.api.FileBytes
 import com.karrad.ticketsclient.data.api.VenueApplicationService
 import com.karrad.ticketsclient.data.api.dto.CreateVenueApplicationRequest
 import com.karrad.ticketsclient.data.api.dto.VenueApplicationDto
@@ -15,7 +16,9 @@ data class VenueApplicationState(
     val applications: List<VenueApplicationDto> = emptyList(),
     val isLoading: Boolean = true,
     val isSubmitting: Boolean = false,
+    val isUploading: Boolean = false,
     val error: String? = null,
+    val uploadError: String? = null,
     val submitSuccess: Boolean = false
 )
 
@@ -59,7 +62,25 @@ class VenueApplicationViewModel(
         }
     }
 
+    fun uploadDocuments(applicationId: String, files: List<FileBytes>) {
+        viewModelScope.launch {
+            _state.value = _state.value.copy(isUploading = true, uploadError = null)
+            try {
+                venueApplicationService.uploadDocuments(applicationId, files)
+                _state.value = _state.value.copy(isUploading = false)
+                load()
+            } catch (e: Exception) {
+                CrashReporter.log(e)
+                _state.value = _state.value.copy(isUploading = false, uploadError = e.message)
+            }
+        }
+    }
+
     fun clearSubmitSuccess() {
         _state.value = _state.value.copy(submitSuccess = false)
+    }
+
+    fun clearUploadError() {
+        _state.value = _state.value.copy(uploadError = null)
     }
 }
