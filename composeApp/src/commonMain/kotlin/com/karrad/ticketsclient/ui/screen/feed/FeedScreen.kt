@@ -60,6 +60,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.karrad.ticketsclient.AppSession
+import com.karrad.ticketsclient.crash.CrashReporter
 import com.karrad.ticketsclient.data.api.dto.CategoryEventsEntryDto
 import com.karrad.ticketsclient.data.api.dto.DiscoveryFeedResponseDto
 import com.karrad.ticketsclient.data.api.dto.EventDto
@@ -552,6 +553,7 @@ private fun EventCard(
                                 if (newFav) AppContainer.favoriteService.add(event.id)
                                 else AppContainer.favoriteService.remove(event.id)
                             }.onFailure {
+                                CrashReporter.log(it)
                                 // rollback on error
                                 isFav = !newFav
                                 AppSession.toggleFavorite(event.id, !newFav)

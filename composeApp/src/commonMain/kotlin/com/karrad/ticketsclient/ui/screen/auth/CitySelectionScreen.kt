@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.karrad.ticketsclient.AppSession
+import com.karrad.ticketsclient.crash.CrashReporter
 import com.karrad.ticketsclient.data.api.dto.CityDto
 import com.karrad.ticketsclient.di.AppContainer
 import com.karrad.ticketsclient.ui.navigation.InterestsScreen
@@ -48,7 +49,7 @@ fun CitySelectionScreen(onCitySelected: ((String) -> Unit)? = null) {
     var selectedCity by remember { mutableStateOf<CityDto?>(null) }
 
     LaunchedEffect(Unit) {
-        allCities = try { AppContainer.geoService.getCities() } catch (_: Exception) { emptyList() }
+        allCities = try { AppContainer.geoService.getCities() } catch (e: Exception) { CrashReporter.log(e); emptyList() }
     }
 
     val cities = remember(query, allCities) {

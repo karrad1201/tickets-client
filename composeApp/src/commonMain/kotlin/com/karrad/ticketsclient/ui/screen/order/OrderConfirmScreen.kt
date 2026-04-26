@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.karrad.ticketsclient.AppSession
+import com.karrad.ticketsclient.crash.CrashReporter
 import com.karrad.ticketsclient.data.api.dto.EventDto
 import com.karrad.ticketsclient.di.AppContainer
 import com.karrad.ticketsclient.ui.navigation.MainScreen
@@ -56,13 +57,13 @@ fun OrderConfirmScreen(eventId: String, orderId: String, totalPrice: Int) {
     var success by remember { mutableStateOf(false) }
 
     LaunchedEffect(eventId) {
-        event = try { AppContainer.eventService.getEvent(eventId) } catch (_: Exception) { null }
+        event = try { AppContainer.eventService.getEvent(eventId) } catch (e: Exception) { CrashReporter.log(e); null }
     }
 
     LaunchedEffect(orderId) {
         try {
             orderStatus = AppContainer.orderService.getOrder(orderId).status
-        } catch (_: Exception) { }
+        } catch (e: Exception) { CrashReporter.log(e) }
     }
 
     Column(
@@ -177,6 +178,7 @@ fun OrderConfirmScreen(eventId: String, orderId: String, totalPrice: Int) {
                             AppContainer.orderService.confirmPayment(orderId)
                             success = true
                         } catch (e: Exception) {
+                            CrashReporter.log(e)
                             error = "Ошибка оплаты. Попробуйте ещё раз."
                         } finally {
                             loading = false

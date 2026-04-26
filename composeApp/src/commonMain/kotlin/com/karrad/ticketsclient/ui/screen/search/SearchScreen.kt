@@ -45,6 +45,7 @@ import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.karrad.ticketsclient.AppSession
+import com.karrad.ticketsclient.crash.CrashReporter
 import com.karrad.ticketsclient.data.api.dto.EventDto
 import com.karrad.ticketsclient.di.AppContainer
 import com.karrad.ticketsclient.ui.navigation.EventDetailScreen
@@ -69,7 +70,8 @@ fun SearchScreen() {
         loading = true
         results = try {
             AppContainer.eventService.search(query, AppSession.city)
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            CrashReporter.log(e)
             emptyList()
         } finally {
             loading = false

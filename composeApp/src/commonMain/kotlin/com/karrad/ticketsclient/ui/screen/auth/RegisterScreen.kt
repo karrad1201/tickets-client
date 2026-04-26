@@ -44,6 +44,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import com.karrad.ticketsclient.crash.CrashReporter
 import com.karrad.ticketsclient.di.AppContainer
 import com.karrad.ticketsclient.ui.navigation.SmsCodeScreen
 import kotlinx.coroutines.launch
@@ -105,6 +106,7 @@ fun RegisterScreen() {
                             AppContainer.authService.sendCode(phone)
                             navigator.push(SmsCodeScreen(isRegistration = true, phone = phone))
                         } catch (e: Exception) {
+                            CrashReporter.log(e)
                             error = "Не удалось отправить код. Проверьте номер."
                         } finally {
                             loading = false

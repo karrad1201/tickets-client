@@ -60,6 +60,7 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import androidx.compose.runtime.LaunchedEffect
 import com.karrad.ticketsclient.AppSession
+import com.karrad.ticketsclient.crash.CrashReporter
 import com.karrad.ticketsclient.data.api.dto.CreateOrderRequestDto
 import com.karrad.ticketsclient.data.api.dto.EventDto
 import com.karrad.ticketsclient.data.api.dto.SeatKeyRequestDto
@@ -100,8 +101,8 @@ fun SeatMapScreen(eventId: String) {
     var seatMap by remember { mutableStateOf<SeatMapDto?>(null) }
 
     LaunchedEffect(eventId) {
-        event = try { AppContainer.eventService.getEvent(eventId) } catch (_: Exception) { null }
-        seatMap = try { AppContainer.eventService.getSeatMap(eventId) } catch (_: Exception) { null }
+        event = try { AppContainer.eventService.getEvent(eventId) } catch (e: Exception) { CrashReporter.log(e); null }
+        seatMap = try { AppContainer.eventService.getSeatMap(eventId) } catch (e: Exception) { CrashReporter.log(e); null }
     }
 
     val allSeats = remember(seatMap) { seatMap?.toSeats() ?: emptyList() }
@@ -331,7 +332,8 @@ fun SeatMapScreen(eventId: String) {
                                                 totalPrice = totalPrice
                                             )
                                         )
-                                    } catch (_: Exception) {
+                                    } catch (e: Exception) {
+                                        CrashReporter.log(e)
                                     } finally {
                                         buyLoading = false
                                     }

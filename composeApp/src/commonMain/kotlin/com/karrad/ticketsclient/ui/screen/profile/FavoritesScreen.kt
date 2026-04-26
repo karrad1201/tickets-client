@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.karrad.ticketsclient.AppSession
+import com.karrad.ticketsclient.crash.CrashReporter
 import com.karrad.ticketsclient.data.api.dto.EventDto
 import com.karrad.ticketsclient.di.AppContainer
 import com.karrad.ticketsclient.ui.navigation.EventDetailScreen
@@ -61,6 +62,7 @@ fun FavoritesScreen() {
                 AppSession.setFavorites(list.map { it.id })
             }
             .onFailure {
+                CrashReporter.log(it)
                 favorites = AppSession.cachedEvents.filter { AppSession.isFavorite(it.id) }
             }
         loading = false

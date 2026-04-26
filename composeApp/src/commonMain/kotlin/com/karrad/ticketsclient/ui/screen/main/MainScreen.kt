@@ -63,7 +63,7 @@ fun MainScreen() {
             val membership = try {
                 AppContainer.orgMemberService.getMyMembership()
             } catch (e: Exception) {
-                println("MainScreen: не удалось получить членство — ${e.message}")
+                CrashReporter.log(e)
                 null
             }
             AppSession.orgMembership = membership

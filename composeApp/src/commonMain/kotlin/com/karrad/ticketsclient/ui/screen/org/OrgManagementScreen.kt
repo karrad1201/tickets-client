@@ -48,6 +48,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import com.karrad.ticketsclient.crash.CrashReporter
 import com.karrad.ticketsclient.data.api.dto.OrgMemberDto
 import com.karrad.ticketsclient.di.AppContainer
 import kotlinx.coroutines.launch
@@ -76,6 +77,7 @@ fun OrgManagementScreen() {
             try {
                 members = AppContainer.orgMemberService.listMembers()
             } catch (e: Exception) {
+                CrashReporter.log(e)
                 error = e.message
             } finally {
                 isLoading = false
@@ -133,6 +135,7 @@ fun OrgManagementScreen() {
                         onDelete = {
                             scope.launch {
                                 runCatching { AppContainer.orgMemberService.deleteMember(member.id) }
+                                    .onFailure { CrashReporter.log(it) }
                                 loadMembers()
                             }
                         }
@@ -198,7 +201,7 @@ fun OrgManagementScreen() {
                                 role = addRole,
                                 venueId = addVenueId.trim().ifBlank { null }
                             )
-                        }
+                        }.onFailure { CrashReporter.log(it) }
                         showAddDialog = false
                         addUserId = ""
                         addRole = "MANAGER"

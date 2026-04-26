@@ -35,6 +35,7 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import androidx.compose.ui.text.style.TextAlign
 import com.karrad.ticketsclient.AppSession
+import com.karrad.ticketsclient.crash.CrashReporter
 import com.karrad.ticketsclient.di.AppContainer
 import com.karrad.ticketsclient.ui.navigation.MainScreen
 import com.karrad.ticketsclient.ui.navigation.NameInputScreen
@@ -128,6 +129,7 @@ fun SmsCodeScreen(isRegistration: Boolean = false, phone: String = "") {
                             navigator.replaceAll(MainScreen)
                         }
                     } catch (e: Exception) {
+                        CrashReporter.log(e)
                         error = "Неверный код. Попробуйте ещё раз."
                     } finally {
                         loading = false

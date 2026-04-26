@@ -44,6 +44,7 @@ import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.karrad.ticketsclient.AppSession
+import com.karrad.ticketsclient.crash.CrashReporter
 import com.karrad.ticketsclient.di.AppContainer
 import kotlinx.coroutines.launch
 
@@ -191,6 +192,7 @@ fun EditProfileScreen() {
                             AppSession.city = city.trim().ifBlank { AppSession.city }
                             navigator.pop()
                         } catch (e: Exception) {
+                            CrashReporter.log(e)
                             saveError = "Ошибка сохранения: ${e.message}"
                         } finally {
                             saving = false
