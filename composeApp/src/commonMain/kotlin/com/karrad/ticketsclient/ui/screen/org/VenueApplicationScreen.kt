@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -18,13 +19,17 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.AttachFile
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -45,6 +50,7 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import com.karrad.ticketsclient.data.api.dto.CreateVenueApplicationRequest
 import com.karrad.ticketsclient.data.api.dto.VenueApplicationDto
 import com.karrad.ticketsclient.di.AppContainer
+import com.karrad.ticketsclient.ui.util.rememberFilePicker
 
 @Composable
 fun VenueApplicationScreen() {
@@ -59,6 +65,15 @@ fun VenueApplicationScreen() {
     var address by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
 
+    var uploadingAppId by remember { mutableStateOf<String?>(null) }
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    val pickFiles = rememberFilePicker { files ->
+        val appId = uploadingAppId ?: return@rememberFilePicker
+        if (files.isNotEmpty()) vm.uploadDocuments(appId, files)
+        uploadingAppId = null
+    }
+
     LaunchedEffect(state.submitSuccess) {
         if (state.submitSuccess) {
             showForm = false
@@ -67,55 +82,82 @@ fun VenueApplicationScreen() {
         }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .statusBarsPadding()
-    ) {
-        Row(
+    LaunchedEffect(state.uploadError) {
+        if (state.uploadError != null) {
+            snackbarHostState.showSnackbar("Ошибка загрузки: ${state.uploadError}")
+            vm.clearUploadError()
+        }
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+                .statusBarsPadding()
         ) {
-            IconButton(onClick = { navigator.pop() }) {
-                Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "Назад")
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(onClick = { navigator.pop() }) {
+                    Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "Назад")
+                }
+                Text(
+                    "Заявки на площадки",
+                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                    modifier = Modifier.weight(1f)
+                )
+                IconButton(onClick = { showForm = true }) {
+                    Icon(Icons.Outlined.Add, contentDescription = "Подать заявку")
+                }
             }
-            Text(
-                "Заявки на площадки",
-                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                modifier = Modifier.weight(1f)
-            )
-            IconButton(onClick = { showForm = true }) {
-                Icon(Icons.Outlined.Add, contentDescription = "Подать заявку")
+
+            when {
+                state.isLoading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+                state.error != null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text("Ошибка: ${state.error}", color = MaterialTheme.colorScheme.error)
+                }
+                state.applications.isEmpty() -> Box(
+                    Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("Заявок пока нет", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                else -> LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 16.dp)
+                        .navigationBarsPadding(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    item { Spacer(Modifier.height(8.dp)) }
+                    items(state.applications) { app ->
+                        VenueApplicationCard(
+                            app = app,
+                            isUploading = state.isUploading && uploadingAppId == app.id,
+                            onAddDocuments = {
+                                uploadingAppId = app.id
+                                pickFiles()
+                            }
+                        )
+                    }
+                    item { Spacer(Modifier.height(96.dp)) }
+                }
             }
         }
 
-        when {
-            state.isLoading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
-            state.error != null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Ошибка: ${state.error}", color = MaterialTheme.colorScheme.error)
-            }
-            state.applications.isEmpty() -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Заявок пока нет", color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-            else -> LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 16.dp)
-                    .navigationBarsPadding(),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                item { Spacer(Modifier.height(8.dp)) }
-                items(state.applications) { app ->
-                    VenueApplicationCard(app)
-                }
-                item { Spacer(Modifier.height(96.dp)) }
-            }
-        }
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .navigationBarsPadding()
+                .padding(bottom = 16.dp)
+        )
     }
 
     if (showForm) {
@@ -167,7 +209,7 @@ fun VenueApplicationScreen() {
                         )
                     }
                     Text(
-                        "* Документы, подтверждающие владение, можно будет добавить после создания заявки.",
+                        "Документы можно прикрепить после создания заявки.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -186,7 +228,9 @@ fun VenueApplicationScreen() {
                             )
                         )
                     },
-                    enabled = name.isNotBlank() && cityLabel.isNotBlank() && subjectLabel.isNotBlank() && address.isNotBlank() && !state.isSubmitting
+                    enabled = name.isNotBlank() && cityLabel.isNotBlank() &&
+                        subjectLabel.isNotBlank() && address.isNotBlank() &&
+                        !state.isSubmitting
                 ) {
                     Text(if (state.isSubmitting) "Отправка..." else "Отправить")
                 }
@@ -199,7 +243,11 @@ fun VenueApplicationScreen() {
 }
 
 @Composable
-private fun VenueApplicationCard(app: VenueApplicationDto) {
+private fun VenueApplicationCard(
+    app: VenueApplicationDto,
+    isUploading: Boolean,
+    onAddDocuments: () -> Unit
+) {
     val statusColor = when (app.status) {
         "APPROVED" -> MaterialTheme.colorScheme.primary
         "REJECTED" -> MaterialTheme.colorScheme.error
@@ -226,7 +274,8 @@ private fun VenueApplicationCard(app: VenueApplicationDto) {
         ) {
             Text(
                 text = app.name,
-                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold)
+                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
+                modifier = Modifier.weight(1f)
             )
             Text(
                 text = statusLabel,
@@ -250,6 +299,38 @@ private fun VenueApplicationCard(app: VenueApplicationDto) {
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+        }
+        if (app.status == "PENDING") {
+            Spacer(Modifier.height(4.dp))
+            if (isUploading) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                    Text(
+                        "Загрузка документов...",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            } else {
+                OutlinedButton(
+                    onClick = onAddDocuments,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(
+                        Icons.Outlined.AttachFile,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Text(
+                        if (app.documentUrls.isEmpty()) "Прикрепить документы"
+                        else "Добавить ещё документы",
+                        modifier = Modifier.padding(start = 4.dp)
+                    )
+                }
+            }
         }
     }
 }

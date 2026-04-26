@@ -8,6 +8,8 @@ import io.ktor.client.request.header
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 
+expect fun currentTimeMs(): Long
+
 fun createHttpClient(tokenProvider: () -> String? = { null }): HttpClient {
     val client = HttpClient {
         install(ContentNegotiation) {
