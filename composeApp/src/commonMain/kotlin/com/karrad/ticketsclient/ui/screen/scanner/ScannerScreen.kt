@@ -48,6 +48,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.karrad.ticketsclient.AppSession
+import com.karrad.ticketsclient.crash.CrashReporter
 import com.karrad.ticketsclient.data.api.dto.OrgEventItem
 import com.karrad.ticketsclient.data.api.dto.TicketValidationResponse
 import com.karrad.ticketsclient.di.AppContainer
@@ -78,6 +79,7 @@ fun ScannerScreen() {
             val events = AppContainer.scannerService.getMyOrgEvents()
             state = if (events.isEmpty()) ScannerState.NoAccess else ScannerState.EventList(events)
         } catch (e: Exception) {
+            CrashReporter.log(e)
             state = ScannerState.NoAccess
         }
     }
@@ -112,6 +114,7 @@ fun ScannerScreen() {
                             )
                             state = s.copy(validating = false, result = result)
                         } catch (e: Exception) {
+                            CrashReporter.log(e)
                             state = s.copy(
                                 validating = false,
                                 result = TicketValidationResponse(status = "NOT_FOUND")

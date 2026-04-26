@@ -53,6 +53,7 @@ import androidx.compose.runtime.LaunchedEffect
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.karrad.ticketsclient.AppSession
+import com.karrad.ticketsclient.crash.CrashReporter
 import com.karrad.ticketsclient.data.api.dto.EventDto
 import com.karrad.ticketsclient.di.AppContainer
 import com.karrad.ticketsclient.ui.navigation.SeatMapScreen
@@ -76,7 +77,7 @@ fun EventDetailScreen(eventId: String) {
     )
 
     LaunchedEffect(eventId) {
-        loadedEvent = try { AppContainer.eventService.getEvent(eventId) } catch (_: Exception) { null }
+        loadedEvent = try { AppContainer.eventService.getEvent(eventId) } catch (e: Exception) { CrashReporter.log(e); null }
     }
 
     val event = loadedEvent ?: run {

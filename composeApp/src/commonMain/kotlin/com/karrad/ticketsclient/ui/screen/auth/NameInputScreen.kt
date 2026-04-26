@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.karrad.ticketsclient.AppSession
+import com.karrad.ticketsclient.crash.CrashReporter
 import com.karrad.ticketsclient.di.AppContainer
 import com.karrad.ticketsclient.ui.navigation.CitySelectionScreen
 import kotlinx.coroutines.launch
@@ -105,6 +106,7 @@ fun NameInputScreen(phone: String = "", code: String = "") {
                         )
                         navigator.push(CitySelectionScreen)
                     } catch (e: Exception) {
+                        CrashReporter.log(e)
                         error = "Ошибка регистрации. Попробуйте ещё раз."
                     } finally {
                         loading = false

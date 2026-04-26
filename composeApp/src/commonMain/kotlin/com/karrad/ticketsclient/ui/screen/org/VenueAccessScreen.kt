@@ -42,6 +42,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import com.karrad.ticketsclient.crash.CrashReporter
 import com.karrad.ticketsclient.data.api.dto.VenueAccessGrantDto
 import com.karrad.ticketsclient.di.AppContainer
 import kotlinx.coroutines.launch
@@ -65,6 +66,7 @@ fun VenueAccessScreen() {
                 incoming = AppContainer.venueAccessGrantService.getIncomingRequests()
                 outgoing = AppContainer.venueAccessGrantService.getOutgoingRequests()
             } catch (e: Exception) {
+                CrashReporter.log(e)
                 error = e.message
             } finally {
                 isLoading = false
@@ -136,7 +138,7 @@ fun VenueAccessScreen() {
                                     scope.launch {
                                         runCatching {
                                             AppContainer.venueAccessGrantService.approve(grant.venueId, grant.id)
-                                        }
+                                        }.onFailure { CrashReporter.log(it) }
                                         load()
                                     }
                                 },
@@ -144,7 +146,7 @@ fun VenueAccessScreen() {
                                     scope.launch {
                                         runCatching {
                                             AppContainer.venueAccessGrantService.reject(grant.venueId, grant.id)
-                                        }
+                                        }.onFailure { CrashReporter.log(it) }
                                         load()
                                     }
                                 }

@@ -48,6 +48,7 @@ import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.karrad.ticketsclient.AppSession
+import com.karrad.ticketsclient.crash.CrashReporter
 import com.karrad.ticketsclient.data.api.dto.AdmissionInventoryItemRequestDto
 import com.karrad.ticketsclient.data.api.dto.CreateOrderRequestDto
 import com.karrad.ticketsclient.data.api.dto.TicketTypeDto
@@ -77,6 +78,7 @@ fun TicketTypeScreen(eventId: String) {
             ticketTypes = AppContainer.eventService.getTicketTypes(eventId)
             ticketTypes.forEach { quantities[it.id] = 0 }
         } catch (e: Exception) {
+            CrashReporter.log(e)
             loadError = e.message ?: "Не удалось загрузить типы билетов"
         } finally {
             loading = false
@@ -284,7 +286,8 @@ fun TicketTypeScreen(eventId: String) {
                                             totalPrice = totalPrice
                                         )
                                     )
-                                } catch (_: Exception) {
+                                } catch (e: Exception) {
+                                    CrashReporter.log(e)
                                 } finally {
                                     buyLoading = false
                                 }

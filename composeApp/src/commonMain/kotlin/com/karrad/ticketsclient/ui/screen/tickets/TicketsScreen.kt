@@ -48,6 +48,7 @@ import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.karrad.ticketsclient.AppSession
+import com.karrad.ticketsclient.crash.CrashReporter
 import com.karrad.ticketsclient.data.api.dto.EventDto
 import com.karrad.ticketsclient.data.api.dto.TicketDto
 import com.karrad.ticketsclient.di.AppContainer
@@ -69,7 +70,8 @@ fun TicketsScreen() {
             AppSession.cachedTickets = loaded   // обновляем кеш при успехе
             AppSession.isOffline = false
             isFromCache = false
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            CrashReporter.log(e)
             // Нет сети — показываем кешированные билеты
             if (AppSession.cachedTickets.isNotEmpty()) {
                 tickets = AppSession.cachedTickets
