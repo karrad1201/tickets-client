@@ -105,7 +105,6 @@ private class FakeDiscoveryService(
 ) : DiscoveryService {
     override suspend fun getDiscoveryFeed(
         city: String,
-        authToken: String?,
         page: Int,
         size: Int,
         date: String?
@@ -115,7 +114,6 @@ private class FakeDiscoveryService(
 private class ThrowingDiscoveryService : DiscoveryService {
     override suspend fun getDiscoveryFeed(
         city: String,
-        authToken: String?,
         page: Int,
         size: Int,
         date: String?

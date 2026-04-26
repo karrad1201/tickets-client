@@ -48,7 +48,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
-import com.karrad.ticketsclient.AppSession
 import com.karrad.ticketsclient.data.api.dto.OrgMemberDto
 import com.karrad.ticketsclient.di.AppContainer
 import kotlinx.coroutines.launch
@@ -74,9 +73,8 @@ fun OrgManagementScreen() {
         scope.launch {
             isLoading = true
             error = null
-            val token = AppSession.authToken ?: return@launch
             try {
-                members = AppContainer.orgMemberService.listMembers(token)
+                members = AppContainer.orgMemberService.listMembers()
             } catch (e: Exception) {
                 error = e.message
             } finally {
@@ -134,8 +132,7 @@ fun OrgManagementScreen() {
                         canDelete = true,
                         onDelete = {
                             scope.launch {
-                                val token = AppSession.authToken ?: return@launch
-                                runCatching { AppContainer.orgMemberService.deleteMember(token, member.id) }
+                                runCatching { AppContainer.orgMemberService.deleteMember(member.id) }
                                 loadMembers()
                             }
                         }
@@ -195,10 +192,8 @@ fun OrgManagementScreen() {
             confirmButton = {
                 Button(onClick = {
                     scope.launch {
-                        val token = AppSession.authToken ?: return@launch
                         runCatching {
                             AppContainer.orgMemberService.addMember(
-                                authToken = token,
                                 userId = addUserId.trim(),
                                 role = addRole,
                                 venueId = addVenueId.trim().ifBlank { null }

@@ -181,20 +181,13 @@ fun EditProfileScreen() {
                     saveError = null
                     scope.launch {
                         try {
-                            val token = AppSession.authToken
-                            if (token != null) {
-                                val updated = AppContainer.profileService.updateProfile(
-                                    authToken = token,
-                                    fullName = name.trim().ifBlank { null },
-                                    interests = selectedInterests.toList()
-                                )
-                                AppSession.userName = updated.fullName
-                                AppSession.userInterests = updated.interests
-                                AppSession.userAvatarUrl = updated.avatarUrl
-                            } else {
-                                AppSession.userName = name.trim().ifBlank { AppSession.userName }
-                                AppSession.userInterests = selectedInterests.toList()
-                            }
+                            val updated = AppContainer.profileService.updateProfile(
+                                fullName = name.trim().ifBlank { null },
+                                interests = selectedInterests.toList()
+                            )
+                            AppSession.userName = updated.fullName
+                            AppSession.userInterests = updated.interests
+                            AppSession.userAvatarUrl = updated.avatarUrl
                             AppSession.city = city.trim().ifBlank { AppSession.city }
                             navigator.pop()
                         } catch (e: Exception) {

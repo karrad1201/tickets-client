@@ -314,7 +314,6 @@ fun SeatMapScreen(eventId: String) {
                                     try {
                                         val order = AppContainer.orderService.createOrder(
                                             eventId = eventId,
-                                            authToken = AppSession.authToken ?: "",
                                             request = CreateOrderRequestDto(
                                                 seatKeys = selectedSeats.map { seat ->
                                                     SeatKeyRequestDto(

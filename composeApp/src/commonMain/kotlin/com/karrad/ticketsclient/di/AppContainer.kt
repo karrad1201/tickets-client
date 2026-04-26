@@ -22,6 +22,7 @@ import com.karrad.ticketsclient.data.api.TicketApiService
 import com.karrad.ticketsclient.data.api.TicketService
 import com.karrad.ticketsclient.data.api.VenueAccessGrantApiService
 import com.karrad.ticketsclient.data.api.VenueAccessGrantService
+import com.karrad.ticketsclient.AppSession
 import com.karrad.ticketsclient.data.api.createHttpClient
 
 /**
@@ -101,7 +102,7 @@ object AppContainer {
 }
 
 fun AppContainer.initReal(baseUrl: String) {
-    val client = createHttpClient()
+    val client = createHttpClient { AppSession.authToken }
     init(
         isMock = false,
         httpClient = client,

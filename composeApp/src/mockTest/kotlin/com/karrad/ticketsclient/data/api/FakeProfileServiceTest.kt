@@ -28,7 +28,6 @@ class FakeProfileServiceTest {
     @Test
     fun `updateProfile returns updated fullName`() = runTest {
         val result = service.updateProfile(
-            authToken = "fake-token",
             fullName = "Новое Имя",
             interests = null
         )
@@ -38,7 +37,6 @@ class FakeProfileServiceTest {
     @Test
     fun `updateProfile keeps existing fullName when null`() = runTest {
         val result = service.updateProfile(
-            authToken = "fake-token",
             fullName = null,
             interests = null
         )
@@ -48,7 +46,6 @@ class FakeProfileServiceTest {
     @Test
     fun `updateProfile returns updated interests`() = runTest {
         val result = service.updateProfile(
-            authToken = "fake-token",
             fullName = null,
             interests = listOf("classical", "rock")
         )
@@ -58,7 +55,6 @@ class FakeProfileServiceTest {
     @Test
     fun `updateProfile keeps existing interests when null`() = runTest {
         val result = service.updateProfile(
-            authToken = "fake-token",
             fullName = null,
             interests = null
         )
@@ -67,14 +63,13 @@ class FakeProfileServiceTest {
 
     @Test
     fun `updateProfile returns correct userId`() = runTest {
-        val result = service.updateProfile("token", null, null)
+        val result = service.updateProfile(null, null)
         assertEquals("user-42", result.id)
     }
 
     @Test
     fun `uploadAvatar returns avatarUrl with correct extension`() = runTest {
         val result = service.uploadAvatar(
-            authToken = "fake-token",
             imageBytes = byteArrayOf(1, 2, 3),
             extension = "png"
         )
@@ -84,13 +79,13 @@ class FakeProfileServiceTest {
 
     @Test
     fun `uploadAvatar returns jpg extension`() = runTest {
-        val result = service.uploadAvatar("token", byteArrayOf(), "jpg")
+        val result = service.uploadAvatar(byteArrayOf(), "jpg")
         assertTrue(result.avatarUrl?.contains("avatar.jpg") == true)
     }
 
     @Test
     fun `uploadAvatar returns correct userId`() = runTest {
-        val result = service.uploadAvatar("token", byteArrayOf(), "jpg")
+        val result = service.uploadAvatar(byteArrayOf(), "jpg")
         assertEquals("user-42", result.id)
     }
 }

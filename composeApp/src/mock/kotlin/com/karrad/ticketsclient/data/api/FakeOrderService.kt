@@ -4,13 +4,9 @@ import com.karrad.ticketsclient.data.api.dto.CreateOrderRequestDto
 import com.karrad.ticketsclient.data.api.dto.OrderDto
 import kotlinx.coroutines.delay
 
-/**
- * Мок-реализация для разработки без бекенда.
- * Имитирует успешный заказ с небольшой задержкой.
- */
 class FakeOrderService : OrderService {
 
-    override suspend fun createOrder(eventId: String, authToken: String, request: CreateOrderRequestDto): OrderDto {
+    override suspend fun createOrder(eventId: String, request: CreateOrderRequestDto): OrderDto {
         delay(800)
         val totalPrice = when {
             request.seatKeys != null -> request.seatKeys.size * 1500
@@ -26,7 +22,7 @@ class FakeOrderService : OrderService {
         )
     }
 
-    override suspend fun confirmPayment(orderId: String, authToken: String): OrderDto {
+    override suspend fun confirmPayment(orderId: String): OrderDto {
         delay(1000)
         return OrderDto(
             id = orderId,
@@ -38,13 +34,11 @@ class FakeOrderService : OrderService {
         )
     }
 
-    override suspend fun getOrder(orderId: String, authToken: String): OrderDto {
-        return OrderDto(
-            id = orderId,
-            eventId = "e-fake",
-            status = "PAID",
-            totalPrice = 1500,
-            amount = 1500
-        )
-    }
+    override suspend fun getOrder(orderId: String): OrderDto = OrderDto(
+        id = orderId,
+        eventId = "e-fake",
+        status = "PAID",
+        totalPrice = 1500,
+        amount = 1500
+    )
 }

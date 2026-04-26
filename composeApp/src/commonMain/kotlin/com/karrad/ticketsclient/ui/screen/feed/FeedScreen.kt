@@ -547,17 +547,14 @@ private fun EventCard(
                         val newFav = !isFav
                         isFav = newFav
                         AppSession.toggleFavorite(event.id, newFav)
-                        val token = AppSession.authToken
-                        if (token != null) {
-                            scope.launch {
-                                runCatching {
-                                    if (newFav) AppContainer.favoriteService.add(event.id, token)
-                                    else AppContainer.favoriteService.remove(event.id, token)
-                                }.onFailure {
-                                    // rollback on error
-                                    isFav = !newFav
-                                    AppSession.toggleFavorite(event.id, !newFav)
-                                }
+                        scope.launch {
+                            runCatching {
+                                if (newFav) AppContainer.favoriteService.add(event.id)
+                                else AppContainer.favoriteService.remove(event.id)
+                            }.onFailure {
+                                // rollback on error
+                                isFav = !newFav
+                                AppSession.toggleFavorite(event.id, !newFav)
                             }
                         }
                     }
