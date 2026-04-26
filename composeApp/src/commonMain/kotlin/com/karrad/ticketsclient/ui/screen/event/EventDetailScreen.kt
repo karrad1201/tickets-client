@@ -39,6 +39,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -61,6 +62,7 @@ import com.karrad.ticketsclient.ui.navigation.TicketTypeScreen
 import com.karrad.ticketsclient.ui.component.EventImage
 import com.karrad.ticketsclient.ui.screen.feed.EventImagePlaceholder
 import com.karrad.ticketsclient.ui.util.formatPrice
+import kotlinx.coroutines.launch
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -68,6 +70,7 @@ import kotlinx.datetime.toLocalDateTime
 @Composable
 fun EventDetailScreen(eventId: String) {
     val navigator = LocalNavigator.currentOrThrow
+    val scope = rememberCoroutineScope()
     var loadedEvent by remember { mutableStateOf<EventDto?>(null) }
     var isFavorite by remember { mutableStateOf(AppSession.isFavorite(eventId)) }
     val favoriteColor by animateColorAsState(
@@ -150,8 +153,22 @@ fun EventDetailScreen(eventId: String) {
                             .clip(CircleShape)
                             .background(Color.White.copy(alpha = 0.85f))
                             .clickable {
-                                isFavorite = !isFavorite
-                                AppSession.toggleFavorite(eventId, isFavorite)
+                                val newFavorite = !isFavorite
+                                isFavorite = newFavorite
+                                AppSession.toggleFavorite(eventId, newFavorite)
+                                scope.launch {
+                                    runCatching {
+                                        if (newFavorite) {
+                                            AppContainer.favoriteService.add(eventId)
+                                        } else {
+                                            AppContainer.favoriteService.remove(eventId)
+                                        }
+                                    }.onFailure {
+                                        CrashReporter.log(it)
+                                        isFavorite = !newFavorite
+                                        AppSession.toggleFavorite(eventId, !newFavorite)
+                                    }
+                                }
                             },
                         contentAlignment = Alignment.Center
                     ) {

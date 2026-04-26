@@ -17,6 +17,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -24,13 +26,16 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -47,10 +52,17 @@ import com.karrad.ticketsclient.di.AppContainer
 @Composable
 fun VenueAccessScreen() {
     val navigator = LocalNavigator.currentOrThrow
-    val vm = viewModel { VenueAccessViewModel(AppContainer.venueAccessGrantService) }
+    val vm = viewModel {
+        VenueAccessViewModel(
+            venueAccessGrantService = AppContainer.venueAccessGrantService,
+            orgMemberService = AppContainer.orgMemberService
+        )
+    }
     val state by vm.state.collectAsState()
 
     var selectedTab by remember { mutableIntStateOf(0) }
+    var showRequestDialog by remember { mutableStateOf(false) }
+    var requestVenueId by remember { mutableStateOf("") }
 
     Column(
         modifier = Modifier
@@ -69,8 +81,12 @@ fun VenueAccessScreen() {
             }
             Text(
                 "Аренда площадок",
-                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                modifier = Modifier.weight(1f)
             )
+            IconButton(onClick = { showRequestDialog = true }) {
+                Icon(Icons.Outlined.Add, contentDescription = "Подать заявку на аренду")
+            }
         }
 
         ScrollableTabRow(selectedTabIndex = selectedTab, edgePadding = 16.dp) {
@@ -78,6 +94,21 @@ fun VenueAccessScreen() {
                 text = { Text("Входящие (${state.incoming.size})") })
             Tab(selected = selectedTab == 1, onClick = { selectedTab = 1 },
                 text = { Text("Исходящие (${state.outgoing.size})") })
+        }
+
+        if (state.requestError != null) {
+            Text(
+                text = when {
+                    state.requestError!!.contains("404") || state.requestError!!.contains("not found", ignoreCase = true) ->
+                        "Площадка не найдена"
+                    state.requestError!!.contains("409") || state.requestError!!.contains("already", ignoreCase = true) ->
+                        "Заявка уже существует"
+                    else -> state.requestError!!
+                },
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+            )
         }
 
         when {
@@ -119,6 +150,55 @@ fun VenueAccessScreen() {
                 }
             }
         }
+    }
+
+    if (showRequestDialog) {
+        AlertDialog(
+            onDismissRequest = { showRequestDialog = false; vm.clearRequestError(); requestVenueId = "" },
+            title = { Text("Запрос на аренду площадки") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(
+                        value = requestVenueId,
+                        onValueChange = { requestVenueId = it },
+                        label = { Text("ID площадки") },
+                        placeholder = { Text("xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    if (state.requestError != null) {
+                        Text(
+                            text = when {
+                                state.requestError!!.contains("404") || state.requestError!!.contains("not found", ignoreCase = true) ->
+                                    "Площадка не найдена"
+                                state.requestError!!.contains("409") || state.requestError!!.contains("already", ignoreCase = true) ->
+                                    "Заявка уже существует"
+                                else -> state.requestError!!
+                            },
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        vm.requestAccess(requestVenueId.trim())
+                        showRequestDialog = false
+                        requestVenueId = ""
+                    },
+                    enabled = requestVenueId.isNotBlank()
+                ) { Text("Отправить") }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    showRequestDialog = false
+                    vm.clearRequestError()
+                    requestVenueId = ""
+                }) { Text("Отмена") }
+            }
+        )
     }
 }
 
