@@ -27,54 +27,29 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
-import com.karrad.ticketsclient.crash.CrashReporter
-import com.karrad.ticketsclient.data.api.dto.OrgMemberDto
 import com.karrad.ticketsclient.di.AppContainer
-import kotlinx.coroutines.launch
 
 @Composable
 fun MemberManagementScreen() {
     val navigator = LocalNavigator.currentOrThrow
-    val scope = rememberCoroutineScope()
-
-    var members by remember { mutableStateOf<List<OrgMemberDto>>(emptyList()) }
-    var isLoading by remember { mutableStateOf(true) }
-    var error by remember { mutableStateOf<String?>(null) }
+    val vm = viewModel { MemberManagementViewModel(AppContainer.orgMemberService) }
+    val state by vm.state.collectAsState()
 
     var showAddDialog by remember { mutableStateOf(false) }
     var addUserId by remember { mutableStateOf("") }
     var addVenueId by remember { mutableStateOf("") }
-
-    fun loadMembers() {
-        scope.launch {
-            isLoading = true
-            error = null
-            try {
-                // MANAGER видит только STAFF
-                members = AppContainer.orgMemberService.listMembers()
-                    .filter { it.role == "STAFF" }
-            } catch (e: Exception) {
-                CrashReporter.log(e)
-                error = e.message
-            } finally {
-                isLoading = false
-            }
-        }
-    }
-
-    LaunchedEffect(Unit) { loadMembers() }
 
     Column(
         modifier = Modifier
@@ -102,13 +77,13 @@ fun MemberManagementScreen() {
         }
 
         when {
-            isLoading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            state.isLoading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
             }
-            error != null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Ошибка: $error", color = MaterialTheme.colorScheme.error)
+            state.error != null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text("Ошибка: ${state.error}", color = MaterialTheme.colorScheme.error)
             }
-            members.isEmpty() -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            state.members.isEmpty() -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text(
                     "Сотрудников пока нет",
                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -122,17 +97,11 @@ fun MemberManagementScreen() {
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 item { Spacer(Modifier.height(8.dp)) }
-                items(members) { member ->
+                items(state.members) { member ->
                     MemberRow(
                         member = member,
                         canDelete = true,
-                        onDelete = {
-                            scope.launch {
-                                runCatching { AppContainer.orgMemberService.deleteMember(member.id) }
-                                    .onFailure { CrashReporter.log(it) }
-                                loadMembers()
-                            }
-                        }
+                        onDelete = { vm.deleteMember(member.id) }
                     )
                 }
                 item { Spacer(Modifier.height(96.dp)) }
@@ -162,19 +131,13 @@ fun MemberManagementScreen() {
             },
             confirmButton = {
                 Button(onClick = {
-                    scope.launch {
-                        runCatching {
-                            AppContainer.orgMemberService.addMember(
-                                userId = addUserId.trim(),
-                                role = "STAFF",
-                                venueId = addVenueId.trim().ifBlank { null }
-                            )
-                        }.onFailure { CrashReporter.log(it) }
-                        showAddDialog = false
-                        addUserId = ""
-                        addVenueId = ""
-                        loadMembers()
-                    }
+                    vm.addMember(
+                        userId = addUserId.trim(),
+                        venueId = addVenueId.trim().ifBlank { null }
+                    )
+                    showAddDialog = false
+                    addUserId = ""
+                    addVenueId = ""
                 }) { Text("Добавить") }
             },
             dismissButton = {

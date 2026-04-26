@@ -28,53 +28,29 @@ import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
-import com.karrad.ticketsclient.crash.CrashReporter
 import com.karrad.ticketsclient.data.api.dto.VenueAccessGrantDto
 import com.karrad.ticketsclient.di.AppContainer
-import kotlinx.coroutines.launch
 
 @Composable
 fun VenueAccessScreen() {
     val navigator = LocalNavigator.currentOrThrow
-    val scope = rememberCoroutineScope()
+    val vm = viewModel { VenueAccessViewModel(AppContainer.venueAccessGrantService) }
+    val state by vm.state.collectAsState()
+
     var selectedTab by remember { mutableIntStateOf(0) }
-
-    var incoming by remember { mutableStateOf<List<VenueAccessGrantDto>>(emptyList()) }
-    var outgoing by remember { mutableStateOf<List<VenueAccessGrantDto>>(emptyList()) }
-    var isLoading by remember { mutableStateOf(true) }
-    var error by remember { mutableStateOf<String?>(null) }
-
-    fun load() {
-        scope.launch {
-            isLoading = true
-            error = null
-            try {
-                incoming = AppContainer.venueAccessGrantService.getIncomingRequests()
-                outgoing = AppContainer.venueAccessGrantService.getOutgoingRequests()
-            } catch (e: Exception) {
-                CrashReporter.log(e)
-                error = e.message
-            } finally {
-                isLoading = false
-            }
-        }
-    }
-
-    LaunchedEffect(Unit) { load() }
 
     Column(
         modifier = Modifier
@@ -99,20 +75,20 @@ fun VenueAccessScreen() {
 
         ScrollableTabRow(selectedTabIndex = selectedTab, edgePadding = 16.dp) {
             Tab(selected = selectedTab == 0, onClick = { selectedTab = 0 },
-                text = { Text("Входящие (${incoming.size})") })
+                text = { Text("Входящие (${state.incoming.size})") })
             Tab(selected = selectedTab == 1, onClick = { selectedTab = 1 },
-                text = { Text("Исходящие (${outgoing.size})") })
+                text = { Text("Исходящие (${state.outgoing.size})") })
         }
 
         when {
-            isLoading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            state.isLoading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
             }
-            error != null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Ошибка: $error", color = MaterialTheme.colorScheme.error)
+            state.error != null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text("Ошибка: ${state.error}", color = MaterialTheme.colorScheme.error)
             }
             else -> {
-                val items = if (selectedTab == 0) incoming else outgoing
+                val items = if (selectedTab == 0) state.incoming else state.outgoing
                 if (items.isEmpty()) {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Text(
@@ -134,22 +110,8 @@ fun VenueAccessScreen() {
                             GrantCard(
                                 grant = grant,
                                 isIncoming = selectedTab == 0,
-                                onApprove = {
-                                    scope.launch {
-                                        runCatching {
-                                            AppContainer.venueAccessGrantService.approve(grant.venueId, grant.id)
-                                        }.onFailure { CrashReporter.log(it) }
-                                        load()
-                                    }
-                                },
-                                onReject = {
-                                    scope.launch {
-                                        runCatching {
-                                            AppContainer.venueAccessGrantService.reject(grant.venueId, grant.id)
-                                        }.onFailure { CrashReporter.log(it) }
-                                        load()
-                                    }
-                                }
+                                onApprove = { vm.approve(grant.venueId, grant.id) },
+                                onReject = { vm.reject(grant.venueId, grant.id) }
                             )
                         }
                         item { Spacer(Modifier.height(96.dp)) }
@@ -168,7 +130,7 @@ private fun GrantCard(
     onReject: () -> Unit
 ) {
     Column(
-        modifier = androidx.compose.ui.Modifier
+        modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
             .background(MaterialTheme.colorScheme.surface)
@@ -176,7 +138,7 @@ private fun GrantCard(
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Row(
-            modifier = androidx.compose.ui.Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -198,12 +160,12 @@ private fun GrantCard(
         )
         if (isIncoming && grant.status == "PENDING") {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(onClick = onApprove, modifier = androidx.compose.ui.Modifier.weight(1f)) {
+                Button(onClick = onApprove, modifier = Modifier.weight(1f)) {
                     Text("Одобрить")
                 }
                 OutlinedButton(
                     onClick = onReject,
-                    modifier = androidx.compose.ui.Modifier.weight(1f),
+                    modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.outlinedButtonColors(
                         contentColor = MaterialTheme.colorScheme.error
                     )
