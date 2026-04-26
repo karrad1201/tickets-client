@@ -22,6 +22,8 @@ import com.karrad.ticketsclient.data.api.TicketApiService
 import com.karrad.ticketsclient.data.api.TicketService
 import com.karrad.ticketsclient.data.api.VenueAccessGrantApiService
 import com.karrad.ticketsclient.data.api.VenueAccessGrantService
+import com.karrad.ticketsclient.data.api.VenueApplicationApiService
+import com.karrad.ticketsclient.data.api.VenueApplicationService
 import com.karrad.ticketsclient.AppSession
 import com.karrad.ticketsclient.data.api.createHttpClient
 
@@ -32,6 +34,9 @@ import com.karrad.ticketsclient.data.api.createHttpClient
 object AppContainer {
 
     var isMock: Boolean = false
+        private set
+
+    var baseUrl: String = ""
         private set
 
     lateinit var authService: AuthService
@@ -67,11 +72,15 @@ object AppContainer {
     lateinit var venueAccessGrantService: VenueAccessGrantService
         private set
 
+    lateinit var venueApplicationService: VenueApplicationService
+        private set
+
     lateinit var httpClient: io.ktor.client.HttpClient
         private set
 
     fun init(
         isMock: Boolean,
+        baseUrl: String = "",
         httpClient: io.ktor.client.HttpClient,
         authService: AuthService,
         discoveryService: DiscoveryService,
@@ -83,9 +92,11 @@ object AppContainer {
         profileService: ProfileService,
         favoriteService: FavoriteService,
         orgMemberService: OrgMemberService,
-        venueAccessGrantService: VenueAccessGrantService
+        venueAccessGrantService: VenueAccessGrantService,
+        venueApplicationService: VenueApplicationService
     ) {
         this.isMock = isMock
+        this.baseUrl = baseUrl
         this.httpClient = httpClient
         this.authService = authService
         this.discoveryService = discoveryService
@@ -98,6 +109,7 @@ object AppContainer {
         this.favoriteService = favoriteService
         this.orgMemberService = orgMemberService
         this.venueAccessGrantService = venueAccessGrantService
+        this.venueApplicationService = venueApplicationService
     }
 }
 
@@ -105,6 +117,7 @@ fun AppContainer.initReal(baseUrl: String) {
     val client = createHttpClient { AppSession.authToken }
     init(
         isMock = false,
+        baseUrl = baseUrl,
         httpClient = client,
         authService = AuthApiService(client, baseUrl),
         discoveryService = DiscoveryApiService(client, baseUrl),
@@ -116,6 +129,7 @@ fun AppContainer.initReal(baseUrl: String) {
         profileService = ProfileApiService(client, baseUrl),
         favoriteService = FavoriteApiService(client, baseUrl),
         orgMemberService = OrgMemberApiService(client, baseUrl),
-        venueAccessGrantService = VenueAccessGrantApiService(client, baseUrl)
+        venueAccessGrantService = VenueAccessGrantApiService(client, baseUrl),
+        venueApplicationService = VenueApplicationApiService(client, baseUrl)
     )
 }

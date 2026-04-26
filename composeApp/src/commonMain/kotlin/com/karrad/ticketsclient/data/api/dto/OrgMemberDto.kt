@@ -31,3 +31,24 @@ data class UpdateMemberRequest(
     val role: String,
     val venueId: String? = null
 )
+
+@Serializable
+data class AddMemberByPhoneRequest(
+    val phone: String,
+    val role: String,
+    val venueId: String? = null
+)
+
+@Serializable
+data class AddMemberByPhoneResponse(
+    val member: OrgMemberDto,
+    val accountCreated: Boolean
+)
+
+@Serializable
+data class VenueDto(
+    val id: String,
+    val label: String,
+    val address: String? = null,
+    val organizationId: String? = null
+)
