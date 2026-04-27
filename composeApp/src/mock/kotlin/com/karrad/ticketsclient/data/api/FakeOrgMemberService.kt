@@ -3,6 +3,7 @@ package com.karrad.ticketsclient.data.api
 import com.karrad.ticketsclient.data.api.dto.AddMemberByPhoneResponse
 import com.karrad.ticketsclient.data.api.dto.OrgMemberDto
 import com.karrad.ticketsclient.data.api.dto.OrgMembershipDto
+import com.karrad.ticketsclient.data.api.dto.VenueDto
 
 class FakeOrgMemberService : OrgMemberService {
 
@@ -16,6 +17,8 @@ class FakeOrgMemberService : OrgMemberService {
         OrgMembershipDto(memberId = "member-owner-1", organizationId = "org-1", role = "OWNER")
 
     override suspend fun listMembers(): List<OrgMemberDto> = members.toList()
+
+    override suspend fun listMyVenues(): List<VenueDto> = emptyList()
 
     override suspend fun addMember(userId: String, role: String, venueId: String?): OrgMemberDto {
         val member = OrgMemberDto(
@@ -50,5 +53,9 @@ class FakeOrgMemberService : OrgMemberService {
 
     override suspend fun deleteMember(memberId: String) {
         members.removeAll { it.id == memberId }
+    }
+
+    override suspend fun leaveOrganization() {
+        members.removeAll { it.userId == "user-owner" }
     }
 }
