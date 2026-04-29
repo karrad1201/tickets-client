@@ -10,7 +10,7 @@ data class SessionSnapshot(
 
 /**
  * Персистентное хранилище токена аутентификации.
- * Android: SharedPreferences; iOS: NSUserDefaults.
+ * Android: EncryptedSharedPreferences; iOS: Keychain (kSecAttrAccessibleWhenUnlockedThisDeviceOnly).
  */
 expect object TokenStore {
     fun save(snapshot: SessionSnapshot)
