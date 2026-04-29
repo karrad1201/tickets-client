@@ -61,7 +61,7 @@ fun SmsCodeScreen(isRegistration: Boolean = false, phone: String = "") {
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "Введите последние 4 цифры номера,\nс которого вам поступит звонок",
+            text = "Введите 6-значный код из SMS",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -69,7 +69,7 @@ fun SmsCodeScreen(isRegistration: Boolean = false, phone: String = "") {
         if (AppContainer.isMock) {
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "Тест-режим: код 1234 — успешный вход, 0000 — ошибка",
+                text = "Тест-режим: код 123456",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.primary.copy(alpha = 0.75f),
                 textAlign = TextAlign.Center,
@@ -81,7 +81,7 @@ fun SmsCodeScreen(isRegistration: Boolean = false, phone: String = "") {
 
         OutlinedTextField(
             value = code,
-            onValueChange = { if (it.length <= 4) { code = it; error = null } },
+            onValueChange = { if (it.length <= 6) { code = it; error = null } },
             label = { Text("Код") },
             leadingIcon = {
                 Icon(
@@ -136,7 +136,7 @@ fun SmsCodeScreen(isRegistration: Boolean = false, phone: String = "") {
                     }
                 }
             },
-            enabled = code.length == 4 && !loading,
+            enabled = code.length == 6 && !loading,
             shape = RoundedCornerShape(12.dp),
             modifier = Modifier.fillMaxWidth(),
             colors = ButtonDefaults.buttonColors(
