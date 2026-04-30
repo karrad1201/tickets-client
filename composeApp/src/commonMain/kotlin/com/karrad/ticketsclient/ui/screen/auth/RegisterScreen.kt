@@ -91,8 +91,9 @@ fun RegisterScreen() {
                     error = null
                     scope.launch {
                         try {
-                            AppContainer.authService.sendCode(phone)
-                            navigator.push(SmsCodeScreen(isRegistration = true, phone = phone))
+                            val normalized = normalizePhone(phone)
+                            AppContainer.authService.sendCode(normalized)
+                            navigator.push(SmsCodeScreen(isRegistration = true, phone = normalized))
                         } catch (e: Exception) {
                             CrashReporter.log(e)
                             error = "Не удалось отправить код. Проверьте номер."
