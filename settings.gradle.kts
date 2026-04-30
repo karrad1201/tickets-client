@@ -1,4 +1,4 @@
-rootProject.name = "Ticketsclient"
+rootProject.name = "visit-kalmykia"
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 pluginManagement {
