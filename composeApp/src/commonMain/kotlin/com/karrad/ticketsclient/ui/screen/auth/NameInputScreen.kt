@@ -96,7 +96,7 @@ fun NameInputScreen(phone: String = "", code: String = "") {
                     try {
                         val response = AppContainer.authService.register(phone, code, name)
                         AppSession.login(
-                            token = response.token,
+                            token = response.accessToken,
                             userId = response.user.id,
                             phone = response.user.phone,
                             fullName = response.user.fullName,
