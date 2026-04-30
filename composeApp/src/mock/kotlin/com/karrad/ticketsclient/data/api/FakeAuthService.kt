@@ -19,7 +19,7 @@ class FakeAuthService : AuthService {
     override suspend fun login(phone: String, code: String): AuthResponseDto {
         if (code == "0000") error("Неверный код")
         return AuthResponseDto(
-            token = "fake-token-login",
+            accessToken = "fake-token-login",
             user = UserDto(
                 id = "fake-user-id",
                 phone = phone,
@@ -31,7 +31,7 @@ class FakeAuthService : AuthService {
     override suspend fun register(phone: String, code: String, fullName: String): AuthResponseDto {
         if (code == "0000") error("Неверный код")
         return AuthResponseDto(
-            token = "fake-token-register",
+            accessToken = "fake-token-register",
             user = UserDto(
                 id = "fake-user-id-new",
                 phone = phone,
