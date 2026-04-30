@@ -1,6 +1,10 @@
 package com.karrad.ticketsclient.ui.screen.auth
 
-/** Приводит номер к виду +7XXXXXXXXXX */
+/**
+ * Приводит номер телефона к формату +7XXXXXXXXXX.
+ * Принимает любые форматы: 89161234567, 8 (916) 123-45-67,
+ * +7-916-123-45-67, 7 916 123 45 67, 9161234567 и т.д.
+ */
 fun normalizePhone(raw: String): String {
     val digits = raw.filter { it.isDigit() }
     return when {
