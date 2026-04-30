@@ -12,7 +12,7 @@ data class LoginRequest(val phone: String, val code: String)
 data class RegisterRequest(val phone: String, val code: String, val fullName: String)
 
 @Serializable
-data class AuthResponseDto(val token: String, val user: UserDto)
+data class AuthResponseDto(val accessToken: String, val refreshToken: String? = null, val user: UserDto)
 
 @Serializable
 data class UserDto(

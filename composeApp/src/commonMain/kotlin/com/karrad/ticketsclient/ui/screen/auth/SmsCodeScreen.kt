@@ -118,7 +118,7 @@ fun SmsCodeScreen(isRegistration: Boolean = false, phone: String = "") {
                         } else {
                             val response = AppContainer.authService.login(phone, code)
                             AppSession.login(
-                                token = response.token,
+                                token = response.accessToken,
                                 userId = response.user.id,
                                 phone = response.user.phone,
                                 fullName = response.user.fullName,
