@@ -56,7 +56,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.karrad.ticketsclient.data.api.dto.OrgMemberDto
@@ -145,10 +144,7 @@ fun OrgManagementScreen() {
                     }
                     item {
                         OutlinedButton(
-                            onClick = { navigator.push(object : Screen {
-                                @Composable
-                                override fun Content() = VenueApplicationScreen()
-                            }) },
+                            onClick = { navigator.push(com.karrad.ticketsclient.ui.navigation.VenueApplicationScreen) },
                             modifier = Modifier.fillMaxWidth(),
                         ) {
                             Icon(Icons.Outlined.Domain, contentDescription = null, modifier = Modifier.size(18.dp))
