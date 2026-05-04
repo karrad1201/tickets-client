@@ -60,6 +60,7 @@ import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.karrad.ticketsclient.data.api.dto.OrgMemberDto
+import com.karrad.ticketsclient.AppSession
 import com.karrad.ticketsclient.di.AppContainer
 import com.karrad.ticketsclient.ui.screen.auth.normalizePhone
 
@@ -139,7 +140,7 @@ fun OrgManagementScreen() {
                     items(state.members) { member ->
                         MemberRow(
                             member = member,
-                            canDelete = true,
+                            canDelete = member.userId != AppSession.userId,
                             onDelete = { vm.deleteMember(member.id) }
                         )
                     }
