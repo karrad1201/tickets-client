@@ -232,7 +232,7 @@ fun OrgManagementScreen() {
                             }
                         }
                     }
-                    if (addRole == "STAFF") {
+                    if (addRole == "STAFF" || addRole == "MANAGER") {
                         if (state.venues.isNotEmpty()) {
                             val selectedVenue = state.venues.firstOrNull { it.id == addVenueId }
                             Box {
@@ -293,7 +293,7 @@ fun OrgManagementScreen() {
                         showAddDialog = false
                         addPhone = ""; addRole = "MANAGER"; addVenueId = ""
                     },
-                    enabled = addPhone.isNotBlank() && (addRole != "STAFF" || addVenueId.isNotBlank())
+                    enabled = addPhone.isNotBlank() && addVenueId.isNotBlank()
                 ) { Text("Добавить") }
             },
             dismissButton = {
