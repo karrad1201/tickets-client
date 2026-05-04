@@ -14,3 +14,9 @@ fun normalizePhone(raw: String): String {
         else -> raw.trim()
     }
 }
+
+fun isValidPhone(raw: String): Boolean {
+    val digits = raw.filter { it.isDigit() }
+    return digits.length == 10 ||
+        (digits.length == 11 && (digits.startsWith("7") || digits.startsWith("8")))
+}
