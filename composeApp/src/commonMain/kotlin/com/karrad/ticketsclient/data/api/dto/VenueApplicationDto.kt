@@ -25,3 +25,14 @@ data class CreateVenueApplicationRequest(
     val address: String,
     val description: String? = null
 )
+
+@Serializable
+data class CreateEventRequest(
+    val label: String,
+    val description: String,
+    val venueId: String,
+    val categoryId: String,
+    val time: String,
+    val imageUrl: String? = null,
+    val ageRating: String? = null
+)

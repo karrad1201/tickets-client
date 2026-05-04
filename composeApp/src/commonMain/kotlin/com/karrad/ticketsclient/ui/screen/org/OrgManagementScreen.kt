@@ -20,6 +20,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.DateRange
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Domain
 import androidx.compose.material.icons.outlined.ExitToApp
@@ -145,6 +146,16 @@ fun OrgManagementScreen() {
                             canDelete = member.userId != AppSession.userId,
                             onDelete = { vm.deleteMember(member.id) }
                         )
+                    }
+                    item {
+                        OutlinedButton(
+                            onClick = { navigator.push(com.karrad.ticketsclient.ui.navigation.CreateEventScreen) },
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Icon(Icons.Outlined.DateRange, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(Modifier.width(8.dp))
+                            Text("Создать мероприятие")
+                        }
                     }
                     item {
                         OutlinedButton(

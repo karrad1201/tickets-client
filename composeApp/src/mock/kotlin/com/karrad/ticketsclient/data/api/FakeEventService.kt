@@ -1,5 +1,6 @@
 package com.karrad.ticketsclient.data.api
 
+import com.karrad.ticketsclient.data.api.dto.CreateEventRequest
 import com.karrad.ticketsclient.data.api.dto.EventDto
 import com.karrad.ticketsclient.data.api.dto.SeatItemDto
 import com.karrad.ticketsclient.data.api.dto.SeatMapDto
@@ -66,4 +67,15 @@ class FakeEventService : EventService {
         }
         return SeatMapDto(sections = listOf(SeatSectionDto(key = "main", label = "Партер", rows = rows)))
     }
+
+    override suspend fun createEvent(request: CreateEventRequest): EventDto =
+        EventDto(
+            id = "fake-${request.label.hashCode()}",
+            label = request.label,
+            description = request.description,
+            venueId = request.venueId,
+            categoryId = request.categoryId,
+            time = request.time,
+            imageUrl = request.imageUrl
+        )
 }

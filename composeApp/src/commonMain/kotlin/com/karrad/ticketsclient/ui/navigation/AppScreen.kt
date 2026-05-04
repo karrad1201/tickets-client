@@ -131,3 +131,9 @@ object VenueApplicationScreen : Screen {
     @androidx.compose.runtime.Composable
     override fun Content() = com.karrad.ticketsclient.ui.screen.org.VenueApplicationScreen()
 }
+
+// Create event (OWNER/MANAGER)
+object CreateEventScreen : Screen {
+    @androidx.compose.runtime.Composable
+    override fun Content() = com.karrad.ticketsclient.ui.screen.org.CreateEventScreen()
+}
