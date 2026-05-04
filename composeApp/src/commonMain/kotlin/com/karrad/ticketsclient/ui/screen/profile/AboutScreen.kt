@@ -103,15 +103,34 @@ fun AboutScreen() {
                 .padding(16.dp)
         ) {
             Text("Tickets — удобный способ покупать билеты на лучшие мероприятия вашего города: " +
-                "театры, кино, концерты, выставки и спорт.",
+                "театры, концерты, выставки и спортивные события.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+
+        Spacer(Modifier.height(12.dp))
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .background(MaterialTheme.colorScheme.surface)
+                .padding(16.dp)
+        ) {
+            Text("Поддержка",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Spacer(Modifier.height(8.dp))
+            Text("support@tickets.ru",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.primary)
         }
 
         Spacer(Modifier.height(24.dp))
 
         Text(
-            "© 2026 Tickets App",
+            "© 2026 Tickets",
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.outlineVariant,
             modifier = Modifier.fillMaxWidth(),
