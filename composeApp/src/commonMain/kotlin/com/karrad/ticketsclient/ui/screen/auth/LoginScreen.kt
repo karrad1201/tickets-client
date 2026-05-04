@@ -42,7 +42,6 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import com.karrad.ticketsclient.crash.CrashReporter
 import com.karrad.ticketsclient.data.api.ApiException
 import com.karrad.ticketsclient.di.AppContainer
-import com.karrad.ticketsclient.ui.navigation.MainScreen
 import com.karrad.ticketsclient.ui.navigation.RegisterScreen
 import com.karrad.ticketsclient.ui.navigation.SmsCodeScreen
 import kotlinx.coroutines.launch
@@ -61,20 +60,6 @@ fun LoginScreen() {
             .statusBarsPadding()
             .imePadding()
     ) {
-        // Пропустить — top right
-        TextButton(
-            onClick = { navigator.replaceAll(MainScreen) },
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(8.dp)
-        ) {
-            Text(
-                text = "Пропустить",
-                color = Color(0xFF8E8E93),
-                style = MaterialTheme.typography.bodyMedium
-            )
-        }
-
         // Main form — center
         Column(
             modifier = Modifier
