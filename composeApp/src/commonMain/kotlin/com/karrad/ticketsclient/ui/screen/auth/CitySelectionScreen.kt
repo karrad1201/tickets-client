@@ -49,7 +49,11 @@ fun CitySelectionScreen(onCitySelected: ((String) -> Unit)? = null) {
     var selectedCity by remember { mutableStateOf<CityDto?>(null) }
 
     LaunchedEffect(Unit) {
-        allCities = try { AppContainer.geoService.getCities() } catch (e: Exception) { CrashReporter.log(e); emptyList() }
+        val cities = try { AppContainer.geoService.getCities() } catch (e: Exception) { CrashReporter.log(e); emptyList() }
+        allCities = cities
+        if (selectedCity == null) {
+            selectedCity = cities.find { it.name.equals("Элиста", ignoreCase = true) }
+        }
     }
 
     val cities = remember(query, allCities) {
