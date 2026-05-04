@@ -119,6 +119,11 @@ fun LoginScreen() {
                     error = null
                     scope.launch {
                         try {
+                            if (!isValidPhone(phone)) {
+                                error = "Введите корректный номер телефона"
+                                loading = false
+                                return@launch
+                            }
                             val normalized = normalizePhone(phone)
                             AppContainer.authService.sendCode(normalized)
                             navigator.push(SmsCodeScreen(isRegistration = false, phone = normalized))
