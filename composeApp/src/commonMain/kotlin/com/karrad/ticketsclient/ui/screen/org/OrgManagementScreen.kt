@@ -142,7 +142,7 @@ fun OrgManagementScreen() {
                     items(state.members) { member ->
                         MemberRow(
                             member = member,
-                            canDelete = true,
+                            canDelete = member.userId != AppSession.userId,
                             onDelete = { vm.deleteMember(member.id) }
                         )
                     }
