@@ -165,7 +165,7 @@ private fun NoAccessContent() {
             )
             Spacer(Modifier.height(8.dp))
             Text(
-                "Сканер доступен только для\nменеджеров организаций",
+                "Нет доступных мероприятий для сканирования",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
