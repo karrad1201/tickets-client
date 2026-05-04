@@ -59,6 +59,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.karrad.ticketsclient.data.api.dto.OrgMemberDto
+import com.karrad.ticketsclient.AppSession
 import com.karrad.ticketsclient.di.AppContainer
 import com.karrad.ticketsclient.ui.screen.auth.normalizePhone
 
@@ -91,7 +92,10 @@ fun OrgManagementScreen() {
     }
 
     LaunchedEffect(state.leftOrg) {
-        if (state.leftOrg) navigator.pop()
+        if (state.leftOrg) {
+            AppSession.orgMembership = null
+            navigator.pop()
+        }
     }
 
     Box(Modifier.fillMaxSize()) {
