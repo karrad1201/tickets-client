@@ -23,7 +23,7 @@ fun createHttpClient(tokenProvider: () -> String? = { null }): HttpClient {
                 coerceInputValues = true
             })
         }
-        install(HttpResponseValidator) {
+        HttpResponseValidator {
             handleResponseExceptionWithRequest { exception, _ ->
                 val response = (exception as? io.ktor.client.plugins.ResponseException)?.response
                     ?: return@handleResponseExceptionWithRequest
