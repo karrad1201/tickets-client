@@ -11,5 +11,6 @@ data class TicketDto(
     val price: Int,
     val usedAt: String? = null,
     val venueName: String? = null,
-    val eventTime: String? = null
+    val eventTime: String? = null,
+    val qrToken: String? = null
 )

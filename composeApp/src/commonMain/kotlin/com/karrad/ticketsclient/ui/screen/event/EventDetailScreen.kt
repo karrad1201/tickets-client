@@ -193,7 +193,7 @@ fun EventDetailScreen(eventId: String) {
                 // Теги: возраст + площадка
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     event.ageRating?.let { TagChip(text = it, outlined = true) }
-                    TagChip(text = event.venueId.venueShort(), filled = true)
+                    TagChip(text = event.venueLabel ?: event.venueId, filled = true)
                 }
 
                 Spacer(Modifier.height(12.dp))
@@ -260,7 +260,7 @@ fun EventDetailScreen(eventId: String) {
                         modifier = Modifier.size(16.dp).padding(top = 2.dp)
                     )
                     Text(
-                        text = event.venueId.venueFull(),
+                        text = event.venueLabel ?: event.venueId,
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -390,22 +390,3 @@ private fun ExpandableText(text: String, collapsedLines: Int = 4) {
     }
 }
 
-private fun String.venueShort(): String = when (this) {
-    "venue-bolshoi"  -> "Большой театр"
-    "venue-arena"    -> "Арена"
-    "venue-cinema"   -> "Кинотеатр Октябрь"
-    "venue-club"     -> "Известия Hall"
-    "venue-museum"   -> "Музей совр. искусства"
-    "venue-theater"  -> "Театр на Таганке"
-    else             -> this
-}
-
-private fun String.venueFull(): String = when (this) {
-    "venue-bolshoi"  -> "Большой театр, ул. Петровка, 1"
-    "venue-arena"    -> "Спортивный комплекс Арена, Лужнецкая наб., 24"
-    "venue-cinema"   -> "Кинотеатр Октябрь, Новый Арбат, 24"
-    "venue-club"     -> "Известия Hall, Пушкинская площадь, 5"
-    "venue-museum"   -> "ГМИИ им. Пушкина, ул. Волхонка, 12"
-    "venue-theater"  -> "Театр на Таганке, Земляной вал, 76"
-    else             -> this
-}

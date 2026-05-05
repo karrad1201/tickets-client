@@ -16,6 +16,7 @@ class MainActivity : ComponentActivity() {
         installUncaughtExceptionHandler()
         TokenStore.init(this)
         AppSession.restoreFromStore()
+        AppSession.appVersion = BuildConfig.VERSION_NAME
         AppSession.userId?.let { CrashReporter.setUserId(it) }
         initContainer(BuildConfig.BASE_URL)
 
