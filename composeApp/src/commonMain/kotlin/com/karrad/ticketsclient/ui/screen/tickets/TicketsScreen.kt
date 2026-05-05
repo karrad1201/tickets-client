@@ -52,6 +52,9 @@ import com.karrad.ticketsclient.crash.CrashReporter
 import com.karrad.ticketsclient.data.api.dto.EventDto
 import com.karrad.ticketsclient.data.api.dto.TicketDto
 import com.karrad.ticketsclient.di.AppContainer
+import io.github.alexzhirkevich.qrose.options.QrBrush
+import io.github.alexzhirkevich.qrose.options.solid
+import io.github.alexzhirkevich.qrose.rememberQrCodePainter
 import com.karrad.ticketsclient.ui.navigation.EventDetailScreen
 
 @Composable
@@ -334,8 +337,10 @@ private fun TicketCard(ticket: TicketDto, isArchived: Boolean, onClick: () -> Un
                 }
 
                 var showQrFullscreen by remember { mutableStateOf(false) }
+                val qrContent = ticket.qrToken ?: ticket.id
 
                 QrCode(
+                    content = qrContent,
                     modifier = Modifier
                         .size(160.dp)
                         .clickable { showQrFullscreen = true }
@@ -351,7 +356,7 @@ private fun TicketCard(ticket: TicketDto, isArchived: Boolean, onClick: () -> Un
                 Spacer(Modifier.height(8.dp))
 
                 if (showQrFullscreen) {
-                    QrFullscreenDialog(onDismiss = { showQrFullscreen = false })
+                    QrFullscreenDialog(content = qrContent, onDismiss = { showQrFullscreen = false })
                 }
             }
         }
@@ -360,67 +365,32 @@ private fun TicketCard(ticket: TicketDto, isArchived: Boolean, onClick: () -> Un
 
 // ─── QR-код ────────────────────────────────────────────────────────────────────
 
-// QR-паттерн вынесен на уровень файла — один экземпляр для всех вызовов
-private val QR_PATTERN = listOf(
-    listOf(1,1,1,1,1,1,1,0,1,0,1,0,1,1,1,1,1,1,1),
-    listOf(1,0,0,0,0,0,1,0,0,1,0,1,1,0,0,0,0,0,1),
-    listOf(1,0,1,1,1,0,1,0,1,0,1,0,1,0,1,1,1,0,1),
-    listOf(1,0,1,1,1,0,1,0,0,1,1,0,1,0,1,1,1,0,1),
-    listOf(1,0,1,1,1,0,1,0,1,1,0,1,1,0,1,1,1,0,1),
-    listOf(1,0,0,0,0,0,1,0,0,0,1,0,1,0,0,0,0,0,1),
-    listOf(1,1,1,1,1,1,1,0,1,0,1,0,1,1,1,1,1,1,1),
-    listOf(0,0,0,0,0,0,0,0,1,1,0,1,0,0,0,0,0,0,0),
-    listOf(1,0,1,1,0,1,1,1,0,1,1,0,1,1,0,1,1,1,0),
-    listOf(0,1,0,0,1,0,0,0,1,0,0,1,0,0,1,0,0,0,1),
-    listOf(1,1,0,1,0,1,1,0,1,1,0,0,1,0,1,1,0,1,1),
-    listOf(0,0,0,0,0,0,0,0,1,0,1,1,0,1,1,0,1,0,0),
-    listOf(1,1,1,1,1,1,1,0,0,1,0,1,1,0,0,1,0,1,0),
-    listOf(1,0,0,0,0,0,1,0,1,0,1,0,0,1,1,0,1,0,1),
-    listOf(1,0,1,1,1,0,1,0,0,1,1,1,0,1,0,1,0,1,0),
-    listOf(1,0,1,1,1,0,1,0,1,0,0,0,1,0,1,0,1,0,1),
-    listOf(1,0,1,1,1,0,1,0,0,1,0,1,1,1,0,1,1,1,0),
-    listOf(1,0,0,0,0,0,1,0,1,1,1,0,0,0,1,0,0,0,1),
-    listOf(1,1,1,1,1,1,1,0,0,0,1,1,0,1,0,1,0,1,0),
-)
-
-/**
- * Отрисовка QR-кода.
- * Ячейка: [cellDp]dp, зазор [gapDp]dp.
- * Итоговый размер сетки: 19 * cellDp + 18 * gapDp.
- * При cellDp=6, gapDp=1 → 114 + 18 = 132dp — помещается в 136dp (160 - 2*12 padding).
- */
 @Composable
-private fun QrCode(modifier: Modifier = Modifier, cellDp: Float = 6f, gapDp: Float = 1f) {
-    // Белый фон с rounded corners — clip ДО background, чтобы скруглить именно фон
+private fun QrCode(content: String, modifier: Modifier = Modifier) {
+    val painter = rememberQrCodePainter(content) {
+        colors {
+            dark = QrBrush.solid(Color.Black)
+            light = QrBrush.solid(Color.White)
+        }
+    }
     Box(
         modifier = modifier
             .background(Color.White, RoundedCornerShape(12.dp))
             .padding(12.dp),
         contentAlignment = Alignment.Center
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(gapDp.dp)) {
-            QR_PATTERN.forEach { row ->
-                Row(horizontalArrangement = Arrangement.spacedBy(gapDp.dp)) {
-                    row.forEach { cell ->
-                        Box(
-                            Modifier
-                                .size(cellDp.dp)
-                                .background(
-                                    color = if (cell == 1) Color.Black else Color.White,
-                                    shape = RoundedCornerShape(1.dp)
-                                )
-                        )
-                    }
-                }
-            }
-        }
+        androidx.compose.foundation.Image(
+            painter = painter,
+            contentDescription = "QR-код билета",
+            modifier = Modifier.fillMaxSize()
+        )
     }
 }
 
 // ─── Fullscreen QR диалог ──────────────────────────────────────────────────────
 
 @Composable
-private fun QrFullscreenDialog(onDismiss: () -> Unit) {
+private fun QrFullscreenDialog(content: String, onDismiss: () -> Unit) {
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false)
@@ -433,13 +403,12 @@ private fun QrFullscreenDialog(onDismiss: () -> Unit) {
             contentAlignment = Alignment.Center
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                // QR увеличен: cellDp=14, gapDp=2 → 19*14 + 18*2 = 266+36 = 302dp + 32dp padding = 334dp
                 QrCode(
+                    content = content,
                     modifier = Modifier
+                        .size(300.dp)
                         .padding(16.dp)
-                        .clickable { /* не пропускать клик наружу */ },
-                    cellDp = 14f,
-                    gapDp = 2f
+                        .clickable { /* не пропускать клик наружу */ }
                 )
                 Spacer(Modifier.height(24.dp))
                 Text(
