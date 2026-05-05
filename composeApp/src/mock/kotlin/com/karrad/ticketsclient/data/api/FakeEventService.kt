@@ -35,7 +35,8 @@ class FakeEventService : EventService {
         city: String,
         page: Int,
         dateFrom: String?,
-        dateTo: String?
+        dateTo: String?,
+        categoryIds: List<String>
     ): List<EventDto> =
         if (query.length < 2) emptyList()
         else allEvents.filter {

@@ -78,13 +78,17 @@ fun FeedScreen() {
                         }
                         else -> null
                     }
-                    val query = filter.categories.firstOrNull() ?: ""
+                    val allCategories = runCatching { AppContainer.geoService.getCategories() }.getOrNull().orEmpty()
+                    val categoryIds = filter.categories.mapNotNull { name ->
+                        allCategories.find { it.label.equals(name, ignoreCase = true) }?.id
+                    }
                     runCatching {
                         AppContainer.eventService.search(
-                            query = query,
+                            query = "",
                             city = AppSession.city,
                             dateFrom = dateStr,
-                            dateTo = dateStr
+                            dateTo = dateStr,
+                            categoryIds = categoryIds
                         )
                     }.onSuccess { results ->
                         filteredEvents = results

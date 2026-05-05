@@ -26,7 +26,8 @@ class EventApiService(
         city: String,
         page: Int,
         dateFrom: String?,
-        dateTo: String?
+        dateTo: String?,
+        categoryIds: List<String>
     ): List<EventDto> =
         httpClient.get("$baseUrl/api/v1/events/search") {
             parameter("q", query)
@@ -34,6 +35,7 @@ class EventApiService(
             parameter("page", page)
             if (dateFrom != null) parameter("dateFrom", dateFrom)
             if (dateTo != null) parameter("dateTo", dateTo)
+            categoryIds.forEach { parameter("categoryId", it) }
         }.body()
 
     override suspend fun getTicketTypes(eventId: String): List<TicketTypeDto> =
