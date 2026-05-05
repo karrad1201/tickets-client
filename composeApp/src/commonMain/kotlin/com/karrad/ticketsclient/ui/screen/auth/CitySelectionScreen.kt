@@ -2,39 +2,29 @@ package com.karrad.ticketsclient.ui.screen.auth
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.karrad.ticketsclient.AppSession
-import com.karrad.ticketsclient.crash.CrashReporter
 import com.karrad.ticketsclient.data.api.dto.CityDto
-import com.karrad.ticketsclient.di.AppContainer
 import com.karrad.ticketsclient.ui.navigation.InterestsScreen
+
+private val ELISTA = CityDto(id = "elista", label = "Элиста", subject = com.karrad.ticketsclient.data.api.dto.SubjectDto(id = "kalmykia", label = "Калмыкия"))
 
 /**
  * @param onCitySelected если передан — вызывается вместо перехода на InterestsScreen.
@@ -43,24 +33,6 @@ import com.karrad.ticketsclient.ui.navigation.InterestsScreen
 @Composable
 fun CitySelectionScreen(onCitySelected: ((String) -> Unit)? = null) {
     val navigator = LocalNavigator.currentOrThrow
-
-    var allCities by remember { mutableStateOf<List<CityDto>>(emptyList()) }
-    var query by remember { mutableStateOf("") }
-    var selectedCity by remember { mutableStateOf<CityDto?>(null) }
-
-    LaunchedEffect(Unit) {
-        allCities = try { AppContainer.geoService.getCities() } catch (e: Exception) { CrashReporter.log(e); emptyList() }
-    }
-
-    val cities = remember(query, allCities) {
-        if (query.isBlank()) allCities
-        else {
-            val q = query.trim().lowercase()
-            allCities.filter {
-                it.name.lowercase().contains(q) || it.region?.lowercase()?.contains(q) == true
-            }
-        }
-    }
 
     Column(
         modifier = Modifier
@@ -74,63 +46,32 @@ fun CitySelectionScreen(onCitySelected: ((String) -> Unit)? = null) {
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "Выберите город, для которого будем рекомендовать события и ближайшие мероприятия",
+            text = "Сервис работает в Элисте (Республика Калмыкия)",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        OutlinedTextField(
-            value = query,
-            onValueChange = { query = it },
-            placeholder = { Text("Поиск города или региона") },
-            singleLine = true,
-            shape = RoundedCornerShape(12.dp),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = MaterialTheme.colorScheme.primary,
-                unfocusedBorderColor = Color(0xFFE0E0E0),
-                cursorColor = MaterialTheme.colorScheme.primary
-            ),
-            modifier = Modifier.fillMaxWidth()
-        )
+        CityCard(city = ELISTA, selected = true, onClick = {})
 
-        Spacer(modifier = Modifier.height(12.dp))
-
-        LazyColumn(
-            modifier = Modifier.weight(1f),
-            contentPadding = PaddingValues(vertical = 4.dp)
-        ) {
-            items(cities, key = { it.id }) { city ->
-                CityCard(
-                    city = city,
-                    selected = selectedCity?.id == city.id,
-                    onClick = { selectedCity = city }
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-            }
-        }
+        Spacer(modifier = Modifier.weight(1f))
 
         Button(
             onClick = {
-                selectedCity?.let { city ->
-                    AppSession.city = city.name
-                    if (onCitySelected != null) {
-                        onCitySelected(city.name)
-                    } else {
-                        navigator.push(InterestsScreen)
-                    }
+                AppSession.city = ELISTA.name
+                if (onCitySelected != null) {
+                    onCitySelected(ELISTA.name)
+                } else {
+                    navigator.push(InterestsScreen)
                 }
             },
-            enabled = selectedCity != null,
             shape = RoundedCornerShape(12.dp),
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 32.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary,
-                disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f),
-                disabledContentColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.6f)
+                containerColor = MaterialTheme.colorScheme.primary
             )
         ) {
             Text("Продолжить", modifier = Modifier.padding(vertical = 4.dp))
