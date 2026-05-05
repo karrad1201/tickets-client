@@ -39,11 +39,9 @@ import com.karrad.ticketsclient.crash.CrashReporter
 import com.karrad.ticketsclient.data.api.dto.EventDto
 import com.karrad.ticketsclient.di.AppContainer
 import com.karrad.ticketsclient.ui.navigation.MainScreen
+import com.karrad.ticketsclient.ui.util.formatEventDateFull
 import com.karrad.ticketsclient.ui.util.formatPrice
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Instant
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 
 @Composable
 fun OrderConfirmScreen(eventId: String, orderId: String, totalPrice: Int) {
@@ -127,16 +125,8 @@ fun OrderConfirmScreen(eventId: String, orderId: String, totalPrice: Int) {
             Spacer(Modifier.height(16.dp))
 
             OrderRow(label = "Событие", value = event?.label ?: "…")
-            event?.time?.let { iso ->
-                val dt = try {
-                    Instant.parse(iso).toLocalDateTime(TimeZone.currentSystemDefault())
-                } catch (_: Exception) { null }
-                if (dt != null) {
-                    val dateStr = "%02d.%02d.%04d %02d:%02d".format(
-                        dt.dayOfMonth, dt.monthNumber, dt.year, dt.hour, dt.minute
-                    )
-                    OrderRow(label = "Дата", value = dateStr)
-                }
+            event?.time?.formatEventDateFull()?.let { dateStr ->
+                OrderRow(label = "Дата", value = dateStr)
             }
             HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
             OrderRow(label = "Номер заказа", value = orderId.takeLast(8).uppercase())

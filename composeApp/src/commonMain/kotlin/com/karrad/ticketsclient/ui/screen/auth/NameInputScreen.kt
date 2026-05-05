@@ -37,6 +37,7 @@ import com.karrad.ticketsclient.crash.CrashReporter
 import com.karrad.ticketsclient.data.api.ApiException
 import com.karrad.ticketsclient.di.AppContainer
 import com.karrad.ticketsclient.ui.navigation.CitySelectionScreen
+import com.karrad.ticketsclient.ui.util.toAuthErrorMessage
 import kotlinx.coroutines.launch
 
 @Composable
@@ -107,10 +108,10 @@ fun NameInputScreen(phone: String = "", code: String = "") {
                         )
                         navigator.push(CitySelectionScreen)
                     } catch (e: ApiException) {
-                        error = e.message ?: "Ошибка регистрации. Попробуйте ещё раз."
+                        error = e.toAuthErrorMessage("Ошибка регистрации. Попробуйте ещё раз.")
                     } catch (e: Exception) {
                         CrashReporter.log(e)
-                        error = "Ошибка регистрации. Попробуйте ещё раз."
+                        error = e.toAuthErrorMessage("Ошибка регистрации. Попробуйте ещё раз.")
                     } finally {
                         loading = false
                     }
