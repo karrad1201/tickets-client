@@ -54,6 +54,7 @@ class CreateEventViewModel(
         description: String,
         venueId: String,
         categoryId: String,
+        ageRating: String,
         isoTime: String
     ) {
         viewModelScope.launch {
@@ -65,7 +66,8 @@ class CreateEventViewModel(
                         description = description,
                         venueId = venueId,
                         categoryId = categoryId,
-                        time = isoTime
+                        time = isoTime,
+                        ageRating = ageRating
                     )
                 )
                 _state.value = _state.value.copy(isSubmitting = false, success = true)

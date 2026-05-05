@@ -1,9 +1,12 @@
 package com.karrad.ticketsclient.ui.screen.org
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -27,6 +30,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -61,6 +66,7 @@ fun CreateEventScreen() {
     var selectedVenueLabel by remember { mutableStateOf("Выберите площадку") }
     var selectedCategoryId by remember { mutableStateOf("") }
     var selectedCategoryLabel by remember { mutableStateOf("Выберите категорию") }
+    var selectedAgeRating by remember { mutableStateOf("") }
     var dateText by remember { mutableStateOf("") }
     var timeText by remember { mutableStateOf("") }
     var venueMenuExpanded by remember { mutableStateOf(false) }
@@ -182,6 +188,12 @@ fun CreateEventScreen() {
                     }
                 }
 
+                // Age rating
+                AgeRatingSelector(
+                    selected = selectedAgeRating,
+                    onSelect = { selectedAgeRating = it }
+                )
+
                 // Date input
                 OutlinedTextField(
                     value = dateText,
@@ -214,6 +226,7 @@ fun CreateEventScreen() {
 
                 val canSubmit = label.isNotBlank() && description.isNotBlank() &&
                     selectedVenueId.isNotBlank() && selectedCategoryId.isNotBlank() &&
+                    selectedAgeRating.isNotBlank() &&
                     dateText.matches(Regex("\\d{4}-\\d{2}-\\d{2}")) &&
                     timeText.matches(Regex("\\d{2}:\\d{2}")) &&
                     !state.isSubmitting
@@ -221,7 +234,7 @@ fun CreateEventScreen() {
                 Button(
                     onClick = {
                         val isoTime = "${dateText}T${timeText}:00Z"
-                        vm.submit(label, description, selectedVenueId, selectedCategoryId, isoTime)
+                        vm.submit(label, description, selectedVenueId, selectedCategoryId, selectedAgeRating, isoTime)
                     },
                     enabled = canSubmit,
                     shape = RoundedCornerShape(12.dp),
@@ -235,6 +248,42 @@ fun CreateEventScreen() {
                 }
 
                 Spacer(Modifier.height(16.dp))
+            }
+        }
+    }
+}
+
+private val AGE_RATINGS = listOf("0+", "6+", "12+", "16+", "18+")
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun AgeRatingSelector(selected: String, onSelect: (String) -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            "Возрастное ограничение *",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            AGE_RATINGS.forEach { rating ->
+                val isSelected = selected == rating
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(50))
+                        .background(
+                            if (isSelected) MaterialTheme.colorScheme.primary
+                            else MaterialTheme.colorScheme.surfaceVariant
+                        )
+                        .clickable { onSelect(rating) }
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        rating,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = if (isSelected) Color.White else MaterialTheme.colorScheme.onBackground
+                    )
+                }
             }
         }
     }
