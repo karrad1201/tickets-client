@@ -46,6 +46,9 @@ object AppSession {
 
     var userRole: String = "USER"
 
+    // Версия приложения — устанавливается платформой при старте
+    var appVersion: String = "1.0.0"
+
     // Членство в организации — загружается после входа в MainScreen
     var orgMembership: OrgMembershipDto? by mutableStateOf(null)
 
