@@ -1,9 +1,13 @@
 package com.karrad.ticketsclient.ui.screen.org
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,12 +15,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.AddPhotoAlternate
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
@@ -27,6 +33,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -41,7 +50,10 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import com.karrad.ticketsclient.data.api.FileBytes
 import com.karrad.ticketsclient.di.AppContainer
+import com.karrad.ticketsclient.ui.util.rememberFilePicker
+import com.karrad.ticketsclient.ui.util.toImageBitmap
 
 @Composable
 fun CreateEventScreen() {
@@ -61,10 +73,13 @@ fun CreateEventScreen() {
     var selectedVenueLabel by remember { mutableStateOf("Выберите площадку") }
     var selectedCategoryId by remember { mutableStateOf("") }
     var selectedCategoryLabel by remember { mutableStateOf("Выберите категорию") }
+    var selectedAgeRating by remember { mutableStateOf("") }
     var dateText by remember { mutableStateOf("") }
     var timeText by remember { mutableStateOf("") }
     var venueMenuExpanded by remember { mutableStateOf(false) }
     var categoryMenuExpanded by remember { mutableStateOf(false) }
+    var coverFile by remember { mutableStateOf<FileBytes?>(null) }
+    val pickCover = rememberFilePicker { files -> coverFile = files.firstOrNull() }
 
     LaunchedEffect(state.success) {
         if (state.success) navigator.pop()
@@ -124,6 +139,44 @@ fun CreateEventScreen() {
                     modifier = Modifier.fillMaxWidth()
                 )
 
+                // Cover image picker
+                val coverBitmap = coverFile?.bytes?.toImageBitmap()
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(180.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                        .clickable { pickCover() },
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (coverBitmap != null) {
+                        Image(
+                            bitmap = coverBitmap,
+                            contentDescription = "Обложка мероприятия",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                Icons.Outlined.AddPhotoAlternate,
+                                contentDescription = null,
+                                modifier = Modifier.size(40.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Text(
+                                "Добавить обложку *",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+
                 // Venue selector
                 Box {
                     OutlinedButton(
@@ -182,6 +235,12 @@ fun CreateEventScreen() {
                     }
                 }
 
+                // Age rating
+                AgeRatingSelector(
+                    selected = selectedAgeRating,
+                    onSelect = { selectedAgeRating = it }
+                )
+
                 // Date input
                 OutlinedTextField(
                     value = dateText,
@@ -214,14 +273,16 @@ fun CreateEventScreen() {
 
                 val canSubmit = label.isNotBlank() && description.isNotBlank() &&
                     selectedVenueId.isNotBlank() && selectedCategoryId.isNotBlank() &&
+                    selectedAgeRating.isNotBlank() &&
                     dateText.matches(Regex("\\d{4}-\\d{2}-\\d{2}")) &&
                     timeText.matches(Regex("\\d{2}:\\d{2}")) &&
+                    coverFile != null &&
                     !state.isSubmitting
 
                 Button(
                     onClick = {
                         val isoTime = "${dateText}T${timeText}:00Z"
-                        vm.submit(label, description, selectedVenueId, selectedCategoryId, isoTime)
+                        vm.submit(label, description, selectedVenueId, selectedCategoryId, selectedAgeRating, isoTime, coverFile!!)
                     },
                     enabled = canSubmit,
                     shape = RoundedCornerShape(12.dp),
@@ -235,6 +296,42 @@ fun CreateEventScreen() {
                 }
 
                 Spacer(Modifier.height(16.dp))
+            }
+        }
+    }
+}
+
+private val AGE_RATINGS = listOf("0+", "6+", "12+", "16+", "18+")
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun AgeRatingSelector(selected: String, onSelect: (String) -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            "Возрастное ограничение *",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            AGE_RATINGS.forEach { rating ->
+                val isSelected = selected == rating
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(50))
+                        .background(
+                            if (isSelected) MaterialTheme.colorScheme.primary
+                            else MaterialTheme.colorScheme.surfaceVariant
+                        )
+                        .clickable { onSelect(rating) }
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        rating,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = if (isSelected) Color.White else MaterialTheme.colorScheme.onBackground
+                    )
+                }
             }
         }
     }
