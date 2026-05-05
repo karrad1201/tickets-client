@@ -12,9 +12,11 @@ interface EventService {
         city: String,
         page: Int = 0,
         dateFrom: String? = null,
-        dateTo: String? = null
+        dateTo: String? = null,
+        categoryIds: List<String> = emptyList()
     ): List<EventDto>
     suspend fun getTicketTypes(eventId: String): List<TicketTypeDto>
     suspend fun getSeatMap(eventId: String): SeatMapDto
     suspend fun createEvent(request: CreateEventRequest): EventDto
+    suspend fun uploadCover(eventId: String, file: FileBytes)
 }

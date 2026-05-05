@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.karrad.ticketsclient.crash.CrashReporter
 import com.karrad.ticketsclient.data.api.EventService
+import com.karrad.ticketsclient.data.api.FileBytes
 import com.karrad.ticketsclient.data.api.OrgMemberService
 import com.karrad.ticketsclient.data.api.dto.CategoryDto
 import com.karrad.ticketsclient.data.api.dto.CreateEventRequest
@@ -55,12 +56,13 @@ class CreateEventViewModel(
         venueId: String,
         categoryId: String,
         ageRating: String,
-        isoTime: String
+        isoTime: String,
+        coverFile: FileBytes
     ) {
         viewModelScope.launch {
             _state.value = _state.value.copy(isSubmitting = true, error = null)
             try {
-                eventService.createEvent(
+                val event = eventService.createEvent(
                     CreateEventRequest(
                         label = label,
                         description = description,
@@ -70,6 +72,7 @@ class CreateEventViewModel(
                         ageRating = ageRating
                     )
                 )
+                eventService.uploadCover(event.id, coverFile)
                 _state.value = _state.value.copy(isSubmitting = false, success = true)
             } catch (e: Exception) {
                 CrashReporter.log(e)

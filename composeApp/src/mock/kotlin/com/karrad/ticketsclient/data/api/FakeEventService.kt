@@ -35,7 +35,8 @@ class FakeEventService : EventService {
         city: String,
         page: Int,
         dateFrom: String?,
-        dateTo: String?
+        dateTo: String?,
+        categoryIds: List<String>
     ): List<EventDto> =
         if (query.length < 2) emptyList()
         else allEvents.filter {
@@ -78,4 +79,6 @@ class FakeEventService : EventService {
             time = request.time,
             imageUrl = request.imageUrl
         )
+
+    override suspend fun uploadCover(eventId: String, file: FileBytes) { /* no-op in mock */ }
 }
