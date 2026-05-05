@@ -40,6 +40,7 @@ import com.karrad.ticketsclient.crash.CrashReporter
 import com.karrad.ticketsclient.data.api.ApiException
 import com.karrad.ticketsclient.di.AppContainer
 import com.karrad.ticketsclient.ui.navigation.SmsCodeScreen
+import com.karrad.ticketsclient.ui.util.toAuthErrorMessage
 import kotlinx.coroutines.launch
 
 @Composable
@@ -101,10 +102,10 @@ fun RegisterScreen() {
                             AppContainer.authService.sendCode(normalized)
                             navigator.push(SmsCodeScreen(isRegistration = true, phone = normalized))
                         } catch (e: ApiException) {
-                            error = e.message ?: "Не удалось отправить код. Проверьте номер."
+                            error = e.toAuthErrorMessage("Не удалось отправить код. Проверьте номер.")
                         } catch (e: Exception) {
                             CrashReporter.log(e)
-                            error = "Не удалось отправить код. Проверьте номер."
+                            error = e.toAuthErrorMessage("Не удалось отправить код. Проверьте номер.")
                         } finally {
                             loading = false
                         }

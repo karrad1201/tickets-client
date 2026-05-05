@@ -52,6 +52,7 @@ import com.karrad.ticketsclient.crash.CrashReporter
 import com.karrad.ticketsclient.data.api.dto.OrgEventItem
 import com.karrad.ticketsclient.data.api.dto.TicketValidationResponse
 import com.karrad.ticketsclient.di.AppContainer
+import com.karrad.ticketsclient.ui.util.formatEventTime
 import kotlinx.coroutines.launch
 
 // ─── State ─────────────────────────────────────────────────────────────────────
@@ -260,14 +261,6 @@ private fun EventRow(event: OrgEventItem, onClick: () -> Unit) {
     }
 }
 
-private fun String.formatEventTime(): String = try {
-    val parts = this.split("T")
-    if (parts.size == 2) {
-        val date = parts[0].split("-")
-        val time = parts[1].removeSuffix("Z").take(5)
-        "${date[2]}.${date[1]}.${date[0]}, $time"
-    } else this
-} catch (e: Exception) { this }
 
 // ─── Scanning ──────────────────────────────────────────────────────────────────
 

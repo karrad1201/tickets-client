@@ -39,6 +39,7 @@ import com.karrad.ticketsclient.crash.CrashReporter
 import com.karrad.ticketsclient.data.api.ApiException
 import com.karrad.ticketsclient.di.AppContainer
 import com.karrad.ticketsclient.ui.navigation.MainScreen
+import com.karrad.ticketsclient.ui.util.toAuthErrorMessage
 import com.karrad.ticketsclient.ui.navigation.NameInputScreen
 import kotlinx.coroutines.launch
 
@@ -130,10 +131,10 @@ fun SmsCodeScreen(isRegistration: Boolean = false, phone: String = "") {
                             navigator.replaceAll(MainScreen)
                         }
                     } catch (e: ApiException) {
-                        error = e.message ?: "Неверный код. Попробуйте ещё раз."
+                        error = e.toAuthErrorMessage("Неверный код. Попробуйте ещё раз.")
                     } catch (e: Exception) {
                         CrashReporter.log(e)
-                        error = "Неверный код. Попробуйте ещё раз."
+                        error = e.toAuthErrorMessage("Неверный код. Попробуйте ещё раз.")
                     } finally {
                         loading = false
                     }

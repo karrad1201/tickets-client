@@ -61,11 +61,10 @@ import com.karrad.ticketsclient.ui.navigation.SeatMapScreen
 import com.karrad.ticketsclient.ui.navigation.TicketTypeScreen
 import com.karrad.ticketsclient.ui.component.EventImage
 import com.karrad.ticketsclient.ui.screen.feed.EventImagePlaceholder
+import com.karrad.ticketsclient.ui.util.formatEventDate
+import com.karrad.ticketsclient.ui.util.formatEventDateFull
 import com.karrad.ticketsclient.ui.util.formatPrice
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Instant
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 
 @Composable
 fun EventDetailScreen(eventId: String) {
@@ -390,20 +389,6 @@ private fun ExpandableText(text: String, collapsedLines: Int = 4) {
         }
     }
 }
-
-private fun String.formatEventDate(): String? = runCatching {
-    val ldt = Instant.parse(this).toLocalDateTime(TimeZone.currentSystemDefault())
-    val months = listOf("янв","фев","мар","апр","май","июн","июл","авг","сен","окт","ноя","дек")
-    "${ldt.dayOfMonth} ${months[ldt.monthNumber - 1]} в ${ldt.hour.toString().padStart(2,'0')}:${ldt.minute.toString().padStart(2,'0')}"
-}.getOrNull()
-
-private fun String.formatEventDateFull(): String? = runCatching {
-    val ldt = Instant.parse(this).toLocalDateTime(TimeZone.currentSystemDefault())
-    val monthsFull = listOf("января","февраля","марта","апреля","мая","июня",
-        "июля","августа","сентября","октября","ноября","декабря")
-    "${ldt.dayOfMonth} ${monthsFull[ldt.monthNumber - 1]} ${ldt.year}, " +
-        "${ldt.hour.toString().padStart(2,'0')}:${ldt.minute.toString().padStart(2,'0')}"
-}.getOrNull()
 
 private fun String.venueShort(): String = when (this) {
     "venue-bolshoi"  -> "Большой театр"
