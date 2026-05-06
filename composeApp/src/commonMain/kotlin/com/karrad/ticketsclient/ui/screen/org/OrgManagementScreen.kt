@@ -62,6 +62,7 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import com.karrad.ticketsclient.data.api.dto.OrgMemberDto
 import com.karrad.ticketsclient.AppSession
 import com.karrad.ticketsclient.di.AppContainer
+import com.karrad.ticketsclient.ui.navigation.VenueSpacesScreen
 import com.karrad.ticketsclient.ui.screen.auth.normalizePhone
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -146,6 +147,48 @@ fun OrgManagementScreen() {
                             canDelete = member.userId != AppSession.userId,
                             onDelete = { vm.deleteMember(member.id) }
                         )
+                    }
+                    if (state.venues.isNotEmpty()) {
+                        item {
+                            Spacer(Modifier.height(4.dp))
+                            Text(
+                                "Площадки",
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(horizontal = 4.dp)
+                            )
+                        }
+                        items(state.venues) { venue ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(MaterialTheme.colorScheme.surface)
+                                    .padding(horizontal = 16.dp, vertical = 10.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    Icons.Outlined.Domain,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Spacer(Modifier.width(10.dp))
+                                Text(
+                                    venue.label,
+                                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                                    modifier = Modifier.weight(1f)
+                                )
+                                OutlinedButton(
+                                    onClick = { navigator.push(VenueSpacesScreen(venue.id, venue.label)) },
+                                    modifier = Modifier.height(32.dp),
+                                    contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 10.dp)
+                                ) {
+                                    Text("Залы", style = MaterialTheme.typography.labelMedium)
+                                }
+                            }
+                        }
+                        item { Spacer(Modifier.height(4.dp)) }
                     }
                     item {
                         OutlinedButton(

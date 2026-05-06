@@ -137,3 +137,9 @@ object CreateEventScreen : Screen {
     @androidx.compose.runtime.Composable
     override fun Content() = com.karrad.ticketsclient.ui.screen.org.CreateEventScreen()
 }
+
+// Venue spaces management (OWNER)
+data class VenueSpacesScreen(val venueId: String, val venueLabel: String) : Screen {
+    @androidx.compose.runtime.Composable
+    override fun Content() = com.karrad.ticketsclient.ui.screen.org.VenueSpacesScreen(venueId, venueLabel)
+}
