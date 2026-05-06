@@ -33,6 +33,7 @@ import com.karrad.ticketsclient.di.AppContainer
 import com.karrad.ticketsclient.ui.navigation.EventDetailScreen
 import com.karrad.ticketsclient.ui.navigation.SearchScreen
 import com.karrad.ticketsclient.ui.screen.tickets.OfflineBanner
+import com.karrad.ticketsclient.data.api.dto.CategoryDto
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.datetime.DateTimeUnit
@@ -53,10 +54,17 @@ fun FeedScreen() {
     var activeFilter by remember { mutableStateOf<FilterState?>(null) }
     var filteredEvents by remember { mutableStateOf<List<com.karrad.ticketsclient.data.api.dto.EventDto>?>(null) }
     var filterLoading by remember { mutableStateOf(false) }
+    var filterCategories by remember { mutableStateOf<List<CategoryDto>>(emptyList()) }
 
     if (showFilters) {
+        if (filterCategories.isEmpty()) {
+            scope.launch {
+                filterCategories = runCatching { AppContainer.geoService.getCategories() }.getOrDefault(emptyList())
+            }
+        }
         FiltersBottomSheet(
             onDismiss = { showFilters = false },
+            categories = filterCategories,
             onApply = { filter ->
                 activeFilter = filter
                 if (!filter.hasActiveFilters) {
@@ -78,11 +86,8 @@ fun FeedScreen() {
                         }
                         else -> null
                     }
-                    val allCategories = runCatching {
-                        AppContainer.geoService.getCategories()
-                    }.getOrNull().orEmpty()
                     val categoryIds = filter.categories.mapNotNull { name ->
-                        allCategories.find { it.label.equals(name, ignoreCase = true) }?.id
+                        filterCategories.find { it.label.equals(name, ignoreCase = true) }?.id
                     }
                     runCatching {
                         AppContainer.eventService.search(

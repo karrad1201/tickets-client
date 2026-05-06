@@ -24,6 +24,8 @@ import com.karrad.ticketsclient.data.api.VenueAccessGrantApiService
 import com.karrad.ticketsclient.data.api.VenueAccessGrantService
 import com.karrad.ticketsclient.data.api.VenueApplicationApiService
 import com.karrad.ticketsclient.data.api.VenueApplicationService
+import com.karrad.ticketsclient.data.api.VenueSpaceApiService
+import com.karrad.ticketsclient.data.api.VenueSpaceService
 import com.karrad.ticketsclient.AppSession
 import com.karrad.ticketsclient.data.api.createHttpClient
 
@@ -75,6 +77,9 @@ object AppContainer {
     lateinit var venueApplicationService: VenueApplicationService
         private set
 
+    lateinit var venueSpaceService: VenueSpaceService
+        private set
+
     lateinit var httpClient: io.ktor.client.HttpClient
         private set
 
@@ -93,7 +98,8 @@ object AppContainer {
         favoriteService: FavoriteService,
         orgMemberService: OrgMemberService,
         venueAccessGrantService: VenueAccessGrantService,
-        venueApplicationService: VenueApplicationService
+        venueApplicationService: VenueApplicationService,
+        venueSpaceService: VenueSpaceService
     ) {
         this.isMock = isMock
         this.baseUrl = baseUrl
@@ -110,6 +116,7 @@ object AppContainer {
         this.orgMemberService = orgMemberService
         this.venueAccessGrantService = venueAccessGrantService
         this.venueApplicationService = venueApplicationService
+        this.venueSpaceService = venueSpaceService
     }
 }
 
@@ -130,6 +137,7 @@ fun AppContainer.initReal(baseUrl: String) {
         favoriteService = FavoriteApiService(client, baseUrl),
         orgMemberService = OrgMemberApiService(client, baseUrl),
         venueAccessGrantService = VenueAccessGrantApiService(client, baseUrl),
-        venueApplicationService = VenueApplicationApiService(client, baseUrl)
+        venueApplicationService = VenueApplicationApiService(client, baseUrl),
+        venueSpaceService = VenueSpaceApiService(client, baseUrl)
     )
 }

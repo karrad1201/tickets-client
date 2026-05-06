@@ -150,7 +150,7 @@ internal fun EventCard(
             lineHeight = 15.sp
         )
         Text(
-            text = event.venueId.venueShort(),
+            text = event.venueLabel ?: event.venueId.venueShort(),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             maxLines = 1,
