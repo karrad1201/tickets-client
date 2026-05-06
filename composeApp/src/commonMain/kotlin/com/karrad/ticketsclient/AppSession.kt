@@ -16,7 +16,7 @@ object AppSession {
     var authToken: String? = null
     var userId: String? = null
 
-    var city: String by mutableStateOf("Москва")
+    var city: String by mutableStateOf("Элиста")
 
     // Profile — заполняется при входе/регистрации
     var userName: String = ""

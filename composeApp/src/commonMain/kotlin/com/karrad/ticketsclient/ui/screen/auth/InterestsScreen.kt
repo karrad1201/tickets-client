@@ -20,7 +20,9 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -34,11 +36,12 @@ import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.karrad.ticketsclient.AppSession
+import com.karrad.ticketsclient.di.AppContainer
 import com.karrad.ticketsclient.ui.navigation.MainScreen
 
 private data class Interest(val name: String, val emoji: String, val size: Dp)
 
-private val interests = listOf(
+private val fallbackInterests = listOf(
     Interest("Театр",    "🎭", 96.dp),
     Interest("Кино",     "🎬", 76.dp),
     Interest("Концерты", "🎵", 104.dp),
@@ -51,11 +54,41 @@ private val interests = listOf(
     Interest("Танцы",    "💃", 68.dp),
 )
 
+private val interestEmojiMap = mapOf(
+    "театр" to ("🎭" to 96.dp), "театры" to ("🎭" to 96.dp), "спектакли" to ("🎭" to 96.dp),
+    "кино" to ("🎬" to 76.dp), "кино и видео" to ("🎬" to 76.dp),
+    "концерты" to ("🎵" to 104.dp), "музыка" to ("🎵" to 88.dp),
+    "шоу" to ("✨" to 68.dp),
+    "еда" to ("🍜" to 64.dp), "кулинария" to ("🍜" to 64.dp),
+    "спорт" to ("⚽" to 80.dp),
+    "выставки" to ("🖼️" to 88.dp), "выставка" to ("🖼️" to 88.dp),
+    "стендап" to ("🎤" to 72.dp),
+    "детям" to ("🎠" to 76.dp), "дети" to ("🎠" to 76.dp),
+    "танцы" to ("💃" to 68.dp),
+    "вечеринки" to ("🎊" to 72.dp),
+    "фестивали" to ("🎪" to 88.dp),
+    "лекции" to ("📚" to 72.dp),
+    "ярмарки" to ("🛍️" to 68.dp),
+)
+
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun InterestsScreen() {
     val navigator = LocalNavigator.currentOrThrow
     val selected = remember { mutableStateListOf<String>() }
+    val (interests, setInterests) = remember { mutableStateOf(fallbackInterests) }
+
+    LaunchedEffect(Unit) {
+        val categories = runCatching { AppContainer.geoService.getCategories() }.getOrNull()
+        if (!categories.isNullOrEmpty()) {
+            val sizes = listOf(96.dp, 76.dp, 104.dp, 68.dp, 64.dp, 80.dp, 88.dp, 72.dp, 76.dp, 68.dp)
+            setInterests(categories.mapIndexed { i, cat ->
+                val (emoji, size) = interestEmojiMap[cat.label.lowercase()]
+                    ?: ("🎟️" to sizes.getOrElse(i) { 80.dp })
+                Interest(cat.label, emoji, size)
+            })
+        }
+    }
 
     Column(
         modifier = Modifier

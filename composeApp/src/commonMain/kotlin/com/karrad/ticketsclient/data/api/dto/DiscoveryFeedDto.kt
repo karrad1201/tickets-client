@@ -24,6 +24,7 @@ data class EventDto(
     val venueId: String,
     val venueLabel: String? = null,
     val categoryId: String,
+    val categoryLabel: String? = null,
     val time: String,
     val imageUrl: String? = null,
     val minPrice: Int? = null,
