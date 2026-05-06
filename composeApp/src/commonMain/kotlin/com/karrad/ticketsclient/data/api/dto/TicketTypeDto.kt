@@ -10,3 +10,15 @@ data class TicketTypeDto(
     val quota: Int,
     val available: Int
 )
+
+@Serializable
+data class CreateTicketTypeRequest(
+    val label: String,
+    val price: Int,
+    val quota: Int
+)
+
+@Serializable
+data class CreateGeneralAdmissionInventoryRequest(
+    val ticketTypes: List<CreateTicketTypeRequest>
+)

@@ -1,6 +1,7 @@
 package com.karrad.ticketsclient.data.api
 
 import com.karrad.ticketsclient.data.api.dto.CreateEventRequest
+import com.karrad.ticketsclient.data.api.dto.CreateGeneralAdmissionInventoryRequest
 import com.karrad.ticketsclient.data.api.dto.EventDto
 import com.karrad.ticketsclient.data.api.dto.SeatMapDto
 import com.karrad.ticketsclient.data.api.dto.TicketTypeDto
@@ -19,4 +20,5 @@ interface EventService {
     suspend fun getSeatMap(eventId: String): SeatMapDto
     suspend fun createEvent(request: CreateEventRequest): EventDto
     suspend fun uploadCover(eventId: String, file: FileBytes)
+    suspend fun createGeneralAdmissionInventory(eventId: String, request: CreateGeneralAdmissionInventoryRequest)
 }

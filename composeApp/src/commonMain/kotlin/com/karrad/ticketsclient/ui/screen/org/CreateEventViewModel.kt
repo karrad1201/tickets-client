@@ -21,7 +21,7 @@ data class CreateEventState(
     val isLoading: Boolean = true,
     val isSubmitting: Boolean = false,
     val error: String? = null,
-    val success: Boolean = false
+    val createdEventId: String? = null
 )
 
 class CreateEventViewModel(
@@ -73,7 +73,7 @@ class CreateEventViewModel(
                     )
                 )
                 eventService.uploadCover(event.id, coverFile)
-                _state.value = _state.value.copy(isSubmitting = false, success = true)
+                _state.value = _state.value.copy(isSubmitting = false, createdEventId = event.id)
             } catch (e: Exception) {
                 CrashReporter.log(e)
                 _state.value = _state.value.copy(isSubmitting = false, error = e.message)
