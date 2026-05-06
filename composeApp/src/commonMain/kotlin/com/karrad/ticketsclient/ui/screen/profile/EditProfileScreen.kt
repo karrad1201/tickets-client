@@ -61,8 +61,6 @@ fun EditProfileScreen() {
 
     var nameValue by remember { mutableStateOf(TextFieldValue(AppSession.userName)) }
     val name = nameValue.text
-    var cityValue by remember { mutableStateOf(TextFieldValue(AppSession.city)) }
-    val city = cityValue.text
     var selectedInterests by remember { mutableStateOf(AppSession.userInterests.toSet()) }
     var saving by remember { mutableStateOf(false) }
     var saveError by remember { mutableStateOf<String?>(null) }
@@ -123,17 +121,6 @@ fun EditProfileScreen() {
                 shape = RoundedCornerShape(12.dp)
             )
 
-            Spacer(Modifier.height(16.dp))
-
-            FieldLabel("Город")
-            OutlinedTextField(
-                value = cityValue,
-                onValueChange = { cityValue = it },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                shape = RoundedCornerShape(12.dp)
-            )
-
             Spacer(Modifier.height(24.dp))
 
             FieldLabel("Интересы")
@@ -189,7 +176,6 @@ fun EditProfileScreen() {
                             AppSession.userName = updated.fullName
                             AppSession.userInterests = updated.interests
                             AppSession.userAvatarUrl = updated.avatarUrl
-                            AppSession.city = city.trim().ifBlank { AppSession.city }
                             navigator.pop()
                         } catch (e: Exception) {
                             CrashReporter.log(e)

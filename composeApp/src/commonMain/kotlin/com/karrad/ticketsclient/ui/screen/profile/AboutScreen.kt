@@ -95,7 +95,7 @@ fun AboutScreen() {
             Spacer(Modifier.height(16.dp))
 
             Text(
-                "Tickets",
+                "Visit Kalmykia",
                 style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
                 modifier = Modifier.fillMaxWidth(),
                 textAlign = TextAlign.Center
@@ -118,7 +118,7 @@ fun AboutScreen() {
                     .background(MaterialTheme.colorScheme.surface)
                     .padding(16.dp)
             ) {
-                Text("Tickets — удобный способ покупать билеты на лучшие мероприятия Элисты: " +
+                Text("Visit Kalmykia — удобный способ покупать билеты на лучшие мероприятия Калмыкии: " +
                     "театры, кино, концерты, выставки и спорт.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -153,7 +153,7 @@ fun AboutScreen() {
             Spacer(Modifier.height(24.dp))
 
             Text(
-                "© 2026 Tickets App",
+                "© 2026 Visit Kalmykia",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.outlineVariant,
                 modifier = Modifier.fillMaxWidth(),

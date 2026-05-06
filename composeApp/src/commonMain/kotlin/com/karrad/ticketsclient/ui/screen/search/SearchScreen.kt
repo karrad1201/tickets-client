@@ -197,7 +197,7 @@ private fun SearchResultRow(event: EventDto, onClick: () -> Unit) {
             )
             Spacer(Modifier.height(2.dp))
             Text(
-                text = event.venueId.venueShort(),
+                text = event.venueLabel ?: event.venueId.venueShort(),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1

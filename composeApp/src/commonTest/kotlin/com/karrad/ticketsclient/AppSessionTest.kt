@@ -70,7 +70,7 @@ class AppSessionTest {
     }
 
     @Test
-    fun `city has default value Moskva`() {
-        assertEquals("Москва", AppSession.city)
+    fun `city has default value Elista`() {
+        assertEquals("Элиста", AppSession.city)
     }
 }

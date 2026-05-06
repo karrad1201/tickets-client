@@ -43,28 +43,31 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.karrad.ticketsclient.data.api.dto.CategoryDto
 
 // ─── Data ──────────────────────────────────────────────────────────────────────
 
 private data class CategoryTag(val name: String, val emoji: String)
 
-private val allCategories = listOf(
-    CategoryTag("Кино",       "🎬"),
-    CategoryTag("Театр",      "🎭"),
-    CategoryTag("Концерты",   "🎵"),
-    CategoryTag("Шоу",        "✨"),
-    CategoryTag("Вечеринки",  "🎊"),
-    CategoryTag("Спорт",      "⚽"),
-    CategoryTag("Выставки",   "🖼️"),
-    CategoryTag("Стендап",    "🎤"),
-    CategoryTag("Детям",      "🎠"),
-    CategoryTag("Фестивали",  "🎪"),
-    CategoryTag("Лекции",     "📚"),
-    CategoryTag("Танцы",      "💃"),
-    CategoryTag("Кулинария",  "🍜"),
-    CategoryTag("Спектакли",  "🎪"),
-    CategoryTag("Ярмарки",    "🛍️"),
+private val categoryEmojiMap = mapOf(
+    "кино" to "🎬", "кино и видео" to "🎬",
+    "театр" to "🎭", "театры" to "🎭", "спектакли" to "🎭",
+    "концерты" to "🎵", "музыка" to "🎵",
+    "шоу" to "✨",
+    "вечеринки" to "🎊", "вечеринка" to "🎊",
+    "спорт" to "⚽",
+    "выставки" to "🖼️", "выставка" to "🖼️",
+    "стендап" to "🎤",
+    "детям" to "🎠", "дети" to "🎠",
+    "фестивали" to "🎪", "фестиваль" to "🎪",
+    "лекции" to "📚", "лекция" to "📚",
+    "танцы" to "💃",
+    "кулинария" to "🍜", "еда" to "🍜",
+    "ярмарки" to "🛍️",
 )
+
+private fun CategoryDto.toTag() =
+    CategoryTag(name = label, emoji = categoryEmojiMap[label.lowercase()] ?: "🎟️")
 
 private val SHOW_COUNT = 5          // показываем первых N, остальные — "+X"
 private val ageOptions = listOf("0+", "6+", "12+", "18+")
@@ -88,7 +91,11 @@ data class FilterState(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FiltersBottomSheet(onDismiss: () -> Unit, onApply: (FilterState) -> Unit = {}) {
+fun FiltersBottomSheet(
+    onDismiss: () -> Unit,
+    onApply: (FilterState) -> Unit = {},
+    categories: List<CategoryDto> = emptyList()
+) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     val selectedCategories = remember { mutableStateListOf<String>() }
@@ -136,7 +143,7 @@ fun FiltersBottomSheet(onDismiss: () -> Unit, onApply: (FilterState) -> Unit = {
             FilterSectionTitle("Категория")
             Spacer(Modifier.height(10.dp))
             CategoryChips(
-                categories = allCategories,
+                categories = categories.map { it.toTag() },
                 selected = selectedCategories,
                 showAll = showAllCategories,
                 visibleCount = SHOW_COUNT,

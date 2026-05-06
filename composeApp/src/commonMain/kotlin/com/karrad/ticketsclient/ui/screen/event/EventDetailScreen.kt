@@ -190,9 +190,10 @@ fun EventDetailScreen(eventId: String) {
             ) {
                 Spacer(Modifier.height(16.dp))
 
-                // Теги: возраст + площадка
+                // Теги: возраст + категория + площадка
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     event.ageRating?.let { TagChip(text = it, outlined = true) }
+                    event.categoryLabel?.let { TagChip(text = it, outlined = true) }
                     TagChip(text = event.venueLabel ?: event.venueId, filled = true)
                 }
 
