@@ -137,3 +137,9 @@ object CreateEventScreen : Screen {
     @androidx.compose.runtime.Composable
     override fun Content() = com.karrad.ticketsclient.ui.screen.org.CreateEventScreen()
 }
+
+// Setup inventory plan after event creation (OWNER/MANAGER)
+data class SetupInventoryScreen(val eventId: String) : Screen {
+    @androidx.compose.runtime.Composable
+    override fun Content() = com.karrad.ticketsclient.ui.screen.org.SetupInventoryScreen(eventId)
+}

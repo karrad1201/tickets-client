@@ -81,8 +81,9 @@ fun CreateEventScreen() {
     var coverFile by remember { mutableStateOf<FileBytes?>(null) }
     val pickCover = rememberFilePicker { files -> coverFile = files.firstOrNull() }
 
-    LaunchedEffect(state.success) {
-        if (state.success) navigator.pop()
+    LaunchedEffect(state.createdEventId) {
+        val eventId = state.createdEventId ?: return@LaunchedEffect
+        navigator.replace(com.karrad.ticketsclient.ui.navigation.SetupInventoryScreen(eventId))
     }
 
     Column(
