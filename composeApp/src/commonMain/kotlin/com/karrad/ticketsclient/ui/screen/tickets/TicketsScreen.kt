@@ -71,7 +71,6 @@ fun TicketsScreen() {
             val loaded = AppContainer.ticketService.getMyTickets()
             tickets = loaded
             AppSession.cachedTickets = loaded   // обновляем кеш при успехе
-            AppSession.isOffline = false
             isFromCache = false
         } catch (e: Exception) {
             CrashReporter.log(e)
@@ -83,7 +82,6 @@ fun TicketsScreen() {
                 tickets = emptyList()
                 isFromCache = false
             }
-            AppSession.isOffline = true
         } finally {
             loading = false
         }
