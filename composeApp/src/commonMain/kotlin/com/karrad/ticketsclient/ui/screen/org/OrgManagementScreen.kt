@@ -1,6 +1,7 @@
 package com.karrad.ticketsclient.ui.screen.org
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -205,6 +206,9 @@ fun OrgManagementScreen() {
                         items(state.events) { event ->
                             OrgEventRow(
                                 event = event,
+                                onClick = {
+                                    navigator.push(com.karrad.ticketsclient.ui.navigation.EventManagementScreen(event))
+                                },
                                 onSetupInventory = {
                                     navigator.push(com.karrad.ticketsclient.ui.navigation.SetupInventoryScreen(event.id, event.venueSpaceId))
                                 }
@@ -432,6 +436,7 @@ fun OrgManagementScreen() {
 @Composable
 private fun OrgEventRow(
     event: OrgEventItem,
+    onClick: () -> Unit,
     onSetupInventory: () -> Unit
 ) {
     Row(
@@ -439,6 +444,7 @@ private fun OrgEventRow(
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
             .background(MaterialTheme.colorScheme.surface)
+            .clickable(onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {

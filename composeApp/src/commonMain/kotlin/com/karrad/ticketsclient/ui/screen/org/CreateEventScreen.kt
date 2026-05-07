@@ -62,7 +62,8 @@ fun CreateEventScreen() {
         CreateEventViewModel(
             AppContainer.eventService,
             AppContainer.orgMemberService,
-            AppContainer.geoService
+            AppContainer.geoService,
+            AppContainer.venueSpaceService
         )
     }
     val state by vm.state.collectAsState()
@@ -78,12 +79,16 @@ fun CreateEventScreen() {
     var timeText by remember { mutableStateOf("") }
     var venueMenuExpanded by remember { mutableStateOf(false) }
     var categoryMenuExpanded by remember { mutableStateOf(false) }
+    var spaceMenuExpanded by remember { mutableStateOf(false) }
+    var selectedSpaceId by remember { mutableStateOf<String?>(null) }
+    var selectedSpaceLabel by remember { mutableStateOf("Выберите зал / пространство") }
+    var selectedSpaceType by remember { mutableStateOf("ADMISSION") }
     var coverFile by remember { mutableStateOf<FileBytes?>(null) }
     val pickCover = rememberFilePicker { files -> coverFile = files.firstOrNull() }
 
     LaunchedEffect(state.createdEventId) {
         val eventId = state.createdEventId ?: return@LaunchedEffect
-        navigator.replace(com.karrad.ticketsclient.ui.navigation.SetupInventoryScreen(eventId))
+        navigator.replace(com.karrad.ticketsclient.ui.navigation.SetupInventoryScreen(eventId, selectedSpaceId))
     }
 
     Column(
@@ -198,6 +203,11 @@ fun CreateEventScreen() {
                                     selectedVenueId = venue.id
                                     selectedVenueLabel = venue.label
                                     venueMenuExpanded = false
+                                    // Сбросить выбор зала и загрузить новые
+                                    selectedSpaceId = null
+                                    selectedSpaceLabel = "Выберите зал / пространство"
+                                    selectedSpaceType = "ADMISSION"
+                                    vm.onVenueSelected(venue.id)
                                 }
                             )
                         }
@@ -206,6 +216,63 @@ fun CreateEventScreen() {
                                 text = { Text("Нет доступных площадок", color = MaterialTheme.colorScheme.onSurfaceVariant) },
                                 onClick = { venueMenuExpanded = false }
                             )
+                        }
+                    }
+                }
+
+                // VenueSpace selector — показывается только если загружены залы
+                if (selectedVenueId.isNotBlank() && (state.spaces.isNotEmpty() || state.spacesLoading)) {
+                    Box {
+                        OutlinedButton(
+                            onClick = { spaceMenuExpanded = true },
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.fillMaxWidth(),
+                            enabled = !state.spacesLoading
+                        ) {
+                            if (state.spacesLoading) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(16.dp).padding(end = 8.dp),
+                                    strokeWidth = 2.dp
+                                )
+                            }
+                            Text(
+                                if (state.spacesLoading) "Загрузка залов..." else selectedSpaceLabel,
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                        DropdownMenu(
+                            expanded = spaceMenuExpanded,
+                            onDismissRequest = { spaceMenuExpanded = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("Без зала", color = MaterialTheme.colorScheme.onSurfaceVariant) },
+                                onClick = {
+                                    selectedSpaceId = null
+                                    selectedSpaceLabel = "Без зала"
+                                    selectedSpaceType = "ADMISSION"
+                                    spaceMenuExpanded = false
+                                }
+                            )
+                            state.spaces.forEach { space ->
+                                DropdownMenuItem(
+                                    text = {
+                                        Column {
+                                            Text(space.label)
+                                            Text(
+                                                space.type,
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                    },
+                                    onClick = {
+                                        selectedSpaceId = space.id
+                                        selectedSpaceLabel = space.label
+                                        selectedSpaceType = space.type
+                                        spaceMenuExpanded = false
+                                    }
+                                )
+                            }
                         }
                     }
                 }
@@ -283,7 +350,12 @@ fun CreateEventScreen() {
                 Button(
                     onClick = {
                         val isoTime = "${dateText}T${timeText}:00Z"
-                        vm.submit(label, description, selectedVenueId, selectedCategoryId, selectedAgeRating, isoTime, coverFile!!)
+                        vm.submit(
+                            label, description, selectedVenueId, selectedCategoryId,
+                            selectedAgeRating, isoTime, coverFile!!,
+                            venueSpaceId = selectedSpaceId,
+                            hasSeatMap = selectedSpaceType == "SEATED"
+                        )
                     },
                     enabled = canSubmit,
                     shape = RoundedCornerShape(12.dp),

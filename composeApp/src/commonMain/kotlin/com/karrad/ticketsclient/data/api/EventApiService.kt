@@ -6,10 +6,12 @@ import com.karrad.ticketsclient.data.api.dto.CreateSeatedInventoryRequest
 import com.karrad.ticketsclient.data.api.dto.EventDto
 import com.karrad.ticketsclient.data.api.dto.SeatMapDto
 import com.karrad.ticketsclient.data.api.dto.TicketTypeDto
+import com.karrad.ticketsclient.data.api.dto.UpdateEventRequest
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
 import io.ktor.client.request.parameter
+import io.ktor.client.request.patch
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.request.forms.MultiPartFormDataContent
@@ -54,6 +56,12 @@ class EventApiService(
 
     override suspend fun createEvent(request: CreateEventRequest): EventDto =
         httpClient.post("$baseUrl/api/v1/events") {
+            contentType(ContentType.Application.Json)
+            setBody(request)
+        }.body()
+
+    override suspend fun updateEvent(eventId: String, request: UpdateEventRequest): EventDto =
+        httpClient.patch("$baseUrl/api/v1/events/$eventId") {
             contentType(ContentType.Application.Json)
             setBody(request)
         }.body()

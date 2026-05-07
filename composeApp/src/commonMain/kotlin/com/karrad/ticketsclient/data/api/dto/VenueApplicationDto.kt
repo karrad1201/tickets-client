@@ -34,5 +34,15 @@ data class CreateEventRequest(
     val categoryId: String,
     val time: String,
     val imageUrl: String? = null,
+    val ageRating: String? = null,
+    val venueSpaceId: String? = null,
+    val hasSeatMap: Boolean? = null
+)
+
+@Serializable
+data class UpdateEventRequest(
+    val label: String? = null,
+    val description: String? = null,
+    val time: String? = null,
     val ageRating: String? = null
 )

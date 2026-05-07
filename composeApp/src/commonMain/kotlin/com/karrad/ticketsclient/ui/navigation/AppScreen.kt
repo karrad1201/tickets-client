@@ -156,6 +156,18 @@ data class LayoutTemplateBuilderScreen(val venueSpaceId: String, val venueSpaceL
     override fun Content() = com.karrad.ticketsclient.ui.screen.org.LayoutTemplateBuilderScreen(venueSpaceId, venueSpaceLabel)
 }
 
+// Event management (OWNER/MANAGER — stats + buttons)
+data class EventManagementScreen(val event: com.karrad.ticketsclient.data.api.dto.OrgEventItem) : Screen {
+    @androidx.compose.runtime.Composable
+    override fun Content() = com.karrad.ticketsclient.ui.screen.org.EventManagementScreen(event)
+}
+
+// Edit event (OWNER/MANAGER)
+data class EditEventScreen(val eventId: String) : Screen {
+    @androidx.compose.runtime.Composable
+    override fun Content() = com.karrad.ticketsclient.ui.screen.org.EditEventScreen(eventId)
+}
+
 // Scanner (STAFF/OWNER entry point from profile)
 object ScannerScreenNav : Screen {
     @androidx.compose.runtime.Composable

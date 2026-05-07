@@ -9,6 +9,7 @@ import com.karrad.ticketsclient.data.api.dto.SeatMapDto
 import com.karrad.ticketsclient.data.api.dto.SeatRowDto
 import com.karrad.ticketsclient.data.api.dto.SeatSectionDto
 import com.karrad.ticketsclient.data.api.dto.TicketTypeDto
+import com.karrad.ticketsclient.data.api.dto.UpdateEventRequest
 
 /**
  * Мок-реализация для разработки без бекенда.
@@ -83,6 +84,12 @@ class FakeEventService : EventService {
         )
 
     override suspend fun uploadCover(eventId: String, file: FileBytes) { /* no-op in mock */ }
+
+    override suspend fun updateEvent(eventId: String, request: UpdateEventRequest): EventDto =
+        allEvents.find { it.id == eventId }?.copy(
+            label = request.label ?: "",
+            description = request.description ?: ""
+        ) ?: getEvent(eventId)
 
     override suspend fun createGeneralAdmissionInventory(eventId: String, request: CreateGeneralAdmissionInventoryRequest) { /* no-op in mock */ }
 
