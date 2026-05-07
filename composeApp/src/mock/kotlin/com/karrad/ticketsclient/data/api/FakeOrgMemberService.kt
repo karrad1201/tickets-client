@@ -1,6 +1,7 @@
 package com.karrad.ticketsclient.data.api
 
 import com.karrad.ticketsclient.data.api.dto.AddMemberByPhoneResponse
+import com.karrad.ticketsclient.data.api.dto.OrgEventItem
 import com.karrad.ticketsclient.data.api.dto.OrgMemberDto
 import com.karrad.ticketsclient.data.api.dto.OrgMembershipDto
 import com.karrad.ticketsclient.data.api.dto.VenueDto
@@ -58,4 +59,9 @@ class FakeOrgMemberService : OrgMemberService {
     override suspend fun leaveOrganization() {
         members.removeAll { it.userId == "user-owner" }
     }
+
+    override suspend fun listMyEvents(): List<OrgEventItem> = listOf(
+        OrgEventItem(id = "event-1", label = "Фестиваль «Тюльпан»", time = "2026-06-01T12:00:00Z", venueLabel = "Большой зал", hasInventory = true, sold = 42, capacity = 100),
+        OrgEventItem(id = "event-2", label = "Концерт народной музыки", time = "2026-06-15T18:00:00Z", venueLabel = "Малый зал", hasInventory = false, sold = 0, capacity = 0)
+    )
 }

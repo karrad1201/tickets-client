@@ -2,6 +2,7 @@ package com.karrad.ticketsclient.data.api
 
 import com.karrad.ticketsclient.data.api.dto.AddMemberByPhoneRequest
 import com.karrad.ticketsclient.data.api.dto.AddMemberByPhoneResponse
+import com.karrad.ticketsclient.data.api.dto.OrgEventItem
 import com.karrad.ticketsclient.data.api.dto.OrgMemberDto
 import com.karrad.ticketsclient.data.api.dto.OrgMembershipDto
 import com.karrad.ticketsclient.data.api.dto.VenueDto
@@ -15,6 +16,9 @@ interface OrgMemberService {
 
     /** Список площадок организации текущего пользователя. */
     suspend fun listMyVenues(): List<VenueDto>
+
+    /** Список предстоящих мероприятий организации со статистикой. */
+    suspend fun listMyEvents(): List<OrgEventItem>
 
     /** Добавить участника (OWNER — любую роль; MANAGER — только STAFF). */
     suspend fun addMember(userId: String, role: String, venueId: String?): OrgMemberDto

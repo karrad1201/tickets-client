@@ -6,7 +6,11 @@ import kotlinx.serialization.Serializable
 data class OrgEventItem(
     val id: String,
     val label: String,
-    val time: String
+    val time: String,
+    val venueLabel: String? = null,
+    val hasInventory: Boolean = false,
+    val sold: Int = 0,
+    val capacity: Int = 0
 )
 
 @Serializable
