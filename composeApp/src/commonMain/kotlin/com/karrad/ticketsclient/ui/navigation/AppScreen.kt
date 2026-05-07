@@ -149,3 +149,9 @@ data class SetupInventoryScreen(val eventId: String) : Screen {
     @androidx.compose.runtime.Composable
     override fun Content() = com.karrad.ticketsclient.ui.screen.org.SetupInventoryScreen(eventId)
 }
+
+// Scanner (STAFF/OWNER entry point from profile)
+object ScannerScreenNav : Screen {
+    @androidx.compose.runtime.Composable
+    override fun Content() = com.karrad.ticketsclient.ui.screen.scanner.ScannerScreen()
+}

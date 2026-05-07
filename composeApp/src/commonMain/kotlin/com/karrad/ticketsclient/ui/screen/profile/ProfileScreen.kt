@@ -176,6 +176,10 @@ fun ProfileScreen() {
                         label = "Сотрудники",
                         onClick = { rootNavigator.push(MemberManagementScreen) }
                     )
+                    "STAFF" -> MenuItem(
+                        label = "Мои мероприятия",
+                        onClick = { rootNavigator.push(com.karrad.ticketsclient.ui.navigation.ScannerScreenNav) }
+                    )
                 }
             }
             Spacer(Modifier.height(12.dp))
