@@ -6,9 +6,11 @@ import com.karrad.ticketsclient.crash.CrashReporter
 import com.karrad.ticketsclient.data.api.EventService
 import com.karrad.ticketsclient.data.api.FileBytes
 import com.karrad.ticketsclient.data.api.OrgMemberService
+import com.karrad.ticketsclient.data.api.VenueSpaceService
 import com.karrad.ticketsclient.data.api.dto.CategoryDto
 import com.karrad.ticketsclient.data.api.dto.CreateEventRequest
 import com.karrad.ticketsclient.data.api.dto.VenueDto
+import com.karrad.ticketsclient.data.api.dto.VenueSpaceDto
 import com.karrad.ticketsclient.data.api.GeoService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -18,6 +20,8 @@ import kotlinx.coroutines.launch
 data class CreateEventState(
     val venues: List<VenueDto> = emptyList(),
     val categories: List<CategoryDto> = emptyList(),
+    val spaces: List<VenueSpaceDto> = emptyList(),
+    val spacesLoading: Boolean = false,
     val isLoading: Boolean = true,
     val isSubmitting: Boolean = false,
     val error: String? = null,
@@ -27,7 +31,8 @@ data class CreateEventState(
 class CreateEventViewModel(
     private val eventService: EventService,
     private val orgMemberService: OrgMemberService,
-    private val geoService: GeoService
+    private val geoService: GeoService,
+    private val venueSpaceService: VenueSpaceService
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(CreateEventState())
@@ -50,6 +55,14 @@ class CreateEventViewModel(
         }
     }
 
+    fun onVenueSelected(venueId: String) {
+        _state.value = _state.value.copy(spacesLoading = true, spaces = emptyList())
+        viewModelScope.launch {
+            val spaces = runCatching { venueSpaceService.list(venueId) }.getOrDefault(emptyList())
+            _state.value = _state.value.copy(spaces = spaces, spacesLoading = false)
+        }
+    }
+
     fun submit(
         label: String,
         description: String,
@@ -57,7 +70,9 @@ class CreateEventViewModel(
         categoryId: String,
         ageRating: String,
         isoTime: String,
-        coverFile: FileBytes
+        coverFile: FileBytes,
+        venueSpaceId: String?,
+        hasSeatMap: Boolean
     ) {
         viewModelScope.launch {
             _state.value = _state.value.copy(isSubmitting = true, error = null)
@@ -69,7 +84,9 @@ class CreateEventViewModel(
                         venueId = venueId,
                         categoryId = categoryId,
                         time = isoTime,
-                        ageRating = ageRating
+                        ageRating = ageRating,
+                        venueSpaceId = venueSpaceId,
+                        hasSeatMap = hasSeatMap
                     )
                 )
                 eventService.uploadCover(event.id, coverFile)
