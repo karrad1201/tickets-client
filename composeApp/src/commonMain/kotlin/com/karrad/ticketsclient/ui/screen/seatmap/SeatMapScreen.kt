@@ -103,9 +103,11 @@ fun SeatMapScreen(eventId: String) {
     LaunchedEffect(eventId) {
         event = try { AppContainer.eventService.getEvent(eventId) } catch (e: Exception) { CrashReporter.log(e); null }
         seatMap = try { AppContainer.eventService.getSeatMap(eventId) } catch (e: Exception) { CrashReporter.log(e); null }
+        isLoading = false
     }
 
     val allSeats = remember(seatMap) { seatMap?.toSeats() ?: emptyList() }
+    var isLoading by remember { mutableStateOf(true) }
     var selectedTime by remember { mutableStateOf(SESSION_TIMES[1]) }
     var selectedSeats by remember { mutableStateOf(setOf<Seat>()) }
     var buyLoading by remember { mutableStateOf(false) }
@@ -118,6 +120,13 @@ fun SeatMapScreen(eventId: String) {
     }
 
     val totalPrice = selectedSeats.sumOf { it.price }
+
+    if (isLoading) {
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
+        }
+        return
+    }
 
     Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         Column(
@@ -472,6 +481,13 @@ private fun SeatGrid(
     selected: Set<Seat>,
     onSeatClick: (Seat) -> Unit
 ) {
+    if (seats.isEmpty()) {
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Text("Схема мест недоступна", color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        return
+    }
+
     val dotSize = 36.dp
     val gap = 6.dp
 

@@ -26,7 +26,8 @@ fun EventImage(imageUrl: String?, seed: String, modifier: Modifier = Modifier) {
 
     LaunchedEffect(imageUrl) {
         if (!imageUrl.isNullOrBlank()) {
-            val bytes = CachedImageLoader.load(AppContainer.httpClient, imageUrl, ImageCache.EVENT_IMAGE_TTL_MS)
+            val resolvedUrl = if (imageUrl.startsWith("/")) AppContainer.baseUrl + imageUrl else imageUrl
+            val bytes = CachedImageLoader.load(AppContainer.httpClient, resolvedUrl, ImageCache.EVENT_IMAGE_TTL_MS)
             bitmap = bytes?.toImageBitmap()
         }
     }

@@ -89,8 +89,13 @@ class CreateEventViewModel(
                         hasSeatMap = hasSeatMap
                     )
                 )
-                eventService.uploadCover(event.id, coverFile)
-                _state.value = _state.value.copy(isSubmitting = false, createdEventId = event.id)
+                val coverError = runCatching { eventService.uploadCover(event.id, coverFile) }
+                    .exceptionOrNull()?.also { CrashReporter.log(it) }
+                _state.value = _state.value.copy(
+                    isSubmitting = false,
+                    createdEventId = event.id,
+                    error = if (coverError != null) "Мероприятие создано, но обложка не загружена" else null
+                )
             } catch (e: Exception) {
                 CrashReporter.log(e)
                 _state.value = _state.value.copy(isSubmitting = false, error = e.message)
