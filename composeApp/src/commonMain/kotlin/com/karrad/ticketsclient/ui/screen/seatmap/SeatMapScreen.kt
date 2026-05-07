@@ -13,7 +13,6 @@ import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -24,8 +23,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -74,8 +71,6 @@ import kotlinx.coroutines.launch
 
 private data class Seat(val sectionKey: String, val rowKey: String, val seatKey: String, val row: Int, val col: Int, val available: Boolean, val price: Int = 0)
 
-private val SESSION_TIMES = listOf("13:00", "17:00", "23:00")
-
 private fun rowLabel(row: Int) = ('A' + row).toString()
 private fun seatLabel(row: Int, col: Int) = "${rowLabel(row)}${col + 1}"
 
@@ -108,7 +103,6 @@ fun SeatMapScreen(eventId: String) {
     }
 
     val allSeats = remember(seatMap) { seatMap?.toSeats() ?: emptyList() }
-    var selectedTime by remember { mutableStateOf(SESSION_TIMES[1]) }
     var selectedSeats by remember { mutableStateOf(setOf<Seat>()) }
     var buyLoading by remember { mutableStateOf(false) }
 
@@ -161,19 +155,7 @@ fun SeatMapScreen(eventId: String) {
                 }
             }
 
-            // ─── Чипы времени ────────────────────────────────────────────────
-            LazyRow(
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                items(SESSION_TIMES) { time ->
-                    TimeChip(
-                        time = time,
-                        selected = time == selectedTime,
-                        onClick = { selectedTime = time; selectedSeats = emptySet() }
-                    )
-                }
-            }
+
 
             // ─── Схема зала ──────────────────────────────────────────────────
             Box(
