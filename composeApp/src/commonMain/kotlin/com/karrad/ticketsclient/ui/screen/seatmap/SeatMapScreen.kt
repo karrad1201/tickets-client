@@ -99,6 +99,7 @@ fun SeatMapScreen(eventId: String) {
     val scope = rememberCoroutineScope()
     var event by remember { mutableStateOf<EventDto?>(null) }
     var seatMap by remember { mutableStateOf<SeatMapDto?>(null) }
+    var isLoading by remember { mutableStateOf(true) }
 
     LaunchedEffect(eventId) {
         event = try { AppContainer.eventService.getEvent(eventId) } catch (e: Exception) { CrashReporter.log(e); null }
@@ -107,7 +108,6 @@ fun SeatMapScreen(eventId: String) {
     }
 
     val allSeats = remember(seatMap) { seatMap?.toSeats() ?: emptyList() }
-    var isLoading by remember { mutableStateOf(true) }
     var selectedTime by remember { mutableStateOf(SESSION_TIMES[1]) }
     var selectedSeats by remember { mutableStateOf(setOf<Seat>()) }
     var buyLoading by remember { mutableStateOf(false) }
