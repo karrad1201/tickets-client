@@ -13,6 +13,7 @@ import com.karrad.ticketsclient.data.api.FakeTicketService
 import com.karrad.ticketsclient.data.api.FakeVenueAccessGrantService
 import com.karrad.ticketsclient.data.api.FakeVenueApplicationService
 import com.karrad.ticketsclient.data.api.FakeVenueSpaceService
+import com.karrad.ticketsclient.data.api.FakeLayoutTemplateService
 import com.karrad.ticketsclient.data.api.createHttpClient
 import com.karrad.ticketsclient.di.AppContainer
 
@@ -33,6 +34,7 @@ fun initContainer(baseUrl: String) {
         orgMemberService = FakeOrgMemberService(),
         venueAccessGrantService = FakeVenueAccessGrantService(),
         venueApplicationService = FakeVenueApplicationService(),
-        venueSpaceService = FakeVenueSpaceService()
+        venueSpaceService = FakeVenueSpaceService(),
+        layoutTemplateService = FakeLayoutTemplateService()
     )
 }

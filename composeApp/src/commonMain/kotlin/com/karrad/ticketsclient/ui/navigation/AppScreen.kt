@@ -145,9 +145,15 @@ data class VenueSpacesScreen(val venueId: String, val venueLabel: String) : Scre
 }
 
 // Setup inventory plan after event creation (OWNER/MANAGER)
-data class SetupInventoryScreen(val eventId: String) : Screen {
+data class SetupInventoryScreen(val eventId: String, val venueSpaceId: String? = null) : Screen {
     @androidx.compose.runtime.Composable
-    override fun Content() = com.karrad.ticketsclient.ui.screen.org.SetupInventoryScreen(eventId)
+    override fun Content() = com.karrad.ticketsclient.ui.screen.org.SetupInventoryScreen(eventId, venueSpaceId)
+}
+
+// Layout template builder for SEATED venue spaces
+data class LayoutTemplateBuilderScreen(val venueSpaceId: String, val venueSpaceLabel: String) : Screen {
+    @androidx.compose.runtime.Composable
+    override fun Content() = com.karrad.ticketsclient.ui.screen.org.LayoutTemplateBuilderScreen(venueSpaceId, venueSpaceLabel)
 }
 
 // Scanner (STAFF/OWNER entry point from profile)

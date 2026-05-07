@@ -1,6 +1,8 @@
 package com.karrad.ticketsclient.ui.screen.org
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,6 +22,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -32,6 +35,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -48,12 +52,209 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.karrad.ticketsclient.crash.CrashReporter
 import com.karrad.ticketsclient.data.api.dto.CreateGeneralAdmissionInventoryRequest
+import com.karrad.ticketsclient.data.api.dto.CreateSeatedInventoryRequest
 import com.karrad.ticketsclient.data.api.dto.CreateTicketTypeRequest
+import com.karrad.ticketsclient.data.api.dto.LayoutTemplateDto
 import com.karrad.ticketsclient.di.AppContainer
 import kotlinx.coroutines.launch
 
+/**
+ * @param venueSpaceId если не null — SEATED-режим: выбор шаблона рассадки.
+ *                     если null — ADMISSION-режим: добавление типов билетов.
+ */
 @Composable
-fun SetupInventoryScreen(eventId: String) {
+fun SetupInventoryScreen(eventId: String, venueSpaceId: String? = null) {
+    if (venueSpaceId != null) {
+        SeatedInventoryScreen(eventId = eventId, venueSpaceId = venueSpaceId)
+    } else {
+        AdmissionInventoryScreen(eventId = eventId)
+    }
+}
+
+// ─── SEATED ──────────────────────────────────────────────────────────────────
+
+@Composable
+private fun SeatedInventoryScreen(eventId: String, venueSpaceId: String) {
+    val navigator = LocalNavigator.currentOrThrow
+    val scope = rememberCoroutineScope()
+
+    var loading by remember { mutableStateOf(true) }
+    val templates = remember { mutableStateListOf<LayoutTemplateDto>() }
+    var loadError by remember { mutableStateOf<String?>(null) }
+    var selectedId by remember { mutableStateOf<String?>(null) }
+    var isSubmitting by remember { mutableStateOf(false) }
+    var submitError by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(venueSpaceId) {
+        loading = true
+        runCatching { AppContainer.layoutTemplateService.list(venueSpaceId) }
+            .onSuccess { templates.addAll(it) }
+            .onFailure { loadError = it.message }
+        loading = false
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .statusBarsPadding()
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = { navigator.pop() }) {
+                Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "Назад")
+            }
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    "Схема рассадки",
+                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                )
+                Text(
+                    "Выберите шаблон для мероприятия",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+
+        when {
+            loading -> Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+            loadError != null -> Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+                Text("Ошибка загрузки: $loadError", color = MaterialTheme.colorScheme.error)
+            }
+            templates.isEmpty() -> Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("Нет шаблонов рассадки", style = MaterialTheme.typography.bodyLarge)
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        "Сначала создайте схему зала через «Залы и пространства»",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+            else -> LazyColumn(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                item { Spacer(Modifier.height(4.dp)) }
+                items(templates) { template ->
+                    val isSelected = template.id == selectedId
+                    val totalSeats = template.sections.sumOf { s ->
+                        s.rows.sumOf { r -> r.endSeat - r.startSeat + 1 }
+                    }
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(
+                                if (isSelected) MaterialTheme.colorScheme.primaryContainer
+                                else MaterialTheme.colorScheme.surface
+                            )
+                            .border(
+                                width = if (isSelected) 2.dp else 0.dp,
+                                color = if (isSelected) MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.surface,
+                                shape = RoundedCornerShape(12.dp)
+                            )
+                            .clickable { selectedId = template.id }
+                            .padding(horizontal = 16.dp, vertical = 14.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                template.label,
+                                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold)
+                            )
+                            Spacer(Modifier.height(2.dp))
+                            Text(
+                                "${template.sections.size} секц. · $totalSeats мест",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        if (isSelected) {
+                            Icon(
+                                Icons.Outlined.CheckCircle,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+                }
+                if (submitError != null) {
+                    item {
+                        Text(
+                            "Ошибка: $submitError",
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(vertical = 4.dp)
+                        )
+                    }
+                }
+                item { Spacer(Modifier.height(8.dp)) }
+            }
+        }
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+                .navigationBarsPadding()
+                .padding(bottom = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Button(
+                onClick = {
+                    isSubmitting = true
+                    submitError = null
+                    scope.launch {
+                        runCatching {
+                            AppContainer.eventService.createSeatedInventory(
+                                eventId = eventId,
+                                request = CreateSeatedInventoryRequest(layoutTemplateId = selectedId!!)
+                            )
+                        }.onSuccess {
+                            navigator.pop()
+                        }.onFailure {
+                            CrashReporter.log(it)
+                            submitError = it.message
+                            isSubmitting = false
+                        }
+                    }
+                },
+                enabled = selectedId != null && !isSubmitting && templates.isNotEmpty(),
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                if (isSubmitting) CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                else Text("Применить схему")
+            }
+            OutlinedButton(
+                onClick = { navigator.pop() },
+                enabled = !isSubmitting,
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Пропустить")
+            }
+        }
+    }
+}
+
+// ─── ADMISSION ───────────────────────────────────────────────────────────────
+
+@Composable
+private fun AdmissionInventoryScreen(eventId: String) {
     val navigator = LocalNavigator.currentOrThrow
     val scope = rememberCoroutineScope()
     val ticketTypes = remember { mutableStateListOf<CreateTicketTypeRequest>() }
@@ -119,10 +320,7 @@ fun SetupInventoryScreen(eventId: String) {
                         contentAlignment = Alignment.Center
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(
-                                "Нет типов билетов",
-                                style = MaterialTheme.typography.bodyLarge
-                            )
+                            Text("Нет типов билетов", style = MaterialTheme.typography.bodyLarge)
                             Spacer(Modifier.height(8.dp))
                             Text(
                                 "Нажмите «+» чтобы добавить",
@@ -134,10 +332,7 @@ fun SetupInventoryScreen(eventId: String) {
                 }
             } else {
                 items(ticketTypes) { tt ->
-                    TicketTypeRow(
-                        ticketType = tt,
-                        onDelete = { ticketTypes.remove(tt) }
-                    )
+                    TicketTypeRow(ticketType = tt, onDelete = { ticketTypes.remove(tt) })
                 }
             }
 
@@ -151,7 +346,6 @@ fun SetupInventoryScreen(eventId: String) {
                     )
                 }
             }
-
             item { Spacer(Modifier.height(8.dp)) }
         }
 
@@ -186,17 +380,9 @@ fun SetupInventoryScreen(eventId: String) {
                 shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                if (isSubmitting) {
-                    CircularProgressIndicator(
-                        modifier = Modifier
-                            .size(16.dp)
-                            .padding(end = 8.dp),
-                        strokeWidth = 2.dp
-                    )
-                }
-                Text("Сохранить")
+                if (isSubmitting) CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                else Text("Сохранить")
             }
-
             OutlinedButton(
                 onClick = { navigator.pop() },
                 enabled = !isSubmitting,
@@ -210,10 +396,7 @@ fun SetupInventoryScreen(eventId: String) {
 }
 
 @Composable
-private fun TicketTypeRow(
-    ticketType: CreateTicketTypeRequest,
-    onDelete: () -> Unit
-) {
+private fun TicketTypeRow(ticketType: CreateTicketTypeRequest, onDelete: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -223,10 +406,7 @@ private fun TicketTypeRow(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(modifier = Modifier.weight(1f)) {
-            Text(
-                ticketType.label,
-                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold)
-            )
+            Text(ticketType.label, style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold))
             Spacer(Modifier.height(2.dp))
             Text(
                 "${ticketType.price} ₽ · ${ticketType.quota} мест",
@@ -290,17 +470,11 @@ private fun AddTicketTypeDialog(
         confirmButton = {
             Button(
                 onClick = {
-                    onConfirm(
-                        label.trim(),
-                        priceStr.toIntOrNull() ?: 0,
-                        quotaStr.toIntOrNull() ?: 0
-                    )
+                    onConfirm(label.trim(), priceStr.toIntOrNull() ?: 0, quotaStr.toIntOrNull() ?: 0)
                 },
                 enabled = label.isNotBlank() && priceStr.isNotBlank() && quotaStr.isNotBlank()
             ) { Text("Добавить") }
         },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Отмена") }
-        }
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Отмена") } }
     )
 }

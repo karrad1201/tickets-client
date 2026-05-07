@@ -2,6 +2,7 @@ package com.karrad.ticketsclient.data.api
 
 import com.karrad.ticketsclient.data.api.dto.CreateEventRequest
 import com.karrad.ticketsclient.data.api.dto.CreateGeneralAdmissionInventoryRequest
+import com.karrad.ticketsclient.data.api.dto.CreateSeatedInventoryRequest
 import com.karrad.ticketsclient.data.api.dto.EventDto
 import com.karrad.ticketsclient.data.api.dto.SeatMapDto
 import com.karrad.ticketsclient.data.api.dto.TicketTypeDto
@@ -59,6 +60,13 @@ class EventApiService(
 
     override suspend fun createGeneralAdmissionInventory(eventId: String, request: CreateGeneralAdmissionInventoryRequest) {
         httpClient.post("$baseUrl/api/v1/events/$eventId/inventory/general-admission") {
+            contentType(ContentType.Application.Json)
+            setBody(request)
+        }
+    }
+
+    override suspend fun createSeatedInventory(eventId: String, request: CreateSeatedInventoryRequest) {
+        httpClient.post("$baseUrl/api/v1/events/$eventId/inventory/seated") {
             contentType(ContentType.Application.Json)
             setBody(request)
         }

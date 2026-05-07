@@ -24,6 +24,8 @@ import com.karrad.ticketsclient.data.api.VenueAccessGrantApiService
 import com.karrad.ticketsclient.data.api.VenueAccessGrantService
 import com.karrad.ticketsclient.data.api.VenueApplicationApiService
 import com.karrad.ticketsclient.data.api.VenueApplicationService
+import com.karrad.ticketsclient.data.api.LayoutTemplateApiService
+import com.karrad.ticketsclient.data.api.LayoutTemplateService
 import com.karrad.ticketsclient.data.api.VenueSpaceApiService
 import com.karrad.ticketsclient.data.api.VenueSpaceService
 import com.karrad.ticketsclient.AppSession
@@ -80,6 +82,9 @@ object AppContainer {
     lateinit var venueSpaceService: VenueSpaceService
         private set
 
+    lateinit var layoutTemplateService: LayoutTemplateService
+        private set
+
     lateinit var httpClient: io.ktor.client.HttpClient
         private set
 
@@ -99,7 +104,8 @@ object AppContainer {
         orgMemberService: OrgMemberService,
         venueAccessGrantService: VenueAccessGrantService,
         venueApplicationService: VenueApplicationService,
-        venueSpaceService: VenueSpaceService
+        venueSpaceService: VenueSpaceService,
+        layoutTemplateService: LayoutTemplateService
     ) {
         this.isMock = isMock
         this.baseUrl = baseUrl
@@ -117,6 +123,7 @@ object AppContainer {
         this.venueAccessGrantService = venueAccessGrantService
         this.venueApplicationService = venueApplicationService
         this.venueSpaceService = venueSpaceService
+        this.layoutTemplateService = layoutTemplateService
     }
 }
 
@@ -138,6 +145,7 @@ fun AppContainer.initReal(baseUrl: String) {
         orgMemberService = OrgMemberApiService(client, baseUrl),
         venueAccessGrantService = VenueAccessGrantApiService(client, baseUrl),
         venueApplicationService = VenueApplicationApiService(client, baseUrl),
-        venueSpaceService = VenueSpaceApiService(client, baseUrl)
+        venueSpaceService = VenueSpaceApiService(client, baseUrl),
+        layoutTemplateService = LayoutTemplateApiService(client, baseUrl)
     )
 }

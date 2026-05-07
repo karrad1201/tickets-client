@@ -2,6 +2,7 @@ package com.karrad.ticketsclient.data.api
 
 import com.karrad.ticketsclient.data.api.dto.CreateEventRequest
 import com.karrad.ticketsclient.data.api.dto.CreateGeneralAdmissionInventoryRequest
+import com.karrad.ticketsclient.data.api.dto.CreateSeatedInventoryRequest
 import com.karrad.ticketsclient.data.api.dto.EventDto
 import com.karrad.ticketsclient.data.api.dto.SeatItemDto
 import com.karrad.ticketsclient.data.api.dto.SeatMapDto
@@ -84,4 +85,6 @@ class FakeEventService : EventService {
     override suspend fun uploadCover(eventId: String, file: FileBytes) { /* no-op in mock */ }
 
     override suspend fun createGeneralAdmissionInventory(eventId: String, request: CreateGeneralAdmissionInventoryRequest) { /* no-op in mock */ }
+
+    override suspend fun createSeatedInventory(eventId: String, request: CreateSeatedInventoryRequest) { /* no-op in mock */ }
 }

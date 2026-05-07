@@ -8,6 +8,7 @@ data class OrgEventItem(
     val label: String,
     val time: String,
     val venueLabel: String? = null,
+    val venueSpaceId: String? = null,
     val hasInventory: Boolean = false,
     val sold: Int = 0,
     val capacity: Int = 0
