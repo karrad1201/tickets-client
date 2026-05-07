@@ -206,7 +206,7 @@ fun OrgManagementScreen() {
                             OrgEventRow(
                                 event = event,
                                 onSetupInventory = {
-                                    navigator.push(com.karrad.ticketsclient.ui.navigation.SetupInventoryScreen(event.id))
+                                    navigator.push(com.karrad.ticketsclient.ui.navigation.SetupInventoryScreen(event.id, event.venueSpaceId))
                                 }
                             )
                         }

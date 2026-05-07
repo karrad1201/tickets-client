@@ -44,6 +44,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import com.karrad.ticketsclient.ui.navigation.LayoutTemplateBuilderScreen
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
@@ -149,7 +150,7 @@ fun VenueSpacesScreen(venueId: String, venueLabel: String) {
             ) {
                 item { Spacer(Modifier.height(4.dp)) }
                 items(spaces) { space ->
-                    VenueSpaceRow(space)
+                    VenueSpaceRow(space, navigator)
                 }
                 item { Spacer(Modifier.height(16.dp)) }
             }
@@ -158,7 +159,7 @@ fun VenueSpacesScreen(venueId: String, venueLabel: String) {
 }
 
 @Composable
-private fun VenueSpaceRow(space: VenueSpaceDto) {
+private fun VenueSpaceRow(space: VenueSpaceDto, navigator: cafe.adriel.voyager.navigator.Navigator) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -177,6 +178,15 @@ private fun VenueSpaceRow(space: VenueSpaceDto) {
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+        }
+        if (space.type == "SEATED") {
+            OutlinedButton(
+                onClick = { navigator.push(LayoutTemplateBuilderScreen(space.id, space.label)) },
+                modifier = Modifier.height(32.dp),
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 10.dp)
+            ) {
+                Text("Схема", style = MaterialTheme.typography.labelMedium)
+            }
         }
     }
 }
