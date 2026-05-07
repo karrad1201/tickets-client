@@ -16,7 +16,9 @@ data class OrgMemberDto(
     val organizationId: String,
     val userId: String,
     val role: String,
-    val venueId: String? = null
+    val venueId: String? = null,
+    val fullName: String? = null,
+    val phone: String? = null
 )
 
 @Serializable

@@ -59,11 +59,13 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import com.karrad.ticketsclient.data.api.dto.OrgEventItem
 import com.karrad.ticketsclient.data.api.dto.OrgMemberDto
 import com.karrad.ticketsclient.AppSession
 import com.karrad.ticketsclient.di.AppContainer
 import com.karrad.ticketsclient.ui.navigation.VenueSpacesScreen
 import com.karrad.ticketsclient.ui.screen.auth.normalizePhone
+import com.karrad.ticketsclient.ui.util.formatEventTime
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -187,6 +189,26 @@ fun OrgManagementScreen() {
                                     Text("Залы", style = MaterialTheme.typography.labelMedium)
                                 }
                             }
+                        }
+                        item { Spacer(Modifier.height(4.dp)) }
+                    }
+                    if (state.events.isNotEmpty()) {
+                        item {
+                            Spacer(Modifier.height(4.dp))
+                            Text(
+                                "Предстоящие мероприятия",
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(horizontal = 4.dp)
+                            )
+                        }
+                        items(state.events) { event ->
+                            OrgEventRow(
+                                event = event,
+                                onSetupInventory = {
+                                    navigator.push(com.karrad.ticketsclient.ui.navigation.SetupInventoryScreen(event.id))
+                                }
+                            )
                         }
                         item { Spacer(Modifier.height(4.dp)) }
                     }
@@ -408,6 +430,48 @@ fun OrgManagementScreen() {
 }
 
 @Composable
+private fun OrgEventRow(
+    event: OrgEventItem,
+    onSetupInventory: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                event.label,
+                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                maxLines = 1
+            )
+            Text(
+                buildString {
+                    append(event.time.formatEventTime())
+                    if (event.venueLabel != null) append(" · ${event.venueLabel}")
+                    if (event.hasInventory) append(" · ${event.sold}/${event.capacity}")
+                },
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        Spacer(Modifier.width(8.dp))
+        if (!event.hasInventory) {
+            OutlinedButton(
+                onClick = onSetupInventory,
+                modifier = Modifier.height(32.dp),
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 10.dp)
+            ) {
+                Text("Билеты", style = MaterialTheme.typography.labelMedium)
+            }
+        }
+    }
+}
+
+@Composable
 fun MemberRow(
     member: OrgMemberDto,
     canDelete: Boolean,
@@ -442,14 +506,14 @@ fun MemberRow(
                 style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold)
             )
             Text(
-                text = member.userId,
+                text = member.fullName ?: member.phone ?: member.userId,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1
             )
-            if (member.venueId != null) {
+            if (member.phone != null && member.fullName != null) {
                 Text(
-                    text = "Площадка: ${member.venueId}",
+                    text = member.phone,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1

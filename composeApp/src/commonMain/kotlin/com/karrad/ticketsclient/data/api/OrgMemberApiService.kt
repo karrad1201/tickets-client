@@ -3,6 +3,7 @@ package com.karrad.ticketsclient.data.api
 import com.karrad.ticketsclient.data.api.dto.AddMemberByPhoneRequest
 import com.karrad.ticketsclient.data.api.dto.AddMemberByPhoneResponse
 import com.karrad.ticketsclient.data.api.dto.AddMemberRequest
+import com.karrad.ticketsclient.data.api.dto.OrgEventItem
 import com.karrad.ticketsclient.data.api.dto.OrgMemberDto
 import com.karrad.ticketsclient.data.api.dto.OrgMembershipDto
 import com.karrad.ticketsclient.data.api.dto.UpdateMemberRequest
@@ -33,6 +34,9 @@ class OrgMemberApiService(
 
     override suspend fun listMyVenues(): List<VenueDto> =
         httpClient.get("$baseUrl/api/v1/my/organization/venues").body()
+
+    override suspend fun listMyEvents(): List<OrgEventItem> =
+        httpClient.get("$baseUrl/api/v1/my/organization/events").body()
 
     override suspend fun addMemberByPhone(phone: String, role: String, venueId: String?): AddMemberByPhoneResponse =
         httpClient.post("$baseUrl/api/v1/my/organization/members/by-phone") {

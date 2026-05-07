@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.karrad.ticketsclient.crash.CrashReporter
 import com.karrad.ticketsclient.data.api.OrgMemberService
+import com.karrad.ticketsclient.data.api.dto.OrgEventItem
 import com.karrad.ticketsclient.data.api.dto.OrgMemberDto
 import com.karrad.ticketsclient.data.api.dto.VenueDto
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,6 +15,7 @@ import kotlinx.coroutines.launch
 data class OrgManagementState(
     val members: List<OrgMemberDto> = emptyList(),
     val venues: List<VenueDto> = emptyList(),
+    val events: List<OrgEventItem> = emptyList(),
     val isLoading: Boolean = true,
     val error: String? = null,
     val addError: String? = null,
@@ -39,7 +41,8 @@ class OrgManagementViewModel(
             try {
                 val members = orgMemberService.listMembers()
                 val venues = try { orgMemberService.listMyVenues() } catch (_: Exception) { emptyList() }
-                _state.value = OrgManagementState(members = members, venues = venues, isLoading = false)
+                val events = try { orgMemberService.listMyEvents() } catch (_: Exception) { emptyList() }
+                _state.value = OrgManagementState(members = members, venues = venues, events = events, isLoading = false)
             } catch (e: Exception) {
                 CrashReporter.log(e)
                 _state.value = OrgManagementState(isLoading = false, error = e.message)
