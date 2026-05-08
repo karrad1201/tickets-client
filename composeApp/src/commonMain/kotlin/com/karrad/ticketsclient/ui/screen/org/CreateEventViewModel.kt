@@ -9,6 +9,8 @@ import com.karrad.ticketsclient.data.api.OrgMemberService
 import com.karrad.ticketsclient.data.api.VenueSpaceService
 import com.karrad.ticketsclient.data.api.dto.CategoryDto
 import com.karrad.ticketsclient.data.api.dto.CreateEventRequest
+import com.karrad.ticketsclient.data.api.dto.EventDto
+import com.karrad.ticketsclient.data.api.dto.SpacePriceProfileDto
 import com.karrad.ticketsclient.data.api.dto.VenueDto
 import com.karrad.ticketsclient.data.api.dto.VenueSpaceDto
 import com.karrad.ticketsclient.data.api.GeoService
@@ -22,10 +24,12 @@ data class CreateEventState(
     val categories: List<CategoryDto> = emptyList(),
     val spaces: List<VenueSpaceDto> = emptyList(),
     val spacesLoading: Boolean = false,
+    val priceProfiles: List<SpacePriceProfileDto> = emptyList(),
+    val priceProfilesLoading: Boolean = false,
     val isLoading: Boolean = true,
     val isSubmitting: Boolean = false,
     val error: String? = null,
-    val createdEventId: String? = null
+    val createdEvent: EventDto? = null
 )
 
 class CreateEventViewModel(
@@ -56,10 +60,18 @@ class CreateEventViewModel(
     }
 
     fun onVenueSelected(venueId: String) {
-        _state.value = _state.value.copy(spacesLoading = true, spaces = emptyList())
+        _state.value = _state.value.copy(spacesLoading = true, spaces = emptyList(), priceProfiles = emptyList())
         viewModelScope.launch {
             val spaces = runCatching { venueSpaceService.list(venueId) }.getOrDefault(emptyList())
             _state.value = _state.value.copy(spaces = spaces, spacesLoading = false)
+        }
+    }
+
+    fun onSpaceSelected(spaceId: String) {
+        _state.value = _state.value.copy(priceProfilesLoading = true, priceProfiles = emptyList())
+        viewModelScope.launch {
+            val profiles = runCatching { venueSpaceService.listPriceProfiles(spaceId) }.getOrDefault(emptyList())
+            _state.value = _state.value.copy(priceProfiles = profiles, priceProfilesLoading = false)
         }
     }
 
@@ -69,10 +81,10 @@ class CreateEventViewModel(
         venueId: String,
         categoryId: String,
         ageRating: String,
-        isoTime: String,
+        sessionTimes: List<String>,
         coverFile: FileBytes,
         venueSpaceId: String?,
-        hasSeatMap: Boolean
+        priceProfileId: String?
     ) {
         viewModelScope.launch {
             _state.value = _state.value.copy(isSubmitting = true, error = null)
@@ -83,17 +95,19 @@ class CreateEventViewModel(
                         description = description,
                         venueId = venueId,
                         categoryId = categoryId,
-                        time = isoTime,
+                        time = sessionTimes.firstOrNull() ?: "",
                         ageRating = ageRating,
                         venueSpaceId = venueSpaceId,
-                        hasSeatMap = hasSeatMap
+                        hasSeatMap = priceProfileId != null,
+                        priceProfileId = priceProfileId,
+                        sessionTimes = if (sessionTimes.size > 1) sessionTimes else null
                     )
                 )
                 val coverError = runCatching { eventService.uploadCover(event.id, coverFile) }
                     .exceptionOrNull()?.also { CrashReporter.log(it) }
                 _state.value = _state.value.copy(
                     isSubmitting = false,
-                    createdEventId = event.id,
+                    createdEvent = event,
                     error = if (coverError != null) "Мероприятие создано, но обложка не загружена" else null
                 )
             } catch (e: Exception) {

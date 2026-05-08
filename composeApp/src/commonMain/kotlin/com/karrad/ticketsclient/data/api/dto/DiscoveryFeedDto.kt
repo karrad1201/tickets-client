@@ -31,7 +31,9 @@ data class EventDto(
     val ageRating: String? = null,
     val hasSeatMap: Boolean = false,   // true → выбор мест; false → типы билетов
     val organizationId: String? = null,
-    val salesClosedAt: String? = null
+    val salesClosedAt: String? = null,
+    val groupId: String? = null,
+    val sessionTimes: List<String> = emptyList()
 )
 
 @Serializable
