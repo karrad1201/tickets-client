@@ -33,7 +33,8 @@ data class EventDto(
     val organizationId: String? = null,
     val salesClosedAt: String? = null,
     val groupId: String? = null,
-    val sessionTimes: List<String> = emptyList()
+    val sessionTimes: List<String> = emptyList(),
+    val sessionEventIds: List<String> = emptyList()
 )
 
 @Serializable
