@@ -1,9 +1,12 @@
 package com.karrad.ticketsclient.data.api
 
+import com.karrad.ticketsclient.data.api.dto.CreateSpacePriceProfileRequest
 import com.karrad.ticketsclient.data.api.dto.CreateVenueSpaceRequest
+import com.karrad.ticketsclient.data.api.dto.SpacePriceProfileDto
 import com.karrad.ticketsclient.data.api.dto.VenueSpaceDto
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
@@ -23,4 +26,17 @@ class VenueSpaceApiService(
             contentType(ContentType.Application.Json)
             setBody(request)
         }.body()
+
+    override suspend fun listPriceProfiles(spaceId: String): List<SpacePriceProfileDto> =
+        httpClient.get("$baseUrl/api/v1/venue-spaces/$spaceId/price-profiles").body()
+
+    override suspend fun createPriceProfile(spaceId: String, request: CreateSpacePriceProfileRequest): SpacePriceProfileDto =
+        httpClient.post("$baseUrl/api/v1/venue-spaces/$spaceId/price-profiles") {
+            contentType(ContentType.Application.Json)
+            setBody(request)
+        }.body()
+
+    override suspend fun deletePriceProfile(spaceId: String, profileId: String) {
+        httpClient.delete("$baseUrl/api/v1/venue-spaces/$spaceId/price-profiles/$profileId")
+    }
 }

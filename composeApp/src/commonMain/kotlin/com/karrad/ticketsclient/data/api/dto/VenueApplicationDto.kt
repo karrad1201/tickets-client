@@ -36,7 +36,9 @@ data class CreateEventRequest(
     val imageUrl: String? = null,
     val ageRating: String? = null,
     val venueSpaceId: String? = null,
-    val hasSeatMap: Boolean? = null
+    val hasSeatMap: Boolean? = null,
+    val priceProfileId: String? = null,
+    val sessionTimes: List<String>? = null
 )
 
 @Serializable

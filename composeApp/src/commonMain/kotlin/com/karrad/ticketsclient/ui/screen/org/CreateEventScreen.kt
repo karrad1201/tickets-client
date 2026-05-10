@@ -17,12 +17,15 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.AddPhotoAlternate
+import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
@@ -33,6 +36,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -40,6 +44,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -51,7 +56,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.karrad.ticketsclient.data.api.FileBytes
+import com.karrad.ticketsclient.data.api.dto.OrgEventItem
 import com.karrad.ticketsclient.di.AppContainer
+import com.karrad.ticketsclient.ui.navigation.EventManagementScreen
+import com.karrad.ticketsclient.ui.navigation.SetupInventoryScreen
 import com.karrad.ticketsclient.ui.util.rememberFilePicker
 import com.karrad.ticketsclient.ui.util.toImageBitmap
 
@@ -75,20 +83,36 @@ fun CreateEventScreen() {
     var selectedCategoryId by remember { mutableStateOf("") }
     var selectedCategoryLabel by remember { mutableStateOf("Выберите категорию") }
     var selectedAgeRating by remember { mutableStateOf("") }
-    var dateText by remember { mutableStateOf("") }
-    var timeText by remember { mutableStateOf("") }
     var venueMenuExpanded by remember { mutableStateOf(false) }
     var categoryMenuExpanded by remember { mutableStateOf(false) }
     var spaceMenuExpanded by remember { mutableStateOf(false) }
+    var profileMenuExpanded by remember { mutableStateOf(false) }
     var selectedSpaceId by remember { mutableStateOf<String?>(null) }
     var selectedSpaceLabel by remember { mutableStateOf("Выберите зал / пространство") }
-    var selectedSpaceType by remember { mutableStateOf("ADMISSION") }
+    var selectedPriceProfileId by remember { mutableStateOf<String?>(null) }
+    var selectedPriceProfileLabel by remember { mutableStateOf("Выберите ценовой профиль") }
+    // Session times: list of "YYYY-MM-DD" to "HH:MM" pairs
+    val sessionDates = remember { mutableStateListOf("") }
+    val sessionTimes = remember { mutableStateListOf("") }
     var coverFile by remember { mutableStateOf<FileBytes?>(null) }
     val pickCover = rememberFilePicker { files -> coverFile = files.firstOrNull() }
 
-    LaunchedEffect(state.createdEventId) {
-        val eventId = state.createdEventId ?: return@LaunchedEffect
-        navigator.replace(com.karrad.ticketsclient.ui.navigation.SetupInventoryScreen(eventId, selectedSpaceId))
+    LaunchedEffect(state.createdEvent) {
+        val event = state.createdEvent ?: return@LaunchedEffect
+        if (selectedPriceProfileId != null) {
+            navigator.replace(EventManagementScreen(
+                OrgEventItem(
+                    id = event.id,
+                    label = event.label,
+                    time = event.time,
+                    venueLabel = event.venueLabel,
+                    venueSpaceId = selectedSpaceId,
+                    hasInventory = true
+                )
+            ))
+        } else {
+            navigator.replace(SetupInventoryScreen(event.id, selectedSpaceId))
+        }
     }
 
     Column(
@@ -206,7 +230,8 @@ fun CreateEventScreen() {
                                     // Сбросить выбор зала и загрузить новые
                                     selectedSpaceId = null
                                     selectedSpaceLabel = "Выберите зал / пространство"
-                                    selectedSpaceType = "ADMISSION"
+                                    selectedPriceProfileId = null
+                                    selectedPriceProfileLabel = "Выберите ценовой профиль"
                                     vm.onVenueSelected(venue.id)
                                 }
                             )
@@ -249,7 +274,8 @@ fun CreateEventScreen() {
                                 onClick = {
                                     selectedSpaceId = null
                                     selectedSpaceLabel = "Без зала"
-                                    selectedSpaceType = "ADMISSION"
+                                    selectedPriceProfileId = null
+                                    selectedPriceProfileLabel = "Выберите ценовой профиль"
                                     spaceMenuExpanded = false
                                 }
                             )
@@ -259,7 +285,7 @@ fun CreateEventScreen() {
                                         Column {
                                             Text(space.label)
                                             Text(
-                                                space.type,
+                                                if (space.type == "SEATED") "С местами" else "Партер",
                                                 style = MaterialTheme.typography.labelSmall,
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                                             )
@@ -268,8 +294,65 @@ fun CreateEventScreen() {
                                     onClick = {
                                         selectedSpaceId = space.id
                                         selectedSpaceLabel = space.label
-                                        selectedSpaceType = space.type
+                                        selectedPriceProfileId = null
+                                        selectedPriceProfileLabel = "Выберите ценовой профиль"
                                         spaceMenuExpanded = false
+                                        vm.onSpaceSelected(space.id)
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // Price profile selector — показывается если выбран зал
+                if (selectedSpaceId != null && (state.priceProfiles.isNotEmpty() || state.priceProfilesLoading)) {
+                    Box {
+                        OutlinedButton(
+                            onClick = { profileMenuExpanded = true },
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.fillMaxWidth(),
+                            enabled = !state.priceProfilesLoading
+                        ) {
+                            if (state.priceProfilesLoading) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(16.dp).padding(end = 8.dp),
+                                    strokeWidth = 2.dp
+                                )
+                            }
+                            Text(
+                                if (state.priceProfilesLoading) "Загрузка профилей..." else selectedPriceProfileLabel,
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                        DropdownMenu(
+                            expanded = profileMenuExpanded,
+                            onDismissRequest = { profileMenuExpanded = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("Без профиля", color = MaterialTheme.colorScheme.onSurfaceVariant) },
+                                onClick = {
+                                    selectedPriceProfileId = null
+                                    selectedPriceProfileLabel = "Без профиля"
+                                    profileMenuExpanded = false
+                                }
+                            )
+                            state.priceProfiles.forEach { profile ->
+                                DropdownMenuItem(
+                                    text = {
+                                        Column {
+                                            Text(profile.label)
+                                            Text(
+                                                if (profile.mode == "SEATED") "С местами" else "Без рассадки",
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                    },
+                                    onClick = {
+                                        selectedPriceProfileId = profile.id
+                                        selectedPriceProfileLabel = profile.label
+                                        profileMenuExpanded = false
                                     }
                                 )
                             }
@@ -309,27 +392,68 @@ fun CreateEventScreen() {
                     onSelect = { selectedAgeRating = it }
                 )
 
-                // Date input
-                OutlinedTextField(
-                    value = dateText,
-                    onValueChange = { dateText = it },
-                    label = { Text("Дата") },
-                    placeholder = { Text("2025-12-31") },
-                    singleLine = true,
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                // Time input
-                OutlinedTextField(
-                    value = timeText,
-                    onValueChange = { timeText = it },
-                    label = { Text("Время (UTC)") },
-                    placeholder = { Text("18:00") },
-                    singleLine = true,
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.fillMaxWidth()
-                )
+                // Session times
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        "Сеансы",
+                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                        modifier = Modifier.weight(1f)
+                    )
+                    if (sessionDates.size < 10) {
+                        TextButton(onClick = {
+                            sessionDates.add("")
+                            sessionTimes.add("")
+                        }) {
+                            Icon(Icons.Outlined.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(Modifier.width(4.dp))
+                            Text("Добавить")
+                        }
+                    }
+                }
+                sessionDates.forEachIndexed { index, date ->
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        OutlinedTextField(
+                            value = date,
+                            onValueChange = { sessionDates[index] = it },
+                            label = { Text("Дата ${index + 1}") },
+                            placeholder = { Text("2026-06-01") },
+                            singleLine = true,
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.weight(1.4f)
+                        )
+                        OutlinedTextField(
+                            value = sessionTimes[index],
+                            onValueChange = { sessionTimes[index] = it },
+                            label = { Text("Время (UTC)") },
+                            placeholder = { Text("18:00") },
+                            singleLine = true,
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.weight(1f)
+                        )
+                        if (sessionDates.size > 1) {
+                            IconButton(
+                                onClick = {
+                                    sessionDates.removeAt(index)
+                                    sessionTimes.removeAt(index)
+                                },
+                                modifier = Modifier.size(36.dp)
+                            ) {
+                                Icon(
+                                    Icons.Outlined.Delete,
+                                    contentDescription = "Удалить сеанс",
+                                    modifier = Modifier.size(20.dp),
+                                    tint = MaterialTheme.colorScheme.error
+                                )
+                            }
+                        }
+                    }
+                }
 
                 if (state.error != null) {
                     Text(
@@ -339,22 +463,28 @@ fun CreateEventScreen() {
                     )
                 }
 
+                val dateRegex = Regex("\\d{4}-\\d{2}-\\d{2}")
+                val timeRegex = Regex("\\d{2}:\\d{2}")
+                val allSessionsValid = sessionDates.indices.all { i ->
+                    sessionDates[i].matches(dateRegex) && sessionTimes[i].matches(timeRegex)
+                }
                 val canSubmit = label.isNotBlank() && description.isNotBlank() &&
                     selectedVenueId.isNotBlank() && selectedCategoryId.isNotBlank() &&
                     selectedAgeRating.isNotBlank() &&
-                    dateText.matches(Regex("\\d{4}-\\d{2}-\\d{2}")) &&
-                    timeText.matches(Regex("\\d{2}:\\d{2}")) &&
+                    allSessionsValid &&
                     coverFile != null &&
                     !state.isSubmitting
 
                 Button(
                     onClick = {
-                        val isoTime = "${dateText}T${timeText}:00Z"
+                        val isoTimes = sessionDates.indices.map { i ->
+                            "${sessionDates[i]}T${sessionTimes[i]}:00Z"
+                        }
                         vm.submit(
                             label, description, selectedVenueId, selectedCategoryId,
-                            selectedAgeRating, isoTime, coverFile!!,
+                            selectedAgeRating, isoTimes, coverFile!!,
                             venueSpaceId = selectedSpaceId,
-                            hasSeatMap = selectedSpaceType == "SEATED"
+                            priceProfileId = selectedPriceProfileId
                         )
                     },
                     enabled = canSubmit,

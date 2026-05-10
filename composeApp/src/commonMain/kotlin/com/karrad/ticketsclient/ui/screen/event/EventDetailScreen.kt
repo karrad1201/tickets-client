@@ -64,6 +64,8 @@ import com.karrad.ticketsclient.ui.screen.feed.EventImagePlaceholder
 import com.karrad.ticketsclient.ui.util.formatEventDate
 import com.karrad.ticketsclient.ui.util.formatEventDateFull
 import com.karrad.ticketsclient.ui.util.formatPrice
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import kotlinx.coroutines.launch
 
 @Composable
@@ -228,6 +230,42 @@ fun EventDetailScreen(eventId: String) {
                     }
                 }
 
+                // Сеансы (если несколько)
+                if (event.sessionTimes.size > 1) {
+                    Spacer(Modifier.height(12.dp))
+                    Text(
+                        "Сеансы",
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold)
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        event.sessionTimes.forEach { sessionTime ->
+                            val isCurrentSession = sessionTime == event.time
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(20.dp))
+                                    .background(
+                                        if (isCurrentSession) MaterialTheme.colorScheme.primary
+                                        else MaterialTheme.colorScheme.surfaceVariant
+                                    )
+                                    .padding(horizontal = 14.dp, vertical = 8.dp)
+                            ) {
+                                Text(
+                                    text = sessionTime.formatEventDate() ?: sessionTime,
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = if (isCurrentSession) Color.White
+                                            else MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+                }
+
                 Spacer(Modifier.height(20.dp))
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                 Spacer(Modifier.height(16.dp))
@@ -293,43 +331,58 @@ fun EventDetailScreen(eventId: String) {
             shadowElevation = 8.dp,
             color = MaterialTheme.colorScheme.surface
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp)
-                    .height(52.dp)
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(MaterialTheme.colorScheme.primary)
-                    .clickable {
-                        if (event.hasSeatMap) {
-                            navigator.push(SeatMapScreen(event.id))
-                        } else {
-                            navigator.push(TicketTypeScreen(event.id))
-                        }
-                    },
-                contentAlignment = Alignment.Center
-            ) {
-                Row(
+            if (event.minPrice != null) {
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 20.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                        .padding(horizontal = 16.dp, vertical = 12.dp)
+                        .height(52.dp)
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(MaterialTheme.colorScheme.primary)
+                        .clickable {
+                            if (event.hasSeatMap) {
+                                navigator.push(SeatMapScreen(event.id))
+                            } else {
+                                navigator.push(TicketTypeScreen(event.id))
+                            }
+                        },
+                    contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        "Выбрать",
-                        color = Color.White,
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 16.sp
-                    )
-                    event.minPrice?.let { price ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Text(
-                            "от ${price.formatPrice()} ₽",
+                            "Выбрать",
+                            color = Color.White,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 16.sp
+                        )
+                        Text(
+                            "от ${event.minPrice.formatPrice()} ₽",
                             color = Color.White.copy(alpha = 0.9f),
                             fontWeight = FontWeight.Medium,
                             fontSize = 14.sp
                         )
                     }
+                }
+            } else {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp)
+                        .height(52.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        "Билеты ещё не поступили в продажу",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 14.sp
+                    )
                 }
             }
         }
