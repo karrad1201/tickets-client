@@ -143,6 +143,18 @@ android {
             }
         }
     }
+    sourceSets {
+        getByName("mock") {
+            kotlin.srcDirs("src/androidMock/kotlin")
+        }
+        getByName("prod") {
+            kotlin.srcDirs("src/androidProd/kotlin")
+        }
+        getByName("testMock") {
+            kotlin.srcDirs("src/androidMockTest/kotlin")
+        }
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
