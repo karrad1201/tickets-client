@@ -150,6 +150,12 @@ data class SetupInventoryScreen(val eventId: String, val venueSpaceId: String? =
     override fun Content() = com.karrad.ticketsclient.ui.screen.org.SetupInventoryScreen(eventId, venueSpaceId)
 }
 
+// Venue space detail — price profile management
+data class VenueSpaceDetailScreen(val spaceId: String, val spaceLabel: String, val spaceType: String) : Screen {
+    @androidx.compose.runtime.Composable
+    override fun Content() = com.karrad.ticketsclient.ui.screen.org.VenueSpaceDetailScreen(spaceId, spaceLabel, spaceType)
+}
+
 // Layout template builder for SEATED venue spaces
 data class LayoutTemplateBuilderScreen(val venueSpaceId: String, val venueSpaceLabel: String) : Screen {
     @androidx.compose.runtime.Composable

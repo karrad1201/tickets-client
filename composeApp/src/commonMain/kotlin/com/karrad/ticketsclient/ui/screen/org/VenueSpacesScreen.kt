@@ -1,6 +1,7 @@
 package com.karrad.ticketsclient.ui.screen.org
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -46,6 +47,7 @@ import androidx.compose.ui.Alignment
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.karrad.ticketsclient.ui.navigation.LayoutTemplateBuilderScreen
+import com.karrad.ticketsclient.ui.navigation.VenueSpaceDetailScreen
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
@@ -166,6 +168,7 @@ private fun VenueSpaceRow(space: VenueSpaceDto, navigator: cafe.adriel.voyager.n
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
             .background(MaterialTheme.colorScheme.surface)
+            .clickable { navigator.push(VenueSpaceDetailScreen(space.id, space.label, space.type)) }
             .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {

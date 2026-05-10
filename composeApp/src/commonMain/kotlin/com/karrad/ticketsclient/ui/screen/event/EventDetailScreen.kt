@@ -64,6 +64,8 @@ import com.karrad.ticketsclient.ui.screen.feed.EventImagePlaceholder
 import com.karrad.ticketsclient.ui.util.formatEventDate
 import com.karrad.ticketsclient.ui.util.formatEventDateFull
 import com.karrad.ticketsclient.ui.util.formatPrice
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import kotlinx.coroutines.launch
 
 @Composable
@@ -225,6 +227,42 @@ fun EventDetailScreen(eventId: String) {
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
+                    }
+                }
+
+                // Сеансы (если несколько)
+                if (event.sessionTimes.size > 1) {
+                    Spacer(Modifier.height(12.dp))
+                    Text(
+                        "Сеансы",
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold)
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        event.sessionTimes.forEach { sessionTime ->
+                            val isCurrentSession = sessionTime == event.time
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(20.dp))
+                                    .background(
+                                        if (isCurrentSession) MaterialTheme.colorScheme.primary
+                                        else MaterialTheme.colorScheme.surfaceVariant
+                                    )
+                                    .padding(horizontal = 14.dp, vertical = 8.dp)
+                            ) {
+                                Text(
+                                    text = sessionTime.formatEventDate() ?: sessionTime,
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = if (isCurrentSession) Color.White
+                                            else MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
                     }
                 }
 

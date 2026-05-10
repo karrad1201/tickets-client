@@ -11,7 +11,9 @@ data class OrgEventItem(
     val venueSpaceId: String? = null,
     val hasInventory: Boolean = false,
     val sold: Int = 0,
-    val capacity: Int = 0
+    val capacity: Int = 0,
+    val groupId: String? = null,
+    val sessionTimes: List<String> = emptyList()
 )
 
 @Serializable

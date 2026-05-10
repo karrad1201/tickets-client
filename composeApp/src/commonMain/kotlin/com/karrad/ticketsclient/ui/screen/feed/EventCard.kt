@@ -38,6 +38,7 @@ import com.karrad.ticketsclient.crash.CrashReporter
 import com.karrad.ticketsclient.data.api.dto.EventDto
 import com.karrad.ticketsclient.di.AppContainer
 import com.karrad.ticketsclient.ui.component.EventImage
+import com.karrad.ticketsclient.ui.util.formatEventDate
 import com.karrad.ticketsclient.ui.util.formatPrice
 import kotlinx.coroutines.launch
 
@@ -149,13 +150,24 @@ internal fun EventCard(
             overflow = TextOverflow.Ellipsis,
             lineHeight = 15.sp
         )
-        Text(
-            text = event.venueLabel ?: event.venueId.venueShort(),
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
+        if (event.sessionTimes.size > 1) {
+            val timesFormatted = event.sessionTimes.take(4).mapNotNull { it.formatEventDate() }.joinToString(" · ")
+            Text(
+                text = timesFormatted,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.primary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        } else {
+            Text(
+                text = event.venueLabel ?: event.venueId.venueShort(),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
     }
 }
 
