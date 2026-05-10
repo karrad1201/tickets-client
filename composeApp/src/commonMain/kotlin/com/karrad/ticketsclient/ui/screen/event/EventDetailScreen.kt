@@ -244,14 +244,20 @@ fun EventDetailScreen(eventId: String) {
                             .horizontalScroll(rememberScrollState()),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        event.sessionTimes.forEach { sessionTime ->
-                            val isCurrentSession = sessionTime == event.time
+                        event.sessionTimes.forEachIndexed { index, sessionTime ->
+                            val sessionId = event.sessionEventIds.getOrNull(index)
+                            val isCurrentSession = sessionId == event.id || (sessionId == null && sessionTime == event.time)
                             Box(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(20.dp))
                                     .background(
                                         if (isCurrentSession) MaterialTheme.colorScheme.primary
                                         else MaterialTheme.colorScheme.surfaceVariant
+                                    )
+                                    .then(
+                                        if (!isCurrentSession && sessionId != null)
+                                            Modifier.clickable { navigator.push(com.karrad.ticketsclient.ui.navigation.EventDetailScreen(sessionId)) }
+                                        else Modifier
                                     )
                                     .padding(horizontal = 14.dp, vertical = 8.dp)
                             ) {
