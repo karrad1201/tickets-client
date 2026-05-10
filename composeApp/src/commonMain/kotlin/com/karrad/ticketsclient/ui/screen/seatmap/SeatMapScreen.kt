@@ -58,6 +58,7 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import androidx.compose.runtime.LaunchedEffect
 import com.karrad.ticketsclient.AppSession
 import com.karrad.ticketsclient.crash.CrashReporter
+import com.karrad.ticketsclient.data.api.ApiException
 import com.karrad.ticketsclient.data.api.dto.CreateOrderRequestDto
 import com.karrad.ticketsclient.data.api.dto.EventDto
 import com.karrad.ticketsclient.data.api.dto.SeatKeyRequestDto
@@ -95,10 +96,18 @@ fun SeatMapScreen(eventId: String) {
     var event by remember { mutableStateOf<EventDto?>(null) }
     var seatMap by remember { mutableStateOf<SeatMapDto?>(null) }
     var isLoading by remember { mutableStateOf(true) }
+    var noInventory by remember { mutableStateOf(false) }
+    var loadError by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(eventId) {
         event = try { AppContainer.eventService.getEvent(eventId) } catch (e: Exception) { CrashReporter.log(e); null }
-        seatMap = try { AppContainer.eventService.getSeatMap(eventId) } catch (e: Exception) { CrashReporter.log(e); null }
+        try {
+            seatMap = AppContainer.eventService.getSeatMap(eventId)
+        } catch (e: ApiException) {
+            if (e.statusCode == 404) noInventory = true else { CrashReporter.log(e); loadError = e.message }
+        } catch (e: Exception) {
+            CrashReporter.log(e); loadError = e.message
+        }
         isLoading = false
     }
 
@@ -162,38 +171,59 @@ fun SeatMapScreen(eventId: String) {
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth()
-                    .clipToBounds()
-                    .transformable(state = transformState)
             ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .graphicsLayer(
-                            scaleX = scale, scaleY = scale,
-                            translationX = offset.x, translationY = offset.y
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    SeatGrid(
-                        seats = allSeats,
-                        selected = selectedSeats,
-                        onSeatClick = { seat ->
-                            if (!seat.available) return@SeatGrid
-                            selectedSeats = if (seat in selectedSeats) selectedSeats - seat
-                            else selectedSeats + seat
+                when {
+                    noInventory -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text(
+                            "Билеты ещё не поступили в продажу",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    loadError != null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text(
+                            "Не удалось загрузить схему зала",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                    else -> Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clipToBounds()
+                            .transformable(state = transformState)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .graphicsLayer(
+                                    scaleX = scale, scaleY = scale,
+                                    translationX = offset.x, translationY = offset.y
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            SeatGrid(
+                                seats = allSeats,
+                                selected = selectedSeats,
+                                onSeatClick = { seat ->
+                                    if (!seat.available) return@SeatGrid
+                                    selectedSeats = if (seat in selectedSeats) selectedSeats - seat
+                                    else selectedSeats + seat
+                                }
+                            )
                         }
-                    )
-                }
 
-                // ─── +/- кнопки ──────────────────────────────────────────────
-                Column(
-                    modifier = Modifier
-                        .align(Alignment.CenterEnd)
-                        .padding(end = 12.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    ZoomButton("+") { scale = (scale * 1.2f).coerceAtMost(3f) }
-                    ZoomButton("−") { scale = (scale / 1.2f).coerceAtLeast(0.6f) }
+                        // ─── +/- кнопки ──────────────────────────────────────
+                        Column(
+                            modifier = Modifier
+                                .align(Alignment.CenterEnd)
+                                .padding(end = 12.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            ZoomButton("+") { scale = (scale * 1.2f).coerceAtMost(3f) }
+                            ZoomButton("−") { scale = (scale / 1.2f).coerceAtLeast(0.6f) }
+                        }
+                    }
                 }
             }
 

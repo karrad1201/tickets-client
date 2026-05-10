@@ -49,6 +49,7 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.karrad.ticketsclient.AppSession
 import com.karrad.ticketsclient.crash.CrashReporter
+import com.karrad.ticketsclient.data.api.ApiException
 import com.karrad.ticketsclient.data.api.dto.AdmissionInventoryItemRequestDto
 import com.karrad.ticketsclient.data.api.dto.CreateOrderRequestDto
 import com.karrad.ticketsclient.data.api.dto.TicketTypeDto
@@ -77,6 +78,9 @@ fun TicketTypeScreen(eventId: String) {
         try {
             ticketTypes = AppContainer.eventService.getTicketTypes(eventId)
             ticketTypes.forEach { quantities[it.id] = 0 }
+        } catch (e: ApiException) {
+            if (e.statusCode == 404) loadError = "Билеты ещё не поступили в продажу"
+            else { CrashReporter.log(e); loadError = e.message ?: "Не удалось загрузить типы билетов" }
         } catch (e: Exception) {
             CrashReporter.log(e)
             loadError = e.message ?: "Не удалось загрузить типы билетов"

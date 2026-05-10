@@ -331,43 +331,58 @@ fun EventDetailScreen(eventId: String) {
             shadowElevation = 8.dp,
             color = MaterialTheme.colorScheme.surface
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp)
-                    .height(52.dp)
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(MaterialTheme.colorScheme.primary)
-                    .clickable {
-                        if (event.hasSeatMap) {
-                            navigator.push(SeatMapScreen(event.id))
-                        } else {
-                            navigator.push(TicketTypeScreen(event.id))
-                        }
-                    },
-                contentAlignment = Alignment.Center
-            ) {
-                Row(
+            if (event.minPrice != null) {
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 20.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                        .padding(horizontal = 16.dp, vertical = 12.dp)
+                        .height(52.dp)
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(MaterialTheme.colorScheme.primary)
+                        .clickable {
+                            if (event.hasSeatMap) {
+                                navigator.push(SeatMapScreen(event.id))
+                            } else {
+                                navigator.push(TicketTypeScreen(event.id))
+                            }
+                        },
+                    contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        "Выбрать",
-                        color = Color.White,
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 16.sp
-                    )
-                    event.minPrice?.let { price ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Text(
-                            "от ${price.formatPrice()} ₽",
+                            "Выбрать",
+                            color = Color.White,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 16.sp
+                        )
+                        Text(
+                            "от ${event.minPrice.formatPrice()} ₽",
                             color = Color.White.copy(alpha = 0.9f),
                             fontWeight = FontWeight.Medium,
                             fontSize = 14.sp
                         )
                     }
+                }
+            } else {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp)
+                        .height(52.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        "Билеты ещё не поступили в продажу",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 14.sp
+                    )
                 }
             }
         }
