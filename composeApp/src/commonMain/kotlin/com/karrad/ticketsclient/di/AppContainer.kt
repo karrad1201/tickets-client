@@ -28,6 +28,8 @@ import com.karrad.ticketsclient.data.api.LayoutTemplateApiService
 import com.karrad.ticketsclient.data.api.LayoutTemplateService
 import com.karrad.ticketsclient.data.api.VenueSpaceApiService
 import com.karrad.ticketsclient.data.api.VenueSpaceService
+import com.karrad.ticketsclient.data.api.PushApiService
+import com.karrad.ticketsclient.data.api.PushService
 import com.karrad.ticketsclient.AppSession
 import com.karrad.ticketsclient.data.api.createHttpClient
 
@@ -85,6 +87,9 @@ object AppContainer {
     lateinit var layoutTemplateService: LayoutTemplateService
         private set
 
+    lateinit var pushService: PushService
+        private set
+
     lateinit var httpClient: io.ktor.client.HttpClient
         private set
 
@@ -105,7 +110,8 @@ object AppContainer {
         venueAccessGrantService: VenueAccessGrantService,
         venueApplicationService: VenueApplicationService,
         venueSpaceService: VenueSpaceService,
-        layoutTemplateService: LayoutTemplateService
+        layoutTemplateService: LayoutTemplateService,
+        pushService: PushService
     ) {
         this.isMock = isMock
         this.baseUrl = baseUrl
@@ -124,6 +130,7 @@ object AppContainer {
         this.venueApplicationService = venueApplicationService
         this.venueSpaceService = venueSpaceService
         this.layoutTemplateService = layoutTemplateService
+        this.pushService = pushService
     }
 }
 
@@ -146,6 +153,7 @@ fun AppContainer.initReal(baseUrl: String) {
         venueAccessGrantService = VenueAccessGrantApiService(client, baseUrl),
         venueApplicationService = VenueApplicationApiService(client, baseUrl),
         venueSpaceService = VenueSpaceApiService(client, baseUrl),
-        layoutTemplateService = LayoutTemplateApiService(client, baseUrl)
+        layoutTemplateService = LayoutTemplateApiService(client, baseUrl),
+        pushService = PushApiService(client, baseUrl)
     )
 }

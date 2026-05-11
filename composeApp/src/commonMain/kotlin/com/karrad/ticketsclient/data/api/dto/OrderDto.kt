@@ -9,7 +9,8 @@ data class OrderDto(
     val status: String, // PENDING_PAYMENT, PAID, PAYMENT_FAILED, EXPIRED
     val totalPrice: Int = 0,
     val amount: Int? = null,
-    val ticketId: String? = null
+    val ticketId: String? = null,
+    val paymentUrl: String? = null
 )
 
 @Serializable

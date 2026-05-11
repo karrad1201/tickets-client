@@ -24,10 +24,13 @@ import androidx.compose.material.icons.outlined.DateRange
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.runtime.Composable
@@ -36,6 +39,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -47,6 +51,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import kotlinx.coroutines.launch
 import com.karrad.ticketsclient.AppSession
 import com.karrad.ticketsclient.crash.CrashReporter
 import com.karrad.ticketsclient.data.api.dto.EventDto
@@ -56,25 +61,30 @@ import io.github.alexzhirkevich.qrose.options.QrBrush
 import io.github.alexzhirkevich.qrose.options.solid
 import io.github.alexzhirkevich.qrose.rememberQrCodePainter
 import com.karrad.ticketsclient.ui.navigation.EventDetailScreen
+import com.karrad.ticketsclient.ui.util.formatEventDate
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TicketsScreen() {
     val navigator = LocalNavigator.currentOrThrow
     val rootNavigator = navigator.parent ?: navigator
+    val scope = rememberCoroutineScope()
     var tickets by remember { mutableStateOf<List<TicketDto>>(emptyList()) }
     var loading by remember { mutableStateOf(true) }
+    var refreshing by remember { mutableStateOf(false) }
     var selectedTab by remember { mutableIntStateOf(0) }
     var isFromCache by remember { mutableStateOf(false) }
+    val pullRefreshState = rememberPullToRefreshState()
 
-    LaunchedEffect(Unit) {
+    suspend fun loadTickets(isRefresh: Boolean = false) {
+        if (isRefresh) refreshing = true else loading = true
         try {
             val loaded = AppContainer.ticketService.getMyTickets()
             tickets = loaded
-            AppSession.cachedTickets = loaded   // обновляем кеш при успехе
+            AppSession.cachedTickets = loaded
             isFromCache = false
         } catch (e: Exception) {
             CrashReporter.log(e)
-            // Нет сети — показываем кешированные билеты
             if (AppSession.cachedTickets.isNotEmpty()) {
                 tickets = AppSession.cachedTickets
                 isFromCache = true
@@ -84,18 +94,26 @@ fun TicketsScreen() {
             }
         } finally {
             loading = false
+            refreshing = false
         }
     }
+
+    LaunchedEffect(Unit) { loadTickets() }
 
     val upcoming = tickets.filter { it.usedAt == null }
     val archived = tickets.filter { it.usedAt != null }
     val current = if (selectedTab == 0) upcoming else archived
 
+    PullToRefreshBox(
+        isRefreshing = refreshing,
+        onRefresh = { scope.launch { loadTickets(isRefresh = true) } },
+        state = pullRefreshState,
+        modifier = Modifier.fillMaxSize().statusBarsPadding()
+    ) {
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .statusBarsPadding()
     ) {
         // ─── Header ──────────────────────────────────────────────────────────
         Text(
@@ -170,7 +188,8 @@ fun TicketsScreen() {
             )
             Spacer(Modifier.height(96.dp))
         }
-    }
+    } // Column
+    } // PullToRefreshBox
 }
 
 // ─── Pager билетов ─────────────────────────────────────────────────────────────
@@ -284,7 +303,7 @@ private fun TicketCard(ticket: TicketDto, isArchived: Boolean, onClick: () -> Un
                     ) {
                         Icon(Icons.Outlined.DateRange, null,
                             tint = Color.White.copy(alpha = 0.8f), modifier = Modifier.size(12.dp))
-                        Text(ticket.eventTime, style = MaterialTheme.typography.labelSmall,
+                        Text(ticket.eventTime.formatEventDate() ?: ticket.eventTime, style = MaterialTheme.typography.labelSmall,
                             color = Color.White.copy(alpha = 0.8f))
                     }
                 }
@@ -307,7 +326,7 @@ private fun TicketCard(ticket: TicketDto, isArchived: Boolean, onClick: () -> Un
                     )
                     if (ticket.eventTime != null) {
                         Text(
-                            ticket.eventTime,
+                            ticket.eventTime.formatEventDate() ?: ticket.eventTime,
                             style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
                             textAlign = TextAlign.Center
                         )

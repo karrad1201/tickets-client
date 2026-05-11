@@ -24,6 +24,7 @@ import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -128,6 +129,14 @@ fun EventManagementScreen(event: OrgEventItem) {
                     )
                     if (event.capacity > 0) {
                         val pct = (event.sold * 100f / event.capacity).toInt()
+                        val progress = event.sold.toFloat() / event.capacity
+                        Spacer(Modifier.height(4.dp))
+                        LinearProgressIndicator(
+                            progress = { progress },
+                            modifier = Modifier.fillMaxWidth(),
+                            color = MaterialTheme.colorScheme.primary,
+                            trackColor = MaterialTheme.colorScheme.surfaceVariant
+                        )
                         Text(
                             "$pct% заполнено",
                             style = MaterialTheme.typography.bodySmall,

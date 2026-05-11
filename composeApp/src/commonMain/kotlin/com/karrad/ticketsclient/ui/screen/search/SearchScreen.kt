@@ -21,11 +21,15 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.Clear
+import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -145,11 +149,35 @@ fun SearchScreen() {
                     },
                     modifier = Modifier.weight(1f)
                 )
+                if (query.isNotEmpty()) {
+                    Spacer(Modifier.width(4.dp))
+                    Box(
+                        modifier = Modifier
+                            .size(20.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f))
+                            .clickable { queryValue = TextFieldValue("") },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            Icons.Outlined.Clear,
+                            contentDescription = "Очистить",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(12.dp)
+                        )
+                    }
+                }
             }
         }
 
         // ─── Результаты / подсказки ───────────────────────────────────────────
+        val history = AppSession.searchHistory
         when {
+            query.length < 2 && history.isNotEmpty() -> SearchHistory(
+                history = history,
+                onQuerySelected = { queryValue = TextFieldValue(it) },
+                onClear = { AppSession.clearSearchHistory() }
+            )
             query.length < 2 -> EmptyHint()
             loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
@@ -161,6 +189,7 @@ fun SearchScreen() {
             ) {
                 items(results, key = { it.id }) { event ->
                     SearchResultRow(event = event, onClick = {
+                        AppSession.addToSearchHistory(query)
                         navigator.push(EventDetailScreen(event.id))
                     })
                 }
@@ -222,6 +251,59 @@ private fun SearchResultRow(event: EventDto, onClick: () -> Unit) {
             .padding(horizontal = 16.dp)
             .background(MaterialTheme.colorScheme.surfaceVariant)
     )
+}
+
+@Composable
+private fun SearchHistory(
+    history: List<String>,
+    onQuerySelected: (String) -> Unit,
+    onClear: () -> Unit
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                "Недавние запросы",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.weight(1f)
+            )
+            TextButton(onClick = onClear) {
+                Text("Очистить", style = MaterialTheme.typography.labelMedium)
+            }
+        }
+        history.forEachIndexed { index, q ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onQuerySelected(q) }
+                    .background(MaterialTheme.colorScheme.surface)
+                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    Icons.Outlined.History,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(Modifier.width(12.dp))
+                Text(
+                    text = q,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+            if (index < history.lastIndex) {
+                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+            }
+        }
+    }
 }
 
 @Composable
