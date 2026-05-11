@@ -5,7 +5,8 @@ data class SessionSnapshot(
     val userId: String,
     val fullName: String,
     val phone: String,
-    val role: String
+    val role: String,
+    val city: String = "Элиста"
 )
 
 /**

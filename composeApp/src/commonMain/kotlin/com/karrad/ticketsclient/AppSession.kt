@@ -18,6 +18,17 @@ object AppSession {
 
     var city: String by mutableStateOf("Элиста")
 
+    // История поиска (in-memory, последние 10 запросов)
+    var searchHistory: List<String> by mutableStateOf(emptyList())
+
+    fun addToSearchHistory(query: String) {
+        val trimmed = query.trim()
+        if (trimmed.isBlank()) return
+        searchHistory = (listOf(trimmed) + searchHistory.filter { it != trimmed }).take(10)
+    }
+
+    fun clearSearchHistory() { searchHistory = emptyList() }
+
     // Profile — заполняется при входе/регистрации
     var userName: String = ""
     var userPhone: String = ""
@@ -79,7 +90,15 @@ object AppSession {
         userName = s.fullName
         userPhone = s.phone
         userRole = s.role
+        city = s.city
         return true
+    }
+
+    /** Обновить город — сохранить в AppSession и персистентном хранилище. */
+    fun saveCity(newCity: String) {
+        city = newCity
+        val snap = TokenStore.load() ?: return
+        TokenStore.save(snap.copy(city = newCity))
     }
 
     fun logout() {

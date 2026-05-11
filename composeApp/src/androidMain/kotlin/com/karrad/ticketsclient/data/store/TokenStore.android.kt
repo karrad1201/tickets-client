@@ -29,6 +29,7 @@ actual object TokenStore {
             ?.putString("fullName", snapshot.fullName)
             ?.putString("phone", snapshot.phone)
             ?.putString("role", snapshot.role)
+            ?.putString("city", snapshot.city)
             ?.apply()
     }
 
@@ -41,14 +42,15 @@ actual object TokenStore {
             userId = userId,
             fullName = p.getString("fullName", "") ?: "",
             phone = p.getString("phone", "") ?: "",
-            role = p.getString("role", "USER") ?: "USER"
+            role = p.getString("role", "USER") ?: "USER",
+            city = p.getString("city", "Элиста") ?: "Элиста"
         )
     }
 
     actual fun clear() {
         prefs?.edit()
             ?.remove("token")?.remove("userId")
-            ?.remove("fullName")?.remove("phone")?.remove("role")
+            ?.remove("fullName")?.remove("phone")?.remove("role")?.remove("city")
             ?.apply()
     }
 }

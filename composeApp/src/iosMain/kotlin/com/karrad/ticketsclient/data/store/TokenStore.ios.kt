@@ -84,6 +84,7 @@ actual object TokenStore {
         keychainSave("fullName", snapshot.fullName)
         keychainSave("phone", snapshot.phone)
         keychainSave("role", snapshot.role)
+        keychainSave("city", snapshot.city)
     }
 
     actual fun load(): SessionSnapshot? {
@@ -94,12 +95,13 @@ actual object TokenStore {
             userId = userId,
             fullName = keychainLoad("fullName") ?: "",
             phone = keychainLoad("phone") ?: "",
-            role = keychainLoad("role") ?: "USER"
+            role = keychainLoad("role") ?: "USER",
+            city = keychainLoad("city") ?: "Элиста"
         )
     }
 
     actual fun clear() {
-        listOf("token", "userId", "fullName", "phone", "role")
+        listOf("token", "userId", "fullName", "phone", "role", "city")
             .forEach { keychainDelete(it) }
     }
 }

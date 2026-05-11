@@ -61,6 +61,7 @@ fun EditProfileScreen() {
 
     var nameValue by remember { mutableStateOf(TextFieldValue(AppSession.userName)) }
     val name = nameValue.text
+    var cityValue by remember { mutableStateOf(TextFieldValue(AppSession.city)) }
     var selectedInterests by remember { mutableStateOf(AppSession.userInterests.toSet()) }
     var saving by remember { mutableStateOf(false) }
     var saveError by remember { mutableStateOf<String?>(null) }
@@ -107,6 +108,18 @@ fun EditProfileScreen() {
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 shape = RoundedCornerShape(12.dp)
+            )
+
+            Spacer(Modifier.height(16.dp))
+
+            FieldLabel("Город")
+            OutlinedTextField(
+                value = cityValue,
+                onValueChange = { cityValue = it },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                shape = RoundedCornerShape(12.dp),
+                placeholder = { Text("Например: Москва") }
             )
 
             Spacer(Modifier.height(16.dp))
@@ -176,6 +189,8 @@ fun EditProfileScreen() {
                             AppSession.userName = updated.fullName
                             AppSession.userInterests = updated.interests
                             AppSession.userAvatarUrl = updated.avatarUrl
+                            val newCity = cityValue.text.trim()
+                            if (newCity.isNotBlank()) AppSession.saveCity(newCity)
                             navigator.pop()
                         } catch (e: Exception) {
                             CrashReporter.log(e)
