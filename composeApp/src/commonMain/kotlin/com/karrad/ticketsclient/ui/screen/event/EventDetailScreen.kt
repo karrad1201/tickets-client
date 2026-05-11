@@ -77,6 +77,8 @@ import com.karrad.ticketsclient.ui.theme.FreeGreen
 import com.karrad.ticketsclient.ui.util.formatEventDate
 import com.karrad.ticketsclient.ui.util.formatSessionsCompact
 import com.karrad.ticketsclient.ui.util.formatPrice
+import com.karrad.ticketsclient.ui.util.rememberShareLauncher
+import androidx.compose.material.icons.outlined.Share
 import kotlinx.coroutines.launch
 
 @Composable
@@ -109,6 +111,13 @@ fun EventDetailScreen(eventId: String) {
 
     val scrollState = rememberScrollState()
     val parallaxOffset = scrollState.value * 0.4f
+
+    val shareText = buildString {
+        append("«${event.label}»")
+        event.time.formatEventDate()?.let { append(" — $it") }
+        (event.venueLabel ?: event.venueId).let { append(", $it") }
+    }
+    val share = rememberShareLauncher(shareText)
 
     Box(
         modifier = Modifier
@@ -173,37 +182,55 @@ fun EventDetailScreen(eventId: String) {
                         }
                     }
 
-                    Box(
-                        modifier = Modifier
-                            .size(36.dp)
-                            .clip(CircleShape)
-                            .background(Color.White.copy(alpha = 0.85f))
-                            .clickable {
-                                val newFavorite = !isFavorite
-                                isFavorite = newFavorite
-                                AppSession.toggleFavorite(eventId, newFavorite)
-                                scope.launch {
-                                    runCatching {
-                                        if (newFavorite) {
-                                            AppContainer.favoriteService.add(eventId)
-                                        } else {
-                                            AppContainer.favoriteService.remove(eventId)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Box(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .background(Color.White.copy(alpha = 0.85f))
+                                .clickable { share() },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                Icons.Outlined.Share,
+                                contentDescription = "Поделиться",
+                                tint = Color.Black,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+
+                        Box(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .background(Color.White.copy(alpha = 0.85f))
+                                .clickable {
+                                    val newFavorite = !isFavorite
+                                    isFavorite = newFavorite
+                                    AppSession.toggleFavorite(eventId, newFavorite)
+                                    scope.launch {
+                                        runCatching {
+                                            if (newFavorite) {
+                                                AppContainer.favoriteService.add(eventId)
+                                            } else {
+                                                AppContainer.favoriteService.remove(eventId)
+                                            }
+                                        }.onFailure {
+                                            CrashReporter.log(it)
+                                            isFavorite = !newFavorite
+                                            AppSession.toggleFavorite(eventId, !newFavorite)
                                         }
-                                    }.onFailure {
-                                        CrashReporter.log(it)
-                                        isFavorite = !newFavorite
-                                        AppSession.toggleFavorite(eventId, !newFavorite)
                                     }
-                                }
-                            },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = if (isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
-                            contentDescription = if (isFavorite) "Убрать из избранного" else "В избранное",
-                            tint = favoriteColor,
-                            modifier = Modifier.size(18.dp)
-                        )
+                                },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = if (isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
+                                contentDescription = if (isFavorite) "Убрать из избранного" else "В избранное",
+                                tint = favoriteColor,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
                     }
                 }
 
