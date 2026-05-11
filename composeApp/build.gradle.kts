@@ -39,6 +39,7 @@ kotlin {
             implementation(libs.mlkit.barcode)
             implementation(libs.androidx.security.crypto)
             implementation(libs.firebase.crashlytics.ktx)
+            implementation(libs.firebase.messaging.ktx)
         }
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)
