@@ -7,6 +7,7 @@ import com.karrad.ticketsclient.data.api.dto.EventDto
 import com.karrad.ticketsclient.data.api.dto.OrgMembershipDto
 import com.karrad.ticketsclient.data.store.SessionSnapshot
 import com.karrad.ticketsclient.data.store.TokenStore
+import com.karrad.ticketsclient.push.onAfterLogin
 
 /**
  * In-memory app session. Holds auth state and short-lived navigation data.
@@ -81,6 +82,7 @@ object AppSession {
         this.userAvatarUrl = avatarUrl
         this.userInterests = interests
         TokenStore.save(SessionSnapshot(token, userId, fullName, phone ?: "", role))
+        onAfterLogin()
     }
 
     /** Восстановить сессию из персистентного хранилища (вызывать при старте приложения). */
