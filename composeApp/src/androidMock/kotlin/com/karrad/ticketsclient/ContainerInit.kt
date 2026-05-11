@@ -14,6 +14,7 @@ import com.karrad.ticketsclient.data.api.FakeVenueAccessGrantService
 import com.karrad.ticketsclient.data.api.FakeVenueApplicationService
 import com.karrad.ticketsclient.data.api.FakeVenueSpaceService
 import com.karrad.ticketsclient.data.api.FakeLayoutTemplateService
+import com.karrad.ticketsclient.data.api.PushService
 import com.karrad.ticketsclient.data.api.createHttpClient
 import com.karrad.ticketsclient.di.AppContainer
 
@@ -35,6 +36,10 @@ fun initContainer(baseUrl: String) {
         venueAccessGrantService = FakeVenueAccessGrantService(),
         venueApplicationService = FakeVenueApplicationService(),
         venueSpaceService = FakeVenueSpaceService(),
-        layoutTemplateService = FakeLayoutTemplateService()
+        layoutTemplateService = FakeLayoutTemplateService(),
+        pushService = object : PushService {
+            override suspend fun registerToken(token: String, platform: String) {}
+            override suspend fun unregisterToken(token: String) {}
+        }
     )
 }

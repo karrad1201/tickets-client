@@ -68,7 +68,6 @@ import com.karrad.ticketsclient.ui.util.formatPrice
 import com.karrad.ticketsclient.ui.util.sessionChipLabel
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import kotlinx.coroutines.launch
 
 // ─── Модели ────────────────────────────────────────────────────────────────────

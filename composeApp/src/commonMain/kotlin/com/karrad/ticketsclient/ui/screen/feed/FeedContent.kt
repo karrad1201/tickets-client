@@ -1,5 +1,13 @@
 package com.karrad.ticketsclient.ui.screen.feed
 
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -9,8 +17,10 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -19,7 +29,10 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowForward
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -30,6 +43,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -188,7 +203,12 @@ private fun SectionHeader(title: String, hasMore: Boolean = false) {
     ) {
         Text(title, style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold))
         if (hasMore) {
-            Text(">", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Icon(
+                Icons.AutoMirrored.Outlined.ArrowForward,
+                contentDescription = "Ещё",
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(18.dp)
+            )
         }
     }
 }
@@ -211,11 +231,17 @@ private fun ForYouSection(events: List<EventDto>, onEventClick: (EventDto) -> Un
         ) {
             repeat(events.size) { i ->
                 val active = pagerState.currentPage == i
+                val dotWidth by animateDpAsState(
+                    targetValue = if (active) 18.dp else 6.dp,
+                    animationSpec = spring(),
+                    label = "dotWidth$i"
+                )
                 Box(
                     modifier = Modifier
                         .padding(horizontal = 3.dp)
-                        .size(if (active) 8.dp else 6.dp)
-                        .clip(CircleShape)
+                        .width(dotWidth)
+                        .height(6.dp)
+                        .clip(RoundedCornerShape(3.dp))
                         .background(
                             if (active) MaterialTheme.colorScheme.primary
                             else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
@@ -235,7 +261,107 @@ private fun HorizontalEventRow(events: List<EventDto>, onEventClick: (EventDto) 
         modifier = Modifier.padding(bottom = 4.dp)
     ) {
         items(events, key = { it.id }) { event ->
-            EventCard(event = event, cardWidth = 155.dp, imageHeight = 165.dp, onClick = { onEventClick(event) })
+            EventCard(event = event, cardWidth = 160.dp, imageHeight = 240.dp, onClick = { onEventClick(event) })
+        }
+    }
+}
+
+// ─── Shimmer skeleton ─────────────────────────────────────────────────────────
+
+@Composable
+fun ShimmerFeedSkeleton() {
+    val transition = rememberInfiniteTransition(label = "shimmer")
+    val shimmerX by transition.animateFloat(
+        initialValue = -600f,
+        targetValue = 1200f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1200, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "shimmerX"
+    )
+
+    val shimmerBrush = Brush.linearGradient(
+        colors = listOf(
+            Color.LightGray.copy(alpha = 0.6f),
+            Color.LightGray.copy(alpha = 0.2f),
+            Color.LightGray.copy(alpha = 0.6f)
+        ),
+        start = Offset(shimmerX, 0f),
+        end = Offset(shimmerX + 600f, 400f)
+    )
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .padding(bottom = 96.dp)
+    ) {
+        // Date strip placeholder
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.surface)
+                .padding(horizontal = 16.dp, vertical = 10.dp),
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            repeat(6) {
+                Box(
+                    modifier = Modifier
+                        .width(36.dp)
+                        .height(40.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(shimmerBrush)
+                )
+            }
+        }
+
+        // Section header placeholder
+        Box(
+            modifier = Modifier
+                .padding(horizontal = 16.dp, vertical = 12.dp)
+                .width(140.dp)
+                .height(18.dp)
+                .clip(RoundedCornerShape(6.dp))
+                .background(shimmerBrush)
+        )
+
+        // Horizontal card row placeholder (full-width)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(260.dp)
+                .padding(horizontal = 16.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .background(shimmerBrush)
+        )
+
+        androidx.compose.foundation.layout.Spacer(Modifier.height(20.dp))
+
+        // Second section header
+        Box(
+            modifier = Modifier
+                .padding(horizontal = 16.dp, vertical = 12.dp)
+                .width(100.dp)
+                .height(18.dp)
+                .clip(RoundedCornerShape(6.dp))
+                .background(shimmerBrush)
+        )
+
+        // Horizontal cards placeholder
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            repeat(3) {
+                Box(
+                    modifier = Modifier
+                        .width(160.dp)
+                        .height(240.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(shimmerBrush)
+                )
+            }
         }
     }
 }

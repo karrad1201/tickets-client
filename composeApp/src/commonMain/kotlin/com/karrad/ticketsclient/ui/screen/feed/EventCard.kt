@@ -1,7 +1,12 @@
 package com.karrad.ticketsclient.ui.screen.feed
 
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -27,6 +32,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -38,6 +44,7 @@ import com.karrad.ticketsclient.crash.CrashReporter
 import com.karrad.ticketsclient.data.api.dto.EventDto
 import com.karrad.ticketsclient.di.AppContainer
 import com.karrad.ticketsclient.ui.component.EventImage
+import com.karrad.ticketsclient.ui.theme.FreeGreen
 import com.karrad.ticketsclient.ui.util.formatEventDate
 import com.karrad.ticketsclient.ui.util.formatPrice
 import com.karrad.ticketsclient.ui.util.formatSessionsCompact
@@ -48,14 +55,39 @@ import kotlinx.coroutines.launch
 internal fun EventCard(
     event: EventDto,
     cardWidth: Dp?,
-    imageHeight: Dp = 165.dp,
+    imageHeight: Dp = 240.dp,
     onClick: () -> Unit
 ) {
     val widthMod = if (cardWidth != null) Modifier.width(cardWidth) else Modifier.fillMaxWidth()
     var isFav by remember { mutableStateOf(AppSession.isFavorite(event.id)) }
     val scope = rememberCoroutineScope()
 
-    Column(modifier = widthMod.clickable { onClick() }) {
+    // Press-scale animation
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.96f else 1f,
+        animationSpec = spring(stiffness = Spring.StiffnessMedium),
+        label = "cardScale"
+    )
+
+    // Bounce scale for favourite icon
+    val favInteractionSource = remember { MutableInteractionSource() }
+    val isFavPressed by favInteractionSource.collectIsPressedAsState()
+    val favScale by animateFloatAsState(
+        targetValue = if (isFavPressed) 1.3f else 1f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMedium
+        ),
+        label = "favScale"
+    )
+
+    Column(
+        modifier = widthMod
+            .scale(scale)
+            .clickable(interactionSource = interactionSource, indication = null) { onClick() }
+    ) {
         Box(
             modifier = Modifier
                 .then(widthMod)
@@ -84,9 +116,10 @@ internal fun EventCard(
                     .align(Alignment.TopEnd)
                     .padding(8.dp)
                     .size(28.dp)
+                    .scale(favScale)
                     .clip(CircleShape)
                     .background(Color.Black.copy(alpha = 0.35f))
-                    .clickable {
+                    .clickable(interactionSource = favInteractionSource, indication = null) {
                         val newFav = !isFav
                         isFav = newFav
                         AppSession.toggleFavorite(event.id, newFav)
@@ -100,35 +133,33 @@ internal fun EventCard(
                                 AppSession.toggleFavorite(event.id, !newFav)
                             }
                         }
-                    }
+                    },
+                contentAlignment = Alignment.Center
             ) {
                 Icon(
                     if (isFav) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
                     contentDescription = if (isFav) "Убрать из избранного" else "В избранное",
                     tint = if (isFav) Color(0xFFFF4D6D) else Color.White,
-                    modifier = Modifier.size(15.dp).align(Alignment.Center)
-                )
-                Text(
-                    "+",
-                    color = Color.White,
-                    fontSize = 9.sp,
-                    fontWeight = FontWeight.Bold,
-                    lineHeight = 9.sp,
-                    modifier = Modifier.align(Alignment.TopEnd).padding(top = 3.dp, end = 3.dp)
+                    modifier = Modifier.size(15.dp)
                 )
             }
 
-            event.minPrice?.let { price ->
+            // Бейдж цены / "Бесплатно"
+            if (event.minPrice != null) {
+                val isFree = event.minPrice == 0
                 Box(
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
                         .padding(8.dp)
                         .clip(RoundedCornerShape(8.dp))
-                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.72f))
+                        .background(
+                            if (isFree) FreeGreen.copy(alpha = 0.90f)
+                            else MaterialTheme.colorScheme.primary.copy(alpha = 0.72f)
+                        )
                         .padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
                     Text(
-                        "от ${price.formatPrice()} ₽",
+                        if (isFree) "Бесплатно" else "от ${event.minPrice.formatPrice()} ₽",
                         color = Color.White,
                         style = MaterialTheme.typography.labelSmall.copy(
                             fontWeight = FontWeight.Bold,
@@ -151,6 +182,17 @@ internal fun EventCard(
             overflow = TextOverflow.Ellipsis,
             lineHeight = 15.sp
         )
+        // Дата события
+        val dateText = event.time.formatEventDate()
+        if (dateText != null) {
+            Text(
+                text = dateText,
+                style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                color = MaterialTheme.colorScheme.primary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
         if (event.sessionTimes.size > 1) {
             Text(
                 text = formatSessionsCompact(event.sessionTimes),

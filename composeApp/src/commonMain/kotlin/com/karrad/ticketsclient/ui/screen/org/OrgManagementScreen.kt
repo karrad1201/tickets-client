@@ -33,6 +33,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -124,8 +125,15 @@ fun OrgManagementScreen() {
                     style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
                     modifier = Modifier.weight(1f)
                 )
+                // FAB создания мероприятия — компактный в тулбаре
+                IconButton(onClick = { navigator.push(com.karrad.ticketsclient.ui.navigation.CreateEventScreen) }) {
+                    Icon(Icons.Outlined.DateRange, contentDescription = "Создать мероприятие")
+                }
                 IconButton(onClick = { showAddDialog = true }) {
                     Icon(Icons.Outlined.Add, contentDescription = "Добавить участника")
+                }
+                IconButton(onClick = { navigator.push(com.karrad.ticketsclient.ui.navigation.CreateEventScreen) }) {
+                    Icon(Icons.Outlined.DateRange, contentDescription = "Создать мероприятие")
                 }
             }
 
@@ -215,16 +223,6 @@ fun OrgManagementScreen() {
                             )
                         }
                         item { Spacer(Modifier.height(4.dp)) }
-                    }
-                    item {
-                        OutlinedButton(
-                            onClick = { navigator.push(com.karrad.ticketsclient.ui.navigation.CreateEventScreen) },
-                            modifier = Modifier.fillMaxWidth(),
-                        ) {
-                            Icon(Icons.Outlined.DateRange, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Spacer(Modifier.width(8.dp))
-                            Text("Создать мероприятие")
-                        }
                     }
                     item {
                         OutlinedButton(

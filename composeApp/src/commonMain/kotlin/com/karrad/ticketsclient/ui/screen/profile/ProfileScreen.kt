@@ -154,6 +154,22 @@ fun ProfileScreen() {
             }
         }
 
+        Spacer(Modifier.height(12.dp))
+
+        // ─── Счётчики ─────────────────────────────────────────────────────────
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            val ticketCount = AppSession.cachedTickets.count { it.usedAt == null }
+            val favCount = AppSession.favoritesCount()
+
+            StatCard(label = "Билеты", value = ticketCount.toString(), modifier = Modifier.weight(1f))
+            StatCard(label = "Избранное", value = favCount.toString(), modifier = Modifier.weight(1f))
+        }
+
         Spacer(Modifier.height(16.dp))
 
         // ─── Меню ────────────────────────────────────────────────────────────
@@ -287,6 +303,29 @@ private fun MenuDivider() {
         modifier = Modifier.padding(horizontal = 16.dp),
         color = MaterialTheme.colorScheme.outlineVariant
     )
+}
+
+@Composable
+private fun StatCard(label: String, value: String, modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(14.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(vertical = 14.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = value,
+            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+            color = MaterialTheme.colorScheme.primary
+        )
+        Spacer(Modifier.height(2.dp))
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
 }
 
 private fun String.maskPhone(): String {
