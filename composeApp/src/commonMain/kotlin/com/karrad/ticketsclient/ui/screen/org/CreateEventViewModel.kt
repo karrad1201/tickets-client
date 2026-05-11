@@ -105,9 +105,13 @@ class CreateEventViewModel(
                 )
                 val coverError = runCatching { eventService.uploadCover(event.id, coverFile) }
                     .exceptionOrNull()?.also { CrashReporter.log(it) }
+                // Re-fetch to get imageUrl populated after cover upload
+                val freshEvent = if (coverError == null)
+                    runCatching { eventService.getEvent(event.id) }.getOrDefault(event)
+                else event
                 _state.value = _state.value.copy(
                     isSubmitting = false,
-                    createdEvent = event,
+                    createdEvent = freshEvent,
                     error = if (coverError != null) "Мероприятие создано, но обложка не загружена" else null
                 )
             } catch (e: Exception) {
