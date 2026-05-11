@@ -109,7 +109,6 @@ fun FiltersBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         containerColor = MaterialTheme.colorScheme.surface,
-        dragHandle = null,
     ) {
         Column(
             modifier = Modifier

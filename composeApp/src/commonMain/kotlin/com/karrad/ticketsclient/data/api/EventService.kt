@@ -1,9 +1,11 @@
 package com.karrad.ticketsclient.data.api
 
+import com.karrad.ticketsclient.data.api.dto.AttendeeDto
 import com.karrad.ticketsclient.data.api.dto.CreateEventRequest
 import com.karrad.ticketsclient.data.api.dto.CreateGeneralAdmissionInventoryRequest
 import com.karrad.ticketsclient.data.api.dto.CreateSeatedInventoryRequest
 import com.karrad.ticketsclient.data.api.dto.EventDto
+import com.karrad.ticketsclient.data.api.dto.EventPhotoDto
 import com.karrad.ticketsclient.data.api.dto.SeatMapDto
 import com.karrad.ticketsclient.data.api.dto.TicketTypeDto
 import com.karrad.ticketsclient.data.api.dto.UpdateEventRequest
@@ -23,6 +25,11 @@ interface EventService {
     suspend fun createEvent(request: CreateEventRequest): EventDto
     suspend fun uploadCover(eventId: String, file: FileBytes)
     suspend fun updateEvent(eventId: String, request: UpdateEventRequest): EventDto
+    suspend fun deleteEvent(eventId: String)
     suspend fun createGeneralAdmissionInventory(eventId: String, request: CreateGeneralAdmissionInventoryRequest)
     suspend fun createSeatedInventory(eventId: String, request: CreateSeatedInventoryRequest)
+    suspend fun getPhotos(eventId: String): List<EventPhotoDto>
+    suspend fun uploadPhoto(eventId: String, file: FileBytes, sortOrder: Int = 0): EventPhotoDto
+    suspend fun deletePhoto(eventId: String, photoId: String)
+    suspend fun getAttendees(eventId: String, page: Int = 0, size: Int = 20): List<AttendeeDto>
 }

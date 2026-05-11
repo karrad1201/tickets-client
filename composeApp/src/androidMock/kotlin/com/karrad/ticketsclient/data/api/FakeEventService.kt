@@ -1,9 +1,11 @@
 package com.karrad.ticketsclient.data.api
 
+import com.karrad.ticketsclient.data.api.dto.AttendeeDto
 import com.karrad.ticketsclient.data.api.dto.CreateEventRequest
 import com.karrad.ticketsclient.data.api.dto.CreateGeneralAdmissionInventoryRequest
 import com.karrad.ticketsclient.data.api.dto.CreateSeatedInventoryRequest
 import com.karrad.ticketsclient.data.api.dto.EventDto
+import com.karrad.ticketsclient.data.api.dto.EventPhotoDto
 import com.karrad.ticketsclient.data.api.dto.SeatItemDto
 import com.karrad.ticketsclient.data.api.dto.SeatMapDto
 import com.karrad.ticketsclient.data.api.dto.SeatRowDto
@@ -91,7 +93,22 @@ class FakeEventService : EventService {
             description = request.description ?: ""
         ) ?: getEvent(eventId)
 
+    override suspend fun deleteEvent(eventId: String) { /* no-op in mock */ }
+
     override suspend fun createGeneralAdmissionInventory(eventId: String, request: CreateGeneralAdmissionInventoryRequest) { /* no-op in mock */ }
 
     override suspend fun createSeatedInventory(eventId: String, request: CreateSeatedInventoryRequest) { /* no-op in mock */ }
+
+    override suspend fun getPhotos(eventId: String): List<EventPhotoDto> = emptyList()
+
+    override suspend fun uploadPhoto(eventId: String, file: FileBytes, sortOrder: Int): EventPhotoDto =
+        EventPhotoDto(id = "fake-photo", eventId = eventId, url = "")
+
+    override suspend fun deletePhoto(eventId: String, photoId: String) { /* no-op in mock */ }
+
+    override suspend fun getAttendees(eventId: String, page: Int, size: Int): List<AttendeeDto> =
+        if (page == 0) listOf(
+            AttendeeDto("u1", "Иван Иванов", "+7 *** ** 12"),
+            AttendeeDto("u2", "Мария Петрова", "+7 *** ** 34")
+        ) else emptyList()
 }

@@ -47,6 +47,7 @@ object AppSession {
     // Избранное (in-memory, синхронизируется с API в FavoritesScreen/FeedScreen)
     private val _favorites = mutableSetOf<String>()
     fun isFavorite(eventId: String): Boolean = eventId in _favorites
+    fun favoritesCount(): Int = _favorites.size
     fun toggleFavorite(eventId: String, add: Boolean) {
         if (add) _favorites.add(eventId) else _favorites.remove(eventId)
     }

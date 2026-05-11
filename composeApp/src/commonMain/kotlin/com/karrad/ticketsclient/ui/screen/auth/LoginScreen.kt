@@ -1,5 +1,6 @@
 package com.karrad.ticketsclient.ui.screen.auth
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.Box
@@ -69,7 +70,25 @@ fun LoginScreen() {
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp)
         ) {
-            Text(text = "Вход", style = MaterialTheme.typography.headlineLarge)
+            // Логотип / бренд
+            Box(
+                modifier = Modifier
+                    .size(64.dp)
+                    .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(18.dp)),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    "🎟",
+                    style = MaterialTheme.typography.headlineMedium
+                )
+            }
+            Spacer(Modifier.height(16.dp))
+            Text(text = "Добро пожаловать", style = MaterialTheme.typography.headlineLarge)
+            Text(
+                text = "Введите номер телефона для входа",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
 
             Spacer(modifier = Modifier.height(24.dp))
 

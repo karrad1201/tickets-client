@@ -21,3 +21,6 @@ val TextHint      = Color(0xFFBDBDBD)
 val Divider         = Color(0xFFEEEEEE)
 val TagBackground   = Color(0xFFFFF0ED)
 val TagText         = Primary
+
+// Бесплатные мероприятия
+val FreeGreen       = Color(0xFF34C759)

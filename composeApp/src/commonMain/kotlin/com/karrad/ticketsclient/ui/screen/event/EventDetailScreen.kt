@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -16,6 +17,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -24,6 +29,7 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.CalendarMonth
@@ -38,6 +44,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -47,21 +54,27 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.compose.runtime.LaunchedEffect
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.karrad.ticketsclient.AppSession
 import com.karrad.ticketsclient.crash.CrashReporter
 import com.karrad.ticketsclient.data.api.dto.EventDto
+import com.karrad.ticketsclient.data.api.dto.EventPhotoDto
 import com.karrad.ticketsclient.di.AppContainer
 import com.karrad.ticketsclient.ui.navigation.SeatMapScreen
 import com.karrad.ticketsclient.ui.navigation.TicketTypeScreen
 import com.karrad.ticketsclient.ui.component.EventImage
 import com.karrad.ticketsclient.ui.screen.feed.EventImagePlaceholder
+import com.karrad.ticketsclient.ui.theme.FreeGreen
 import com.karrad.ticketsclient.ui.util.formatEventDate
 import com.karrad.ticketsclient.ui.util.formatSessionsCompact
 import com.karrad.ticketsclient.ui.util.formatPrice
@@ -79,8 +92,13 @@ fun EventDetailScreen(eventId: String) {
         label = "favColor"
     )
 
+    var photos by remember { mutableStateOf<List<EventPhotoDto>>(emptyList()) }
+    var galleryIndex by remember { mutableIntStateOf(0) }
+    var showGallery by remember { mutableStateOf(false) }
+
     LaunchedEffect(eventId) {
         loadedEvent = try { AppContainer.eventService.getEvent(eventId) } catch (e: Exception) { CrashReporter.log(e); null }
+        photos = try { AppContainer.eventService.getPhotos(eventId) } catch (e: Exception) { CrashReporter.log(e); emptyList() }
     }
 
     val event = loadedEvent ?: run {
@@ -90,6 +108,9 @@ fun EventDetailScreen(eventId: String) {
         return
     }
 
+    val scrollState = rememberScrollState()
+    val parallaxOffset = scrollState.value * 0.4f
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -98,7 +119,7 @@ fun EventDetailScreen(eventId: String) {
         Column(
             Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(scrollState)
         ) {
             // ─── Hero ────────────────────────────────────────────────────────
             Box(
@@ -106,7 +127,13 @@ fun EventDetailScreen(eventId: String) {
                     .fillMaxWidth()
                     .height(280.dp)
             ) {
-                EventImage(imageUrl = event.imageUrl, seed = event.id, modifier = Modifier.fillMaxSize())
+                EventImage(
+                    imageUrl = event.imageUrl,
+                    seed = event.id,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .graphicsLayer { translationY = parallaxOffset }
+                )
 
                 // тёмный градиент снизу
                 Box(
@@ -303,6 +330,40 @@ fun EventDetailScreen(eventId: String) {
                 Spacer(Modifier.height(8.dp))
                 ExpandableText(text = event.description)
 
+                // Галерея (если есть фото)
+                if (photos.isNotEmpty()) {
+                    Spacer(Modifier.height(20.dp))
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                    Spacer(Modifier.height(16.dp))
+                    Text(
+                        "Галерея",
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold)
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    LazyRow(
+                        contentPadding = PaddingValues(horizontal = 0.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        itemsIndexed(photos) { index, photo ->
+                            Box(
+                                modifier = Modifier
+                                    .size(120.dp)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .clickable {
+                                        galleryIndex = index
+                                        showGallery = true
+                                    }
+                            ) {
+                                EventImage(
+                                    imageUrl = photo.url,
+                                    seed = photo.id,
+                                    modifier = Modifier.fillMaxSize()
+                                )
+                            }
+                        }
+                    }
+                }
+
                 Spacer(Modifier.height(20.dp))
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                 Spacer(Modifier.height(16.dp))
@@ -341,13 +402,14 @@ fun EventDetailScreen(eventId: String) {
             color = MaterialTheme.colorScheme.surface
         ) {
             if (event.minPrice != null) {
+                val isFree = event.minPrice == 0
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 12.dp)
                         .height(52.dp)
                         .clip(RoundedCornerShape(14.dp))
-                        .background(MaterialTheme.colorScheme.primary)
+                        .background(if (isFree) FreeGreen else MaterialTheme.colorScheme.primary)
                         .clickable {
                             if (event.hasSeatMap) {
                                 navigator.push(SeatMapScreen(event.id, event.sessionEventIds, event.sessionTimes))
@@ -365,17 +427,19 @@ fun EventDetailScreen(eventId: String) {
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            "Выбрать",
+                            if (isFree) "Получить бесплатно" else "Выбрать",
                             color = Color.White,
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 16.sp
                         )
-                        Text(
-                            "от ${event.minPrice.formatPrice()} ₽",
-                            color = Color.White.copy(alpha = 0.9f),
-                            fontWeight = FontWeight.Medium,
-                            fontSize = 14.sp
-                        )
+                        if (!isFree) {
+                            Text(
+                                "от ${event.minPrice.formatPrice()} ₽",
+                                color = Color.White.copy(alpha = 0.9f),
+                                fontWeight = FontWeight.Medium,
+                                fontSize = 14.sp
+                            )
+                        }
                     }
                 }
             } else {
@@ -393,6 +457,49 @@ fun EventDetailScreen(eventId: String) {
                         fontSize = 14.sp
                     )
                 }
+            }
+        }
+    }
+
+    // ─── Галерея fullscreen ───────────────────────────────────────────────────
+    if (showGallery && photos.isNotEmpty()) {
+        val pagerState = rememberPagerState(initialPage = galleryIndex) { photos.size }
+        Dialog(
+            onDismissRequest = { showGallery = false },
+            properties = DialogProperties(usePlatformDefaultWidth = false)
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.95f))
+            ) {
+                HorizontalPager(
+                    state = pagerState,
+                    modifier = Modifier.fillMaxSize()
+                ) { page ->
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        EventImage(
+                            imageUrl = photos[page].url,
+                            seed = photos[page].id,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+                IconButton(
+                    onClick = { showGallery = false },
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(16.dp)
+                        .windowInsetsPadding(WindowInsets.statusBars)
+                ) {
+                    Icon(Icons.Filled.Close, contentDescription = "Закрыть", tint = Color.White, modifier = Modifier.size(28.dp))
+                }
+                Text(
+                    "${pagerState.currentPage + 1} / ${photos.size}",
+                    color = Color.White.copy(alpha = 0.7f),
+                    style = MaterialTheme.typography.labelMedium,
+                    modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 32.dp)
+                )
             }
         }
     }

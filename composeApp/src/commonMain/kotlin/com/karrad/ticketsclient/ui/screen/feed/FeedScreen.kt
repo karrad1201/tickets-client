@@ -157,9 +157,7 @@ fun FeedScreen() {
             )
         } else {
             when (val s = state) {
-                is FeedState.Loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
-                }
+                is FeedState.Loading -> ShimmerFeedSkeleton()
                 is FeedState.Error -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(

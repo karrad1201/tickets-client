@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
@@ -167,6 +169,13 @@ fun TicketsScreen() {
             }
         } else if (current.isEmpty()) {
             EmptyTickets(selectedTab == 0)
+        } else if (current.size >= 3) {
+            TicketsList(
+                tickets = current,
+                isArchived = selectedTab == 1,
+                modifier = Modifier.weight(1f),
+                onTicketClick = { ticket -> rootNavigator.push(EventDetailScreen(ticket.eventId)) }
+            )
         } else {
             TicketsPager(
                 tickets = current,
@@ -190,6 +199,27 @@ fun TicketsScreen() {
         }
     } // Column
     } // PullToRefreshBox
+}
+
+// ─── Вертикальный список билетов (3+) ─────────────────────────────────────────
+
+@Composable
+private fun TicketsList(
+    tickets: List<TicketDto>,
+    isArchived: Boolean,
+    modifier: Modifier = Modifier,
+    onTicketClick: (TicketDto) -> Unit
+) {
+    LazyColumn(
+        modifier = modifier,
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        items(tickets) { ticket ->
+            TicketCard(ticket = ticket, isArchived = isArchived, onClick = { onTicketClick(ticket) })
+        }
+        item { Spacer(Modifier.height(96.dp)) }
+    }
 }
 
 // ─── Pager билетов ─────────────────────────────────────────────────────────────

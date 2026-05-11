@@ -1,14 +1,17 @@
 package com.karrad.ticketsclient.data.api
 
+import com.karrad.ticketsclient.data.api.dto.AttendeeDto
 import com.karrad.ticketsclient.data.api.dto.CreateEventRequest
 import com.karrad.ticketsclient.data.api.dto.CreateGeneralAdmissionInventoryRequest
 import com.karrad.ticketsclient.data.api.dto.CreateSeatedInventoryRequest
 import com.karrad.ticketsclient.data.api.dto.EventDto
+import com.karrad.ticketsclient.data.api.dto.EventPhotoDto
 import com.karrad.ticketsclient.data.api.dto.SeatMapDto
 import com.karrad.ticketsclient.data.api.dto.TicketTypeDto
 import com.karrad.ticketsclient.data.api.dto.UpdateEventRequest
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.parameter
 import io.ktor.client.request.patch
@@ -94,4 +97,36 @@ class EventApiService(
             }))
         }
     }
+
+    override suspend fun deleteEvent(eventId: String) {
+        httpClient.delete("$baseUrl/api/v1/events/$eventId")
+    }
+
+    override suspend fun getPhotos(eventId: String): List<EventPhotoDto> =
+        httpClient.get("$baseUrl/api/v1/events/$eventId/photos").body()
+
+    override suspend fun uploadPhoto(eventId: String, file: FileBytes, sortOrder: Int): EventPhotoDto =
+        httpClient.post("$baseUrl/api/v1/events/$eventId/photos") {
+            setBody(MultiPartFormDataContent(formData {
+                appendInput(
+                    key = "file",
+                    headers = Headers.build {
+                        append(HttpHeaders.ContentDisposition, "filename=\"${file.name}\"")
+                        append(HttpHeaders.ContentType, file.mimeType)
+                    },
+                    size = file.bytes.size.toLong()
+                ) { buildPacket { writeFully(file.bytes) } }
+                append("sortOrder", sortOrder.toString())
+            }))
+        }.body()
+
+    override suspend fun deletePhoto(eventId: String, photoId: String) {
+        httpClient.delete("$baseUrl/api/v1/events/$eventId/photos/$photoId")
+    }
+
+    override suspend fun getAttendees(eventId: String, page: Int, size: Int): List<AttendeeDto> =
+        httpClient.get("$baseUrl/api/v1/events/$eventId/attendees") {
+            parameter("page", page)
+            parameter("size", size)
+        }.body()
 }
