@@ -56,12 +56,20 @@ import com.karrad.ticketsclient.data.api.dto.TicketTypeDto
 import com.karrad.ticketsclient.di.AppContainer
 import com.karrad.ticketsclient.ui.navigation.OrderConfirmScreen
 import com.karrad.ticketsclient.ui.util.formatPrice
+import com.karrad.ticketsclient.ui.util.sessionChipLabel
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import kotlinx.coroutines.launch
 
 @Composable
-fun TicketTypeScreen(eventId: String) {
+fun TicketTypeScreen(
+    initialEventId: String,
+    sessionEventIds: List<String> = emptyList(),
+    sessionTimes: List<String> = emptyList()
+) {
     val navigator = LocalNavigator.currentOrThrow
     val scope = rememberCoroutineScope()
+    var currentEventId by remember { mutableStateOf(initialEventId) }
 
     var ticketTypes by remember { mutableStateOf<List<TicketTypeDto>>(emptyList()) }
     var loading by remember { mutableStateOf(true) }
@@ -72,11 +80,13 @@ fun TicketTypeScreen(eventId: String) {
     var totalPrice by remember { mutableIntStateOf(0) }
     var buyLoading by remember { mutableStateOf(false) }
 
-    LaunchedEffect(eventId) {
+    LaunchedEffect(currentEventId) {
         loading = true
         loadError = null
+        quantities.clear()
+        totalPrice = 0
         try {
-            ticketTypes = AppContainer.eventService.getTicketTypes(eventId)
+            ticketTypes = AppContainer.eventService.getTicketTypes(currentEventId)
             ticketTypes.forEach { quantities[it.id] = 0 }
         } catch (e: ApiException) {
             if (e.statusCode == 404) loadError = "Билеты ещё не поступили в продажу"
@@ -123,6 +133,43 @@ fun TicketTypeScreen(eventId: String) {
                         modifier = Modifier.padding(start = 4.dp)
                     )
                 }
+            }
+
+            // ─── Session chips ────────────────────────────────────────────
+            if (sessionEventIds.size > 1) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState())
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    sessionEventIds.forEachIndexed { idx, sid ->
+                        val isActive = sid == currentEventId
+                        val label = sessionChipLabel(sessionTimes.getOrElse(idx) { "" }, sessionTimes)
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(20.dp))
+                                .background(
+                                    if (isActive) MaterialTheme.colorScheme.primary
+                                    else MaterialTheme.colorScheme.surfaceVariant
+                                )
+                                .then(
+                                    if (!isActive) Modifier.clickable {
+                                        currentEventId = sid
+                                    } else Modifier
+                                )
+                                .padding(horizontal = 14.dp, vertical = 7.dp)
+                        ) {
+                            Text(
+                                label,
+                                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Medium),
+                                color = if (isActive) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             }
 
             when {
@@ -271,7 +318,7 @@ fun TicketTypeScreen(eventId: String) {
                             scope.launch {
                                 try {
                                     val order = AppContainer.orderService.createOrder(
-                                        eventId = eventId,
+                                        eventId = currentEventId,
                                         request = CreateOrderRequestDto(
                                             admissionItems = quantities
                                                 .filterValues { it > 0 }
@@ -285,7 +332,7 @@ fun TicketTypeScreen(eventId: String) {
                                     )
                                     navigator.push(
                                         OrderConfirmScreen(
-                                            eventId = eventId,
+                                            eventId = currentEventId,
                                             orderId = order.id,
                                             totalPrice = totalPrice
                                         )

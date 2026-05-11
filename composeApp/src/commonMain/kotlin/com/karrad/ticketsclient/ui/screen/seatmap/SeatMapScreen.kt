@@ -27,7 +27,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.ConfirmationNumber
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -66,6 +65,10 @@ import com.karrad.ticketsclient.data.api.dto.SeatMapDto
 import com.karrad.ticketsclient.di.AppContainer
 import com.karrad.ticketsclient.ui.navigation.OrderConfirmScreen
 import com.karrad.ticketsclient.ui.util.formatPrice
+import com.karrad.ticketsclient.ui.util.sessionChipLabel
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import kotlinx.coroutines.launch
 
 // ─── Модели ────────────────────────────────────────────────────────────────────
@@ -90,19 +93,27 @@ private fun SeatMapDto.toSeats(): List<Seat> {
 // ─── Screen ────────────────────────────────────────────────────────────────────
 
 @Composable
-fun SeatMapScreen(eventId: String) {
+fun SeatMapScreen(
+    initialEventId: String,
+    sessionEventIds: List<String> = emptyList(),
+    sessionTimes: List<String> = emptyList()
+) {
     val navigator = LocalNavigator.currentOrThrow
     val scope = rememberCoroutineScope()
+    var currentEventId by remember { mutableStateOf(initialEventId) }
     var event by remember { mutableStateOf<EventDto?>(null) }
     var seatMap by remember { mutableStateOf<SeatMapDto?>(null) }
     var isLoading by remember { mutableStateOf(true) }
     var noInventory by remember { mutableStateOf(false) }
     var loadError by remember { mutableStateOf<String?>(null) }
+    var selectedSeats by remember { mutableStateOf(setOf<Seat>()) }
+    var buyLoading by remember { mutableStateOf(false) }
 
-    LaunchedEffect(eventId) {
-        event = try { AppContainer.eventService.getEvent(eventId) } catch (e: Exception) { CrashReporter.log(e); null }
+    LaunchedEffect(currentEventId) {
+        isLoading = true; noInventory = false; loadError = null; seatMap = null; selectedSeats = setOf()
+        event = try { AppContainer.eventService.getEvent(currentEventId) } catch (e: Exception) { CrashReporter.log(e); null }
         try {
-            seatMap = AppContainer.eventService.getSeatMap(eventId)
+            seatMap = AppContainer.eventService.getSeatMap(currentEventId)
         } catch (e: ApiException) {
             if (e.statusCode == 404) noInventory = true else { CrashReporter.log(e); loadError = e.message }
         } catch (e: Exception) {
@@ -112,8 +123,6 @@ fun SeatMapScreen(eventId: String) {
     }
 
     val allSeats = remember(seatMap) { seatMap?.toSeats() ?: emptyList() }
-    var selectedSeats by remember { mutableStateOf(setOf<Seat>()) }
-    var buyLoading by remember { mutableStateOf(false) }
 
     var scale by remember { mutableFloatStateOf(1f) }
     var offset by remember { mutableStateOf(Offset.Zero) }
@@ -138,29 +147,60 @@ fun SeatMapScreen(eventId: String) {
                 .statusBarsPadding()
         ) {
             // ─── Toolbar ─────────────────────────────────────────────────────
-            Box(
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(MaterialTheme.colorScheme.surface)
-                    .padding(horizontal = 8.dp, vertical = 8.dp)
             ) {
-                IconButton(
-                    onClick = { navigator.pop() },
-                    modifier = Modifier.align(Alignment.CenterStart)
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp, vertical = 8.dp)
                 ) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Назад")
+                    IconButton(
+                        onClick = { navigator.pop() },
+                        modifier = Modifier.align(Alignment.CenterStart)
+                    ) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Назад")
+                    }
+                    Text(
+                        text = "Купить билеты",
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                        modifier = Modifier.align(Alignment.Center)
+                    )
                 }
-                Text(
-                    text = "Купить билеты",
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                    modifier = Modifier.align(Alignment.Center)
-                )
-                IconButton(
-                    onClick = {},
-                    modifier = Modifier.align(Alignment.CenterEnd)
-                ) {
-                    Icon(Icons.Outlined.CalendarMonth, contentDescription = "Дата",
-                        tint = MaterialTheme.colorScheme.primary)
+                // ─── Чипы сеансов ────────────────────────────────────────────
+                if (sessionEventIds.size > 1) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState())
+                            .padding(horizontal = 12.dp, vertical = 6.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        sessionEventIds.forEachIndexed { idx, sid ->
+                            val isActive = sid == currentEventId
+                            val label = sessionChipLabel(sessionTimes.getOrElse(idx) { "" }, sessionTimes)
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(20.dp))
+                                    .background(
+                                        if (isActive) MaterialTheme.colorScheme.primary
+                                        else MaterialTheme.colorScheme.surfaceVariant
+                                    )
+                                    .then(if (!isActive) Modifier.clickable { currentEventId = sid; selectedSeats = setOf() } else Modifier)
+                                    .padding(horizontal = 14.dp, vertical = 7.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    label,
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = if (isActive) androidx.compose.ui.graphics.Color.White
+                                    else MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
                 }
             }
 
@@ -335,7 +375,7 @@ fun SeatMapScreen(eventId: String) {
                                 scope.launch {
                                     try {
                                         val order = AppContainer.orderService.createOrder(
-                                            eventId = eventId,
+                                            eventId = currentEventId,
                                             request = CreateOrderRequestDto(
                                                 seatKeys = selectedSeats.map { seat ->
                                                     SeatKeyRequestDto(
@@ -348,7 +388,7 @@ fun SeatMapScreen(eventId: String) {
                                         )
                                         navigator.push(
                                             OrderConfirmScreen(
-                                                eventId = eventId,
+                                                eventId = currentEventId,
                                                 orderId = order.id,
                                                 totalPrice = totalPrice
                                             )

@@ -40,6 +40,7 @@ import com.karrad.ticketsclient.di.AppContainer
 import com.karrad.ticketsclient.ui.component.EventImage
 import com.karrad.ticketsclient.ui.util.formatEventDate
 import com.karrad.ticketsclient.ui.util.formatPrice
+import com.karrad.ticketsclient.ui.util.formatSessionsCompact
 import kotlinx.coroutines.launch
 
 // cardWidth = null → заполняет пространство пейджера; иначе — фиксированная ширина
@@ -151,9 +152,8 @@ internal fun EventCard(
             lineHeight = 15.sp
         )
         if (event.sessionTimes.size > 1) {
-            val timesFormatted = event.sessionTimes.take(4).mapNotNull { it.formatEventDate() }.joinToString(" · ")
             Text(
-                text = timesFormatted,
+                text = formatSessionsCompact(event.sessionTimes),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.primary,
                 maxLines = 1,

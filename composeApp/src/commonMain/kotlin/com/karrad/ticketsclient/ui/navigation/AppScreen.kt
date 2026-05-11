@@ -69,15 +69,23 @@ object EditProfileScreen : Screen {
 }
 
 // Seat map
-data class SeatMapScreen(val eventId: String) : Screen {
+data class SeatMapScreen(
+    val eventId: String,
+    val sessionEventIds: List<String> = emptyList(),
+    val sessionTimes: List<String> = emptyList()
+) : Screen {
     @androidx.compose.runtime.Composable
-    override fun Content() = com.karrad.ticketsclient.ui.screen.seatmap.SeatMapScreen(eventId)
+    override fun Content() = com.karrad.ticketsclient.ui.screen.seatmap.SeatMapScreen(eventId, sessionEventIds, sessionTimes)
 }
 
 // Ticket types (events without seat map)
-data class TicketTypeScreen(val eventId: String) : Screen {
+data class TicketTypeScreen(
+    val eventId: String,
+    val sessionEventIds: List<String> = emptyList(),
+    val sessionTimes: List<String> = emptyList()
+) : Screen {
     @androidx.compose.runtime.Composable
-    override fun Content() = com.karrad.ticketsclient.ui.screen.tickettype.TicketTypeScreen(eventId)
+    override fun Content() = com.karrad.ticketsclient.ui.screen.tickettype.TicketTypeScreen(eventId, sessionEventIds, sessionTimes)
 }
 
 // Order confirm

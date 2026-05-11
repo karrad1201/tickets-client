@@ -25,9 +25,10 @@ import androidx.compose.animation.core.tween
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.LocationOn
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -62,10 +63,8 @@ import com.karrad.ticketsclient.ui.navigation.TicketTypeScreen
 import com.karrad.ticketsclient.ui.component.EventImage
 import com.karrad.ticketsclient.ui.screen.feed.EventImagePlaceholder
 import com.karrad.ticketsclient.ui.util.formatEventDate
-import com.karrad.ticketsclient.ui.util.formatEventDateFull
+import com.karrad.ticketsclient.ui.util.formatSessionsCompact
 import com.karrad.ticketsclient.ui.util.formatPrice
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.rememberScrollState
 import kotlinx.coroutines.launch
 
 @Composable
@@ -180,6 +179,26 @@ fun EventDetailScreen(eventId: String) {
                             modifier = Modifier.size(18.dp)
                         )
                     }
+                }
+
+                // Время/дата — снизу слева на шапке
+                val timeLabel = if (event.sessionTimes.size > 1)
+                    formatSessionsCompact(event.sessionTimes)
+                else
+                    event.time.formatEventDate() ?: event.time
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomStart)
+                        .padding(12.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(Color.Black.copy(alpha = 0.52f))
+                        .padding(horizontal = 10.dp, vertical = 5.dp)
+                ) {
+                    Text(
+                        text = timeLabel,
+                        color = Color.White,
+                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold)
+                    )
                 }
             }
 
@@ -311,22 +330,6 @@ fun EventDetailScreen(eventId: String) {
                     )
                 }
 
-                Spacer(Modifier.height(20.dp))
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                Spacer(Modifier.height(16.dp))
-
-                // Дата мероприятия
-                Text(
-                    "Дата мероприятия",
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold)
-                )
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    text = event.time.formatEventDateFull() ?: event.time,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-
                 Spacer(Modifier.height(100.dp))
             }
         }
@@ -347,9 +350,9 @@ fun EventDetailScreen(eventId: String) {
                         .background(MaterialTheme.colorScheme.primary)
                         .clickable {
                             if (event.hasSeatMap) {
-                                navigator.push(SeatMapScreen(event.id))
+                                navigator.push(SeatMapScreen(event.id, event.sessionEventIds, event.sessionTimes))
                             } else {
-                                navigator.push(TicketTypeScreen(event.id))
+                                navigator.push(TicketTypeScreen(event.id, event.sessionEventIds, event.sessionTimes))
                             }
                         },
                     contentAlignment = Alignment.Center
