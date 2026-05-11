@@ -125,15 +125,12 @@ fun OrgManagementScreen() {
                     style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
                     modifier = Modifier.weight(1f)
                 )
-                // FAB создания мероприятия — компактный в тулбаре
+                // Создать мероприятие
                 IconButton(onClick = { navigator.push(com.karrad.ticketsclient.ui.navigation.CreateEventScreen) }) {
                     Icon(Icons.Outlined.DateRange, contentDescription = "Создать мероприятие")
                 }
                 IconButton(onClick = { showAddDialog = true }) {
                     Icon(Icons.Outlined.Add, contentDescription = "Добавить участника")
-                }
-                IconButton(onClick = { navigator.push(com.karrad.ticketsclient.ui.navigation.CreateEventScreen) }) {
-                    Icon(Icons.Outlined.DateRange, contentDescription = "Создать мероприятие")
                 }
             }
 
