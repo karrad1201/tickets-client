@@ -56,6 +56,7 @@ import io.github.alexzhirkevich.qrose.options.QrBrush
 import io.github.alexzhirkevich.qrose.options.solid
 import io.github.alexzhirkevich.qrose.rememberQrCodePainter
 import com.karrad.ticketsclient.ui.navigation.EventDetailScreen
+import com.karrad.ticketsclient.ui.util.formatEventDate
 
 @Composable
 fun TicketsScreen() {
@@ -284,7 +285,7 @@ private fun TicketCard(ticket: TicketDto, isArchived: Boolean, onClick: () -> Un
                     ) {
                         Icon(Icons.Outlined.DateRange, null,
                             tint = Color.White.copy(alpha = 0.8f), modifier = Modifier.size(12.dp))
-                        Text(ticket.eventTime, style = MaterialTheme.typography.labelSmall,
+                        Text(ticket.eventTime.formatEventDate() ?: ticket.eventTime, style = MaterialTheme.typography.labelSmall,
                             color = Color.White.copy(alpha = 0.8f))
                     }
                 }
@@ -307,7 +308,7 @@ private fun TicketCard(ticket: TicketDto, isArchived: Boolean, onClick: () -> Un
                     )
                     if (ticket.eventTime != null) {
                         Text(
-                            ticket.eventTime,
+                            ticket.eventTime.formatEventDate() ?: ticket.eventTime,
                             style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
                             textAlign = TextAlign.Center
                         )
