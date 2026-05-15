@@ -23,8 +23,6 @@ import io.ktor.http.ContentType
 import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
-import io.ktor.utils.io.core.buildPacket
-import io.ktor.utils.io.core.writeFully
 
 class EventApiService(
     private val httpClient: HttpClient,
@@ -86,14 +84,10 @@ class EventApiService(
     override suspend fun uploadCover(eventId: String, file: FileBytes) {
         httpClient.post("$baseUrl/api/v1/events/$eventId/cover") {
             setBody(MultiPartFormDataContent(formData {
-                appendInput(
-                    key = "file",
-                    headers = Headers.build {
-                        append(HttpHeaders.ContentDisposition, "filename=\"${file.name}\"")
-                        append(HttpHeaders.ContentType, file.mimeType)
-                    },
-                    size = file.bytes.size.toLong()
-                ) { buildPacket { writeFully(file.bytes) } }
+                append("file", file.bytes, Headers.build {
+                    append(HttpHeaders.ContentDisposition, "filename=\"${file.name}\"")
+                    append(HttpHeaders.ContentType, file.mimeType)
+                })
             }))
         }
     }
@@ -108,14 +102,10 @@ class EventApiService(
     override suspend fun uploadPhoto(eventId: String, file: FileBytes, sortOrder: Int): EventPhotoDto =
         httpClient.post("$baseUrl/api/v1/events/$eventId/photos") {
             setBody(MultiPartFormDataContent(formData {
-                appendInput(
-                    key = "file",
-                    headers = Headers.build {
-                        append(HttpHeaders.ContentDisposition, "filename=\"${file.name}\"")
-                        append(HttpHeaders.ContentType, file.mimeType)
-                    },
-                    size = file.bytes.size.toLong()
-                ) { buildPacket { writeFully(file.bytes) } }
+                append("file", file.bytes, Headers.build {
+                    append(HttpHeaders.ContentDisposition, "filename=\"${file.name}\"")
+                    append(HttpHeaders.ContentType, file.mimeType)
+                })
                 append("sortOrder", sortOrder.toString())
             }))
         }.body()
