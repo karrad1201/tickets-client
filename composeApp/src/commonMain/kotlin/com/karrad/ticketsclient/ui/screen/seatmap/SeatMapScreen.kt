@@ -72,7 +72,25 @@ import kotlinx.coroutines.launch
 
 // ─── Модели ────────────────────────────────────────────────────────────────────
 
-private data class Seat(val sectionKey: String, val rowKey: String, val seatKey: String, val row: Int, val col: Int, val available: Boolean, val price: Int = 0)
+private data class Seat(
+    val sectionKey: String,
+    val sectionLabel: String,
+    val rowKey: String,
+    val seatKey: String,
+    val row: Int,
+    val col: Int,
+    val available: Boolean,
+    val price: Int = 0
+)
+
+private val sectionPalette = listOf(
+    Color(0xFF4C7EFF), // синий
+    Color(0xFF2ECC71), // зелёный
+    Color(0xFFFF6B35), // оранжевый
+    Color(0xFF9B59B6), // фиолетовый
+    Color(0xFF1ABC9C), // бирюзовый
+    Color(0xFFE74C3C), // красный
+)
 
 private fun rowLabel(row: Int) = ('A' + row).toString()
 private fun seatLabel(row: Int, col: Int) = "${rowLabel(row)}${col + 1}"
@@ -82,7 +100,7 @@ private fun SeatMapDto.toSeats(): List<Seat> {
     sections.forEach { section ->
         section.rows.forEachIndexed { rowIdx, row ->
             row.seats.forEachIndexed { colIdx, seat ->
-                result += Seat(section.key, row.key, seat.key, rowIdx, colIdx, seat.available, seat.price)
+                result += Seat(section.key, section.label, row.key, seat.key, rowIdx, colIdx, seat.available, seat.price)
             }
         }
     }
@@ -243,6 +261,7 @@ fun SeatMapScreen(
                         ) {
                             SeatGrid(
                                 seats = allSeats,
+                                sections = seatMap?.sections ?: emptyList(),
                                 selected = selectedSeats,
                                 onSeatClick = { seat ->
                                     if (!seat.available) return@SeatGrid
@@ -529,6 +548,7 @@ private fun ZoomButton(label: String, onClick: () -> Unit) {
 @Composable
 private fun SeatGrid(
     seats: List<Seat>,
+    sections: List<com.karrad.ticketsclient.data.api.dto.SeatSectionDto>,
     selected: Set<Seat>,
     onSeatClick: (Seat) -> Unit
 ) {
@@ -545,6 +565,13 @@ private fun SeatGrid(
     val rows = seats.maxOf { it.row } + 1
     val cols = seats.maxOf { it.col } + 1
 
+    // Map sectionKey → color from palette
+    val sectionColorMap = remember(sections) {
+        sections.mapIndexed { idx, section ->
+            section.key to sectionPalette[idx % sectionPalette.size]
+        }.toMap()
+    }
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(gap)
@@ -558,7 +585,7 @@ private fun SeatGrid(
                         seat == null    -> Color.Transparent
                         isSelected      -> MaterialTheme.colorScheme.primary
                         !seat.available -> Color(0xFFDDDDDD)
-                        else            -> Color(0xFF2C2C2E)
+                        else            -> sectionColorMap[seat.sectionKey] ?: Color(0xFF2C2C2E)
                     }
                     Box(
                         modifier = Modifier
@@ -575,8 +602,7 @@ private fun SeatGrid(
                         if (seat != null) {
                             Text(
                                 text = seatLabel(row, col),
-                                color = if (!seat.available) Color(0xFFAAAAAA)
-                                        else Color.White,
+                                color = if (!seat.available) Color(0xFFAAAAAA) else Color.White,
                                 fontSize = 8.sp,
                                 fontWeight = FontWeight.Medium,
                                 textAlign = TextAlign.Center
@@ -613,5 +639,35 @@ private fun SeatGrid(
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(top = 4.dp)
         )
+
+        // ─── Легенда секций ───────────────────────────────────────────────────
+        if (sections.size > 1) {
+            Spacer(Modifier.height(12.dp))
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(horizontal = 8.dp)
+            ) {
+                sections.forEachIndexed { idx, section ->
+                    val color = sectionPalette[idx % sectionPalette.size]
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(12.dp)
+                                .clip(RoundedCornerShape(3.dp))
+                                .background(color)
+                        )
+                        Text(
+                            section.label,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+        }
     }
 }

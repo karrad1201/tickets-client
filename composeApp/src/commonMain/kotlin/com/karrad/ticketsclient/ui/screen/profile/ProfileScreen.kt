@@ -154,22 +154,6 @@ fun ProfileScreen() {
             }
         }
 
-        Spacer(Modifier.height(12.dp))
-
-        // ─── Счётчики ─────────────────────────────────────────────────────────
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            val ticketCount = AppSession.cachedTickets.count { it.usedAt == null }
-            val favCount = AppSession.favoritesCount()
-
-            StatCard(label = "Билеты", value = ticketCount.toString(), modifier = Modifier.weight(1f))
-            StatCard(label = "Избранное", value = favCount.toString(), modifier = Modifier.weight(1f))
-        }
-
         Spacer(Modifier.height(16.dp))
 
         // ─── Меню ────────────────────────────────────────────────────────────
@@ -179,19 +163,31 @@ fun ProfileScreen() {
                 when (membership.role) {
                     "OWNER" -> {
                         MenuItem(
-                            label = "Управление организацией",
+                            label = "Мероприятия",
                             onClick = { rootNavigator.push(OrgManagementScreen) }
                         )
                         MenuDivider()
                         MenuItem(
-                            label = "Аренда площадок",
+                            label = "Участники организации",
+                            onClick = { rootNavigator.push(MemberManagementScreen) }
+                        )
+                        MenuDivider()
+                        MenuItem(
+                            label = "Площадки",
                             onClick = { rootNavigator.push(VenueAccessScreen) }
                         )
                     }
-                    "MANAGER" -> MenuItem(
-                        label = "Сотрудники",
-                        onClick = { rootNavigator.push(MemberManagementScreen) }
-                    )
+                    "MANAGER" -> {
+                        MenuItem(
+                            label = "Мероприятия",
+                            onClick = { rootNavigator.push(OrgManagementScreen) }
+                        )
+                        MenuDivider()
+                        MenuItem(
+                            label = "Сотрудники",
+                            onClick = { rootNavigator.push(MemberManagementScreen) }
+                        )
+                    }
                     "STAFF" -> MenuItem(
                         label = "Мои мероприятия",
                         onClick = { rootNavigator.push(com.karrad.ticketsclient.ui.navigation.ScannerScreenNav) }
