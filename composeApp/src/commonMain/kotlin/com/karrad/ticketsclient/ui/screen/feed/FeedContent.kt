@@ -63,6 +63,7 @@ internal fun FeedContent(
     selectedDay: Int,
     onDaySelect: (Int) -> Unit,
     onEventClick: (EventDto) -> Unit,
+    onCategoryMore: (String) -> Unit = {},
     hasMore: Boolean = false,
     onLoadMore: () -> Unit = {}
 ) {
@@ -96,7 +97,11 @@ internal fun FeedContent(
 
         feed.byCategory.forEach { entry ->
             item {
-                SectionHeader(entry.category.label, hasMore = true)
+                SectionHeader(
+                    title = entry.category.label,
+                    hasMore = true,
+                    onMore = { onCategoryMore(entry.category.label) }
+                )
                 HorizontalEventRow(events = entry.events, onEventClick = onEventClick)
             }
         }
@@ -193,7 +198,7 @@ private fun DayOfWeek.shortRu(): String = when (this) {
 }
 
 @Composable
-private fun SectionHeader(title: String, hasMore: Boolean = false) {
+private fun SectionHeader(title: String, hasMore: Boolean = false, onMore: (() -> Unit)? = null) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -206,8 +211,10 @@ private fun SectionHeader(title: String, hasMore: Boolean = false) {
             Icon(
                 Icons.AutoMirrored.Outlined.ArrowForward,
                 contentDescription = "Ещё",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(18.dp)
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier
+                    .size(18.dp)
+                    .then(if (onMore != null) Modifier.clickable { onMore() } else Modifier)
             )
         }
     }

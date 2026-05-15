@@ -179,6 +179,7 @@ fun FeedScreen() {
                         selectedDay = selectedDay,
                         onDaySelect = { viewModel.selectDay(it) },
                         onEventClick = { event -> rootNavigator.push(EventDetailScreen(event.id)) },
+                        onCategoryMore = { rootNavigator.push(SearchScreen) },
                         hasMore = s.hasMore,
                         onLoadMore = { viewModel.loadMore() }
                     )
