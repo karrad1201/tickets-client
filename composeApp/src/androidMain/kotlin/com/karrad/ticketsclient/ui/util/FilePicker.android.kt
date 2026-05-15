@@ -8,7 +8,10 @@ import androidx.compose.ui.platform.LocalContext
 import com.karrad.ticketsclient.data.api.FileBytes
 
 @Composable
-actual fun rememberFilePicker(onFiles: (List<FileBytes>) -> Unit): () -> Unit {
+actual fun rememberFilePicker(
+    accept: String,
+    onFiles: (List<FileBytes>) -> Unit
+): () -> Unit {
     val context = LocalContext.current
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetMultipleContents()
@@ -31,5 +34,5 @@ actual fun rememberFilePicker(onFiles: (List<FileBytes>) -> Unit): () -> Unit {
         }
         onFiles(result)
     }
-    return { launcher.launch("*/*") }
+    return { launcher.launch(accept) }
 }

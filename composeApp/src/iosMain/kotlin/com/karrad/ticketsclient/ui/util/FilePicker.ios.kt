@@ -12,11 +12,15 @@ import platform.UIKit.UIApplication
 import platform.UIKit.UIDocumentPickerDelegateProtocol
 import platform.UIKit.UIDocumentPickerViewController
 import platform.UniformTypeIdentifiers.UTTypeData
+import platform.UniformTypeIdentifiers.UTTypeImage
 import platform.darwin.NSObject
 
 @OptIn(ExperimentalForeignApi::class)
 @Composable
-actual fun rememberFilePicker(onFiles: (List<FileBytes>) -> Unit): () -> Unit {
+actual fun rememberFilePicker(
+    accept: String,
+    onFiles: (List<FileBytes>) -> Unit
+): () -> Unit {
     val delegate = remember {
         object : NSObject(), UIDocumentPickerDelegateProtocol {
             override fun documentPicker(
@@ -50,10 +54,11 @@ actual fun rememberFilePicker(onFiles: (List<FileBytes>) -> Unit): () -> Unit {
         }
     }
 
-    return remember {
+    return remember(accept) {
         {
+            val contentTypes = if (accept.startsWith("image")) listOf(UTTypeImage) else listOf(UTTypeData)
             val picker = UIDocumentPickerViewController(
-                forOpeningContentTypes = listOf(UTTypeData),
+                forOpeningContentTypes = contentTypes,
                 asCopy = true
             )
             picker.allowsMultipleSelection = true
