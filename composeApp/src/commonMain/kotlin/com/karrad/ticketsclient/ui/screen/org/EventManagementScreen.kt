@@ -23,7 +23,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.ui.draw.clip
+import androidx.compose.material.icons.outlined.AddPhotoAlternate
 import androidx.compose.material.icons.outlined.BarChart
+import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.ConfirmationNumber
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
@@ -56,9 +60,12 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.karrad.ticketsclient.crash.CrashReporter
 import com.karrad.ticketsclient.data.api.dto.AttendeeDto
+import com.karrad.ticketsclient.data.api.dto.EventPhotoDto
 import com.karrad.ticketsclient.data.api.dto.OrgEventItem
 import com.karrad.ticketsclient.di.AppContainer
+import com.karrad.ticketsclient.ui.component.EventImage
 import com.karrad.ticketsclient.ui.util.formatEventTime
+import com.karrad.ticketsclient.ui.util.rememberFilePicker
 import kotlinx.coroutines.launch
 
 @Composable
@@ -68,6 +75,8 @@ fun EventManagementScreen(event: OrgEventItem) {
 
     var showDeleteConfirm by remember { mutableStateOf(false) }
     var deleteLoading by remember { mutableStateOf(false) }
+    var photos by remember { mutableStateOf<List<EventPhotoDto>>(emptyList()) }
+    var photosLoading by remember { mutableStateOf(false) }
     var attendees by remember { mutableStateOf<List<AttendeeDto>>(emptyList()) }
     var attendeesPage by remember { mutableStateOf(0) }
     var attendeesHasMore by remember { mutableStateOf(true) }
@@ -83,6 +92,11 @@ fun EventManagementScreen(event: OrgEventItem) {
     }
 
     LaunchedEffect(event.id) {
+        photosLoading = true
+        runCatching { photos = AppContainer.eventService.getPhotos(event.id) }
+            .onFailure { CrashReporter.log(it) }
+        photosLoading = false
+
         attendeesLoading = true
         runCatching {
             val page = AppContainer.eventService.getAttendees(event.id, 0, 20)
@@ -91,6 +105,18 @@ fun EventManagementScreen(event: OrgEventItem) {
             attendeesPage = 1
         }.onFailure { CrashReporter.log(it) }
         attendeesLoading = false
+    }
+
+    val pickPhoto = rememberFilePicker(accept = "image/*") { files ->
+        val file = files.firstOrNull() ?: return@rememberFilePicker
+        scope.launch {
+            photosLoading = true
+            runCatching {
+                val dto = AppContainer.eventService.uploadPhoto(event.id, file, photos.size)
+                photos = photos + dto
+            }.onFailure { CrashReporter.log(it) }
+            photosLoading = false
+        }
     }
 
     LaunchedEffect(reachedBottom) {
@@ -239,6 +265,86 @@ fun EventManagementScreen(event: OrgEventItem) {
                     ) {
                         Icon(Icons.Outlined.Edit, contentDescription = null, modifier = Modifier.padding(end = 8.dp))
                         Text("Редактировать")
+                    }
+                }
+            }
+
+            // Галерея фотографий
+            item {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp))
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            "Галерея",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        IconButton(
+                            onClick = { pickPhoto() },
+                            enabled = !photosLoading
+                        ) {
+                            if (photosLoading)
+                                CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
+                            else
+                                Icon(
+                                    Icons.Outlined.AddPhotoAlternate,
+                                    contentDescription = "Добавить фото",
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                        }
+                    }
+                    if (photos.isEmpty() && !photosLoading) {
+                        Text(
+                            "Фотографий пока нет",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    } else {
+                        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            items(photos, key = { it.id }) { photo ->
+                                Box {
+                                    EventImage(
+                                        imageUrl = photo.url,
+                                        seed = photo.id,
+                                        modifier = androidx.compose.ui.Modifier
+                                            .size(100.dp)
+                                            .clip(RoundedCornerShape(8.dp))
+                                    )
+                                    IconButton(
+                                        onClick = {
+                                            scope.launch {
+                                                runCatching {
+                                                    AppContainer.eventService.deletePhoto(event.id, photo.id)
+                                                    photos = photos.filter { it.id != photo.id }
+                                                }.onFailure { CrashReporter.log(it) }
+                                            }
+                                        },
+                                        modifier = androidx.compose.ui.Modifier
+                                            .align(Alignment.TopEnd)
+                                            .size(28.dp)
+                                    ) {
+                                        Icon(
+                                            Icons.Outlined.Close,
+                                            contentDescription = "Удалить фото",
+                                            tint = Color.White,
+                                            modifier = androidx.compose.ui.Modifier
+                                                .background(Color.Black.copy(alpha = 0.5f), RoundedCornerShape(14.dp))
+                                                .padding(4.dp)
+                                                .size(16.dp)
+                                        )
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }

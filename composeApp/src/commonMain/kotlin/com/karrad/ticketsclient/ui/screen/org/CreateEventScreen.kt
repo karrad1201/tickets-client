@@ -95,7 +95,7 @@ fun CreateEventScreen() {
     val sessionDates = remember { mutableStateListOf("") }
     val sessionTimes = remember { mutableStateListOf("") }
     var coverFile by remember { mutableStateOf<FileBytes?>(null) }
-    val pickCover = rememberFilePicker { files -> coverFile = files.firstOrNull() }
+    val pickCover = rememberFilePicker(accept = "image/*") { files -> coverFile = files.firstOrNull() }
 
     LaunchedEffect(state.createdEvent) {
         val event = state.createdEvent ?: return@LaunchedEffect
