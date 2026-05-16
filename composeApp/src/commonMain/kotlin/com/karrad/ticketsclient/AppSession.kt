@@ -8,6 +8,7 @@ import com.karrad.ticketsclient.data.api.dto.OrgMembershipDto
 import com.karrad.ticketsclient.data.store.SessionSnapshot
 import com.karrad.ticketsclient.data.store.TokenStore
 import com.karrad.ticketsclient.push.onAfterLogin
+import kotlinx.coroutines.flow.MutableStateFlow
 
 /**
  * In-memory app session. Holds auth state and short-lived navigation data.
@@ -61,6 +62,11 @@ object AppSession {
 
     // Версия приложения — устанавливается платформой при старте
     var appVersion: String = "1.0.0"
+
+    // Deep link — холодный старт (устанавливается до App())
+    var pendingDeepLinkEventId: String? = null
+    // Deep link — горячий старт (onNewIntent, когда приложение уже запущено)
+    val liveDeepLinkEventId = MutableStateFlow<String?>(null)
 
     // Членство в организации — загружается после входа в MainScreen
     var orgMembership: OrgMembershipDto? by mutableStateOf(null)

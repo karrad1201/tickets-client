@@ -63,7 +63,7 @@ internal fun FeedContent(
     selectedDay: Int,
     onDaySelect: (Int) -> Unit,
     onEventClick: (EventDto) -> Unit,
-    onCategoryMore: (String) -> Unit = {},
+    onCategoryMore: (com.karrad.ticketsclient.data.api.dto.CategoryDto) -> Unit = {},
     hasMore: Boolean = false,
     onLoadMore: () -> Unit = {}
 ) {
@@ -100,7 +100,7 @@ internal fun FeedContent(
                 SectionHeader(
                     title = entry.category.label,
                     hasMore = true,
-                    onMore = { onCategoryMore(entry.category.label) }
+                    onMore = { onCategoryMore(entry.category) }
                 )
                 HorizontalEventRow(events = entry.events, onEventClick = onEventClick)
             }
