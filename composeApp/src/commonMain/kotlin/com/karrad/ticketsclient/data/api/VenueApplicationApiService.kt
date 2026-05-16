@@ -13,8 +13,6 @@ import io.ktor.http.ContentType
 import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
-import io.ktor.utils.io.core.buildPacket
-import io.ktor.utils.io.core.writeFully
 
 class VenueApplicationApiService(
     private val httpClient: HttpClient,
@@ -30,21 +28,26 @@ class VenueApplicationApiService(
     override suspend fun listMine(): List<VenueApplicationDto> =
         httpClient.get("$baseUrl/api/v1/my/organization/venue-applications").body()
 
-    override suspend fun uploadDocuments(applicationId: String, files: List<FileBytes>): VenueApplicationDto =
-        httpClient.post("$baseUrl/api/v1/my/organization/venue-applications/$applicationId/documents") {
-            setBody(MultiPartFormDataContent(formData {
-                files.forEach { f ->
-                    appendInput(
-                        key = "files",
+    override suspend fun uploadDocuments(applicationId: String, files: List<FileBytes>): VenueApplicationDto {
+        var result: VenueApplicationDto? = null
+        for (f in files) {
+            result = httpClient.post(
+                "$baseUrl/api/v1/my/organization/venue-applications/$applicationId/documents"
+            ) {
+                setBody(MultiPartFormDataContent(formData {
+                    append(
+                        key = "file",
+                        value = f.bytes,
                         headers = Headers.build {
-                            append(HttpHeaders.ContentDisposition, "filename=\"${f.name}\"")
+                            append(HttpHeaders.ContentDisposition, "form-data; name=\"file\"; filename=\"${f.name}\"")
                             append(HttpHeaders.ContentType, f.mimeType)
-                        },
-                        size = f.bytes.size.toLong()
-                    ) {
-                        buildPacket { writeFully(f.bytes) }
-                    }
-                }
-            }))
-        }.body()
+                        }
+                    )
+                }))
+            }.body()
+        }
+        return result ?: httpClient.get(
+            "$baseUrl/api/v1/my/organization/venue-applications"
+        ).body<List<VenueApplicationDto>>().first { it.id == applicationId }
+    }
 }
