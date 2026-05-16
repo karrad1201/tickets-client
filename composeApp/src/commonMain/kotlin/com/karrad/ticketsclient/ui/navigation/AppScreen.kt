@@ -95,9 +95,15 @@ data class OrderConfirmScreen(val eventId: String, val orderId: String, val tota
 }
 
 // Search
-object SearchScreen : Screen {
+data class SearchScreen(
+    val initialCategoryId: String? = null,
+    val initialCategoryLabel: String? = null
+) : Screen {
     @androidx.compose.runtime.Composable
-    override fun Content() = com.karrad.ticketsclient.ui.screen.search.SearchScreen()
+    override fun Content() = com.karrad.ticketsclient.ui.screen.search.SearchScreen(
+        initialCategoryId = initialCategoryId,
+        initialCategoryLabel = initialCategoryLabel
+    )
 }
 
 // Profile sub-screens

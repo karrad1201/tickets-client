@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -32,6 +33,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -58,28 +60,96 @@ import com.karrad.ticketsclient.ui.util.formatPrice
 import kotlinx.coroutines.delay
 
 @Composable
-fun SearchScreen() {
+fun SearchScreen(
+    initialCategoryId: String? = null,
+    initialCategoryLabel: String? = null
+) {
     val navigator = LocalNavigator.currentOrThrow
     var queryValue by remember { mutableStateOf(TextFieldValue("")) }
     val query = queryValue.text
     var results by remember { mutableStateOf<List<EventDto>>(emptyList()) }
     var loading by remember { mutableStateOf(false) }
+    var page by remember { mutableStateOf(0) }
+    var hasMore by remember { mutableStateOf(false) }
+    var loadingMore by remember { mutableStateOf(false) }
+    val listState = rememberLazyListState()
 
+    val reachedBottom by remember {
+        derivedStateOf {
+            val lastVisible = listState.layoutInfo.visibleItemsInfo.lastOrNull()
+            val total = listState.layoutInfo.totalItemsCount
+            lastVisible != null && total > 0 && lastVisible.index >= total - 2
+        }
+    }
+
+    // Initial load when category pre-filter is set
+    LaunchedEffect(Unit) {
+        if (initialCategoryId != null) {
+            loading = true
+            page = 0
+            results = try {
+                AppContainer.eventService.search(
+                    query = "",
+                    city = AppSession.city,
+                    page = 0,
+                    categoryIds = listOf(initialCategoryId)
+                )
+            } catch (e: Exception) {
+                CrashReporter.log(e)
+                emptyList()
+            }
+            hasMore = results.size >= 20
+            loading = false
+        }
+    }
+
+    // Text search with debounce
     LaunchedEffect(query) {
+        if (initialCategoryId != null && query.isEmpty()) return@LaunchedEffect
         if (query.length < 2) {
-            results = emptyList()
+            if (initialCategoryId == null) results = emptyList()
             return@LaunchedEffect
         }
-        delay(300) // debounce
+        delay(300)
         loading = true
+        page = 0
         results = try {
-            AppContainer.eventService.search(query, AppSession.city)
+            AppContainer.eventService.search(
+                query = query,
+                city = AppSession.city,
+                page = 0,
+                categoryIds = if (initialCategoryId != null) listOf(initialCategoryId) else emptyList()
+            )
         } catch (e: Exception) {
             CrashReporter.log(e)
             emptyList()
-        } finally {
-            loading = false
         }
+        hasMore = results.size >= 20
+        loading = false
+    }
+
+    // Load more on scroll
+    LaunchedEffect(reachedBottom) {
+        if (!reachedBottom || !hasMore || loadingMore || loading) return@LaunchedEffect
+        loadingMore = true
+        val nextPage = page + 1
+        val more = try {
+            AppContainer.eventService.search(
+                query = query,
+                city = AppSession.city,
+                page = nextPage,
+                categoryIds = if (initialCategoryId != null) listOf(initialCategoryId) else emptyList()
+            )
+        } catch (e: Exception) {
+            CrashReporter.log(e)
+            emptyList()
+        }
+        if (more.isNotEmpty()) {
+            results = results + more
+            page = nextPage
+        }
+        hasMore = more.size >= 20
+        loadingMore = false
     }
 
     Column(
@@ -140,7 +210,8 @@ fun SearchScreen() {
                     decorationBox = { inner ->
                         if (query.isEmpty()) {
                             Text(
-                                "Поиск событий",
+                                if (initialCategoryLabel != null) "Поиск в «$initialCategoryLabel»"
+                                else "Поиск событий",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -170,9 +241,46 @@ fun SearchScreen() {
             }
         }
 
+        // Category chip
+        if (initialCategoryLabel != null) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.surface)
+                    .padding(horizontal = 16.dp, vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(MaterialTheme.colorScheme.primaryContainer)
+                        .padding(horizontal = 12.dp, vertical = 4.dp)
+                ) {
+                    Text(
+                        text = initialCategoryLabel,
+                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                }
+            }
+        }
+
         // ─── Результаты / подсказки ───────────────────────────────────────────
         val history = AppSession.searchHistory
         when {
+            initialCategoryId != null && loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+            initialCategoryId != null -> ResultsList(
+                results = results,
+                query = query,
+                loadingMore = loadingMore,
+                listState = listState,
+                onEventClick = { event ->
+                    if (query.isNotEmpty()) AppSession.addToSearchHistory(query)
+                    navigator.push(EventDetailScreen(event.id))
+                }
+            )
             query.length < 2 && history.isNotEmpty() -> SearchHistory(
                 history = history,
                 onQuerySelected = { queryValue = TextFieldValue(it) },
@@ -183,15 +291,43 @@ fun SearchScreen() {
                 CircularProgressIndicator()
             }
             results.isEmpty() -> NotFound(query)
-            else -> LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(0.dp)
-            ) {
-                items(results, key = { it.id }) { event ->
-                    SearchResultRow(event = event, onClick = {
-                        AppSession.addToSearchHistory(query)
-                        navigator.push(EventDetailScreen(event.id))
-                    })
+            else -> ResultsList(
+                results = results,
+                query = query,
+                loadingMore = loadingMore,
+                listState = listState,
+                onEventClick = { event ->
+                    AppSession.addToSearchHistory(query)
+                    navigator.push(EventDetailScreen(event.id))
+                }
+            )
+        }
+    }
+}
+
+@Composable
+private fun ResultsList(
+    results: List<EventDto>,
+    query: String,
+    loadingMore: Boolean,
+    listState: androidx.compose.foundation.lazy.LazyListState,
+    onEventClick: (EventDto) -> Unit
+) {
+    LazyColumn(
+        state = listState,
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(0.dp)
+    ) {
+        items(results, key = { it.id }) { event ->
+            SearchResultRow(event = event, onClick = { onEventClick(event) })
+        }
+        if (loadingMore) {
+            item {
+                Box(
+                    modifier = Modifier.fillMaxWidth().padding(16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
                 }
             }
         }

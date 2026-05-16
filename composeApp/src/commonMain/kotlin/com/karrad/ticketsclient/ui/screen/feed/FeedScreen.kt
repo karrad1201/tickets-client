@@ -12,9 +12,13 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -41,6 +45,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FeedScreen() {
     val navigator = LocalNavigator.currentOrThrow
@@ -50,6 +55,12 @@ fun FeedScreen() {
     val state by viewModel.state.collectAsState()
     var showFilters by rememberSaveable { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+    var refreshing by remember { mutableStateOf(false) }
+    val pullRefreshState = rememberPullToRefreshState()
+
+    LaunchedEffect(state) {
+        if (state !is FeedState.Loading) refreshing = false
+    }
 
     var activeFilter by remember { mutableStateOf<FilterState?>(null) }
     var filteredEvents by remember { mutableStateOf<List<com.karrad.ticketsclient.data.api.dto.EventDto>?>(null) }
@@ -106,14 +117,19 @@ fun FeedScreen() {
         )
     }
 
+    PullToRefreshBox(
+        isRefreshing = refreshing,
+        onRefresh = { refreshing = true; viewModel.load() },
+        state = pullRefreshState,
+        modifier = Modifier.fillMaxSize().statusBarsPadding()
+    ) {
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .statusBarsPadding()
     ) {
         FeedHeader(
-            onSearchClick = { rootNavigator.push(SearchScreen) },
+            onSearchClick = { rootNavigator.push(SearchScreen()) },
             onFilterClick = { showFilters = true },
             onCityClick = { rootNavigator.push(com.karrad.ticketsclient.ui.navigation.CityPickerScreen) },
             hasActiveFilter = activeFilter?.hasActiveFilters == true
@@ -179,7 +195,7 @@ fun FeedScreen() {
                         selectedDay = selectedDay,
                         onDaySelect = { viewModel.selectDay(it) },
                         onEventClick = { event -> rootNavigator.push(EventDetailScreen(event.id)) },
-                        onCategoryMore = { rootNavigator.push(SearchScreen) },
+                        onCategoryMore = { cat -> rootNavigator.push(SearchScreen(initialCategoryId = cat.id, initialCategoryLabel = cat.label)) },
                         hasMore = s.hasMore,
                         onLoadMore = { viewModel.loadMore() }
                     )
@@ -187,4 +203,5 @@ fun FeedScreen() {
             }
         }
     }
+    } // PullToRefreshBox
 }
