@@ -4,6 +4,8 @@
 <dict>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
+	<key>CFBundleDisplayName</key>
+	<string>Визит Калмыкия</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Приложение использует камеру для сканирования QR-кодов билетов</string>
 </dict>
