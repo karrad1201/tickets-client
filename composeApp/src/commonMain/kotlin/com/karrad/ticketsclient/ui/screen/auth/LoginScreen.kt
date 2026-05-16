@@ -1,5 +1,6 @@
 package com.karrad.ticketsclient.ui.screen.auth
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -32,7 +33,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.input.KeyboardType
@@ -63,6 +66,25 @@ fun LoginScreen() {
             .statusBarsPadding()
             .imePadding()
     ) {
+        // Subtle Kalmykia lotus background (flag symbol, very low opacity)
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val lotusColor = Color(0xFFFFD700).copy(alpha = 0.07f)
+            val scale = minOf(size.width, size.height) / 400f
+            val lotuses = listOf(
+                Triple(0.10f, 0.12f, 44f * scale),
+                Triple(0.88f, 0.28f, 36f * scale),
+                Triple(0.78f, 0.72f, 52f * scale),
+                Triple(0.20f, 0.82f, 30f * scale),
+                Triple(0.52f, 0.50f, 26f * scale),
+            )
+            for ((xFrac, yFrac, r) in lotuses) {
+                val center = Offset(size.width * xFrac, size.height * yFrac)
+                drawCircle(color = lotusColor, radius = r, center = center, style = Stroke(2f * scale))
+                drawCircle(color = lotusColor, radius = r * 0.62f, center = center, style = Stroke(1.5f * scale))
+                drawCircle(color = lotusColor, radius = r * 0.27f, center = center)
+            }
+        }
+
         // Main form — center
         Column(
             modifier = Modifier
